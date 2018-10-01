@@ -4,13 +4,13 @@ const VuePlugin = require('vue-loader/lib/plugin');
 module.exports = {
     mode: 'development',
     entry: {
-        view: './src/view.ts',
-        profile: './src/profile.ts',
+        view: './frontend/view.ts',
+        profile: './frontend/profile.ts'
     },
     output: {
         filename: '[name].js',
         library: '[name]',
-        path: path.resolve(__dirname, 'dist'),
+        path: path.resolve(__dirname, 'frontend-dist/static/scripts'),
     },
     module: {
         rules: [

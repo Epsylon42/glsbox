@@ -72,5 +72,6 @@ typings/
 # Serverless directories
 .serverless
 
-frontend/dist
-frontend/node_modules
+frontend-dist
+backend-dist
+node_modules
