@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" type="text/css" href="/styles/style.css">
+    </head>
+
+    <body>
+        <nav>
+            <a href="/browse">Browse</a>
+            <a href="/create">Create</a>
+
+            <div id="profile">
+                <div id="profile-app"></div>
+            </div>
+        </nav>
+
+        <div id="content">
+            <div id="content-app"></div>
+        </div>
+
+        <div id="footer">
+            <p>Copyrights or something</p>
+        </div>
+    </body>
+
+    {% for script in scripts %}
+    <script src="/scripts/{{ script }}"></script>
+    {% endfor %}
+
+    <script>
+     {% for mt in mountPoints %}
+
+     {{ mt.lib }}.mount("{{ mt.mount }}");
+
+     {% endfor %}
+    </script>
+
+</html>

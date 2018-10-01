@@ -5,16 +5,18 @@
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "build-frontend": "webpack",
+        "build-frontend": "webpack && cp -R frontend-files/* frontend-dist/",
         "build-backend": "tsc -p backend/tsconfig.json",
-        "start": "npm run build-frontend && npm run build-backend && ln -s ../../index.html frontend-dist/static && node backend-dist/index.js",
+        "start": "npm run build-frontend && npm run build-backend && node backend-dist/index.js",
         "clean": "rm -r frontend-dist backend-dist"
     },
     "author": "",
     "license": "ISC",
     "dependencies": {
         "@types/express": "^4.16.0",
+        "@types/swig": "0.0.29",
         "express": "^4.16.3",
+        "swig": "^1.4.2",
         "vue": "^2.5.17",
         "vue-property-decorator": "^7.0.0",
         "wgl": "file:wgl"
