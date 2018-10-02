@@ -1,5 +1,8 @@
 import Express from 'express';
 import Swig from 'swig';
+import { openDB } from './db';
+
+const db = openDB();
 
 const app = Express();
 
