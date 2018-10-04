@@ -1,8 +1,6 @@
 import Express from 'express';
 import Swig from 'swig';
-import { openDB } from './db';
-
-const db = openDB();
+import { db, Utils } from './db';
 
 const app = Express();
 
@@ -35,6 +33,32 @@ app.get("/create", (req, res) => {
     });
 });
 
-app.listen(3000, () => {
-    console.log("ready");
+app.get("/login", (req, res) => {
+    res.render("index", {
+        scripts: [
+            "login.js",
+            "profile.js",
+        ],
+        mountPoints: [
+            {
+                lib: "login",
+                mount: "#content-app",
+            },
+            {
+                lib: "profile",
+                mount: "#profile-app",
+            }
+        ]
+    });
 });
+
+db.sync({ force: false }).then(() => {
+    console.log("database initialized");
+    app.listen(3000, () => {
+        console.log("ready");
+    });
+}).catch(err => {
+    console.log("failed to initialize database");
+    console.log(err);
+});
+

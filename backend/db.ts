@@ -1,146 +1,166 @@
-import Database from 'better-sqlite3';
-import * as fs from 'fs';
-import * as crypto from 'crypto';
+import Sequelize from 'sequelize';
+import fs from 'fs';
+import crypto from 'crypto';
 
 export const userRole = {
     admin: 0,
     moderator: 1,
-    normal: 2,
+    user: 2,
 };
 
 export const textureKind = {
     normal: 0,
-    normalVflip: 1,
+    normalVFlip: 1,
     cubemap: 2,
 };
 
-const dataPath = __dirname;
+export const db = new Sequelize("postgres://tempuser:temppass@localhost:5432/glsbox", {
+    define: {
+        timestamps: false,
+    }
+});
 
-export interface GLSDatabase {
-    addUser: (name: string, role: number, password: string) => Promise<number>;
-    updateUserPassword: (id: number, password: string) => Promise<void>;
-    checkUserPassword: (id: number, password: string) => Promise<boolean>;
-
-    addShader: (owner: number, code: string) => Promise<number>;
-    getShaderCode: (id: number, code: string) => Promise<string>;
-    updateShaderCode: (id: number, code: string) => Promise<void>;
-    getShaderTextureFiles: (id: number) => Promise<[string, number][]>;
-
-    close: () => void;
-}
-
-export function openDB(): GLSDatabase {
-    let db = new Database("data.db") as Database & GLSDatabase;
-
-    db.addUser = function (name: string, role: number, password: string) {
-        const salt = crypto.randomBytes(64).toString("base64");
-        const hash = crypto.createHash("sha256").update(password + salt).digest("base64");
-
-        const date = new Date().toISOString();
-
-        try {
-            const last = this.prepare(`
-INSERT INTO users (username, role, registrationDate, passwordHash, passwordSalt)
-VALUES (?, ?, ?, ?, ?)
-`).run(name, role, date, hash, salt).lastInsertROWID;
-
-            return Promise.resolve(Number(last));
-        } catch (e) {
-            return Promise.reject(e);
+export const Users = db.define("users", {
+    id: {
+        type: Sequelize.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+        unique: true,
+        allowNull: false,
+    },
+    username: {
+        type: Sequelize.TEXT,
+        unique: true,
+        allowNull: false,
+    },
+    role: {
+        type: Sequelize.SMALLINT,
+        defaultValue: userRole.user,
+        allowNull: false,
+    },
+    registrationDate: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW,
+        allowNull: false,
+    },
+    passwordHash: {
+        type: Sequelize.TEXT,
+        allowNull: false,
+    },
+    passwordSalt: {
+        type: Sequelize.TEXT,
+        allowNull: false,
+    },
+    email: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+        validate: {
+            isEmail: true,
         }
-    };
+    },
 
-    db.updateUserPassword = function (id: number, password: string) {
-        const salt = crypto.randomBytes(64).toString("base64");
-        const hash = crypto.createHash("sha256").update(password + salt).digest("base64");
+    password: {
+        type: Sequelize.VIRTUAL,
+        set: function(val: string) {
+            const salt = crypto.randomBytes(16).toString("base64");
+            const hash = crypto.createHash("sha256").update(val + salt).digest("base64");
 
-        try {
-            this.prepare(`
-UPDATE users
-SET passwordHash = ?, passwordSalt = ?
-WHERE id = ?
-`).run(hash, salt, id);
-        } catch (e) {
-            return Promise.reject(e);
+            (this as any).setDataValue("passwordHash", hash);
+            (this as any).setDataValue("passwordSalt", salt);
         }
+    }
+});
 
-        return Promise.resolve(undefined);
-    };
+export const Shaders = db.define("shaders", {
+    id: {
+        type: Sequelize.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+        allowNull: false,
+    },
+    owner: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+    },
+    published: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+    },
+    creationDate: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW,
+        allowNull: false,
+    },
+    publishingDate: {
+        type: Sequelize.DATE,
+        allowNull: true,
+    },
+    likeCount: {
+        type: Sequelize.INTEGER,
+        defaultValue: 0,
+        allowNull: false,
+    },
+    code: {
+        type: Sequelize.TEXT,
+        allowNull: false,
+    }
+});
 
-    db.checkUserPassword = function (id: number, password: string) {
+export const ShaderTextures = db.define("shader_textures", {
+    id: {
+        type: Sequelize.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+        allowNull: false,
+    },
+    shaderId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+    },
+    textureKind: {
+        type: Sequelize.SMALLINT,
+        allowNull: false,
+    }
+});
+
+export module Utils {
+    export async function checkUserPassword(id: number, password: string) {
         try {
-            const { passwordSalt, passwordHash } = this.prepare(`
-SELECT passwordSalt, passwordHash
-FROM users
-WHERE id = ?
-`).get(id);
+            const user = await Users.findByPrimary(
+                id,
+                { attributes: ["passwordHash", "passwordSalt"] }
+            ) as {
+                passwordHash: string,
+                passwordSalt: string,
+            };
 
-            return Promise.resolve(passwordHash === crypto.createHash("sha256").update(password + passwordSalt).digest("base64"));
+            const salt = user.passwordSalt;
+            const hash = crypto.createHash("sha256").update(password + salt).digest("base64");
+
+            return user.passwordHash === hash;
         } catch (e) {
-            return Promise.reject(e);
+            throw e;
         }
-    };
+    }
 
-    db.addShader = function (owner: number, code: string) {
+    export async function publishShader(id: number): Promise<void> {
         try {
-            const date = new Date().toISOString();
+            const shader = await Shaders.findByPrimary(
+                id,
+                { attributes: ["published", "publishedDate"] }
+            ) as any;
 
-            const id = this.prepare(`
-INSERT INTO shaders (owner, creationDate)
-VALUES (?, ?)
-`).run(owner, date).lastInsertROWID;
+            if (shader.dataValues.published) {
+                throw new Error("shader is already published");
+            }
 
-            return new Promise((resolve, reject) => {
-                fs.writeFile(dataPath + `/shaders/${id}.glsl`, code, e => {
-                    if (e) {
-                        reject(e);
-                    } else {
-                        resolve(Number(id));
-                    }
-                })
-            });
+            shader.dataValues.published = true;
+            shader.dataValues.publishedDate = new Date();
+
+            return (shader.update() as Promise<any>).then(() => undefined)
         } catch (e) {
-            return Promise.reject(e);
+            throw e;
         }
-    };
-
-    db.getShaderCode = function (id: number) {
-        return new Promise((resolve, reject) => {
-            fs.readFile(dataPath + `/shaders/${id}.glsl`, (e, data) => {
-                if (e) {
-                    reject(e);
-                } else {
-                    resolve(data.toString());
-                }
-            })
-        });
-    };
-
-    db.updateShaderCode = function (id: number, code: string) {
-        return new Promise((resolve, reject) => {
-            fs.writeFile(dataPath + `/shaders/${id}.glsl`, code, e => {
-                if (e) {
-                    reject(e);
-                } else {
-                    resolve(undefined);
-                }
-            })
-        });
-    };
-
-    db.getShaderTextureFiles = function (id: number) {
-        try {
-            const data = this.prepare(`
-SELECT id, textureKind
-FROM shader_textures
-WHERE shaderId = ?
-`).all(id) as { id: number, textureKind: number }[];
-
-            return Promise.resolve(data.map(row => [dataPath + `/shaders/${row.id}.glsl`, row.textureKind] as [string, number]));
-        } catch (e) {
-            return Promise.reject(e);
-        }
-    };
-
-    return db;
+    }
 }
