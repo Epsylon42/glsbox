@@ -60,6 +60,7 @@
         "index.ts"
     ],
     "include": [
-        "**/*.ts"
+        "**/*.ts",
+        "../common/**/*.ts"
     ]
 }

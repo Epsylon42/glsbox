@@ -9,7 +9,9 @@
 import { Vue, Component, Prop, Watch, Emit } from 'vue-property-decorator';
 import ShaderCompute from './shader-compute.ts';
 import FragShader from '../frag-shader.ts';
-import Wgl, { Uniform, FloatUniform, FloatVecUniform, TextureCubeUniform, WglError } from 'wgl';
+import Wgl, { Uniform, FloatUniform, FloatVecUniform, Texture2DUniform, TextureCubeUniform, WglError } from 'wgl';
+import { TextureData } from './textures.vue';
+import { TextureKind } from '../../common/texture-kind.ts';
 
 @Component
 export default class ShaderWindow extends Vue {
@@ -24,6 +26,24 @@ export default class ShaderWindow extends Vue {
                 throw e;
             }
         }
+    }
+    
+    @Prop({ required: true }) textures: TextureData[];
+    private get textureUniforms(): [string, Uniform][] {
+        return this.textures
+            .filter(tex => tex.image)
+            .map(tex => {
+                if (tex.kind !== TextureKind.Normal && tex.kind !== TextureKind.Cubemap) {
+                    throw new Error("Invalid TextureKind");
+                }
+                
+                const uni =
+                    tex.kind === TextureKind.Normal ? new Texture2DUniform(tex.image) :
+                    tex.kind === TextureKind.Cubemap ? new TextureCubeUniform(tex.image) :
+                    "UNREACHABLE";
+                
+                return ["tex_" + tex.name, uni] as [string, Uniform];
+            });
     }
     
     private gl: Wgl;
@@ -47,10 +67,12 @@ export default class ShaderWindow extends Vue {
             this.timerId = setInterval(() => {
                 this.time += 1/30;
                 
-                this.shaderCompute.draw([
+                const uniforms: [string, Uniform][] = [
                     ['u_time', new FloatUniform(this.time)],
                     ['u_resolution', new FloatVecUniform([400.0, 300.0])],
-                ]);
+                ];
+
+                this.shaderCompute.draw(uniforms.concat(this.textureUniforms));
             }, 1/30 * 1000);
         }
     }

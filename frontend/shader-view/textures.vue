@@ -1,15 +1,24 @@
 <template>
   <div class="textures">
     <div class="texture" v-for="tex, i in textures">
-      <img ref="images" :src="tex.src">
+      <img ref="images" :src="tex.src" @load="onLoad(i)">
       <div class="texture-controls">
+
         <button @click="removeTexture(i)">remove</button>
+
         <input
           type="text"
           v-model="tex.name"
           @change="texUpdate"
           @input="validateName(i)"
           >
+
+        <select v-model.number="tex.kind" @change="texUpdate">
+          <option v-for="opt in texKindVariants" :value="opt.value">
+            {{ opt.text }}
+          </option>
+        </select>
+
       </div>
     </div>
 
@@ -23,11 +32,18 @@
 <script lang="ts">
     
 import { Vue, Component, Emit } from 'vue-property-decorator';
+import { TextureKind } from '../../common/texture-kind.ts';
 import Icon from 'vue-awesome/components/Icon.vue';
 import 'vue-awesome/icons/plus.js';
 
-class TextureSource {
-    constructor(public src: string, public name: string) {}
+export class TextureData {
+    constructor(
+        public src: string,
+        public name: string,
+        public kind: TextureKind = TextureKind.Normal
+    ) {}
+
+    public image: HTMLImageElement | null = null;
 }
 
 @Component({
@@ -37,7 +53,13 @@ class TextureSource {
 })
 export default class Textures extends Vue {
     
-    private textures: TextureSource[] = [];
+    private texKindVariants = [
+        { text: "Normal",      value: TextureKind.Normal },
+        // { text: "NormalVFlip", value: TextureKind.NormalVFlip },
+        { text: "Cubemap",     value: TextureKind.Cubemap },
+    ];
+
+    private textures: TextureData[] = [];
     private files: [number, File][] = [];
     
     private addTexture(event) {
@@ -47,7 +69,7 @@ export default class Textures extends Vue {
             name = name.replace(/\W/g, "");
 
             this.files.push([this.textures.length, file]);
-            this.textures.push(new TextureSource(URL.createObjectURL(file), name));
+            this.textures.push(new TextureData(URL.createObjectURL(file), name));
         }
 
         this.$nextTick(() => {
@@ -65,14 +87,17 @@ export default class Textures extends Vue {
         this.texUpdate();
     }
 
-    public getTextures(): [string, HTMLImageElement][] {
-        return this.textures.map((tex, i) => {
-            return [tex.name, this.$refs.images[i]] as [string, HTMLImageElement];
-        });
+    private onLoad(i: number) {
+        this.textures[i].image = this.$refs.images[i];
+        this.texUpdate();
+    }
+
+    public getTextures(): TextureData[] {
+        return this.textures;
     }
 
     private texUpdate() {
-        this.$emit("texUpdate");
+        this.$emit("texUpdate", this.textures);
     }
 
     private validateName(i: number) {

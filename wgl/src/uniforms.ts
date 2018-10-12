@@ -58,7 +58,7 @@ export class FloatVecUniform implements Uniform {
 }
 
 export class Texture2DUniform implements Uniform {
-    constructor(private value: HTMLImageElement) {}
+    constructor(private value: HTMLImageElement, private flip: boolean = false) {}
 
     public setUniform(gl: WebGLRenderingContext, location: WebGLUniformLocation, ctx: UniformContext) {
         const texture = ctx.textures.get(this.value, "2d");

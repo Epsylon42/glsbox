@@ -1,17 +1,12 @@
 import Sequelize from 'sequelize';
 import fs from 'fs';
 import crypto from 'crypto';
+import { TextureKind } from '../common/texture-kind';
 
 export const userRole = {
     admin: 0,
     moderator: 1,
     user: 2,
-};
-
-export const textureKind = {
-    normal: 0,
-    normalVFlip: 1,
-    cubemap: 2,
 };
 
 export const db = new Sequelize("postgres://tempuser:temppass@localhost:5432/glsbox", {

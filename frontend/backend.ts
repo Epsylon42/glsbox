@@ -6,6 +6,7 @@ export class ShaderStorage {
     gl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
 }`, [
     'varying vec2 v_pos;',
+    'varying vec2 v_uv;',
     'uniform float u_time;',
     'uniform vec2 u_resolution;',
 ]));

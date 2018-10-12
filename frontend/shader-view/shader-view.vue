@@ -7,6 +7,7 @@
       ref="window"
       class="display"
       :shader="currentShader"
+      :textures="textures"
       @error="processError"
       >
     </ShaderWindow>
@@ -53,9 +54,10 @@
 import { Vue, Component, Prop } from 'vue-property-decorator';
 import ShaderWindow from './shader-window.vue';
 import FragShader from '../frag-shader.ts';
-import Textures from './textures.vue';
+import Textures, { TextureData } from './textures.vue';
 import { WglError } from 'wgl';
 import { ShaderStorage } from '../backend.ts';
+import { TextureKind } from '../../common/texture-kind.ts';
 
 @Component({
     components: {
@@ -65,10 +67,12 @@ import { ShaderStorage } from '../backend.ts';
 })
 export default class ShaderView extends Vue {
     @Prop({type: Number, required: false}) public shaderId: number | null;
-    public currentShader: FragShader | null = null;
+    private currentShader: FragShader | null = null;
     
-    public shaderSource = "";
-    public loaded: boolean = false;
+    private shaderSource = "";
+    private loaded: boolean = false;
+
+    private textures: TextureData[] = [];
     
     mounted() {
         var promise = (this.shaderId
@@ -92,10 +96,21 @@ export default class ShaderView extends Vue {
         );
     }
     
-    updateTextures() {
-        console.log("update");
-        const textures = this.$refs.textures as Textures;
-        this.currentShader.textures = textures.getTextures().map(([name]) => "uniform sampler2D tex_" + name + ";");
+    updateTextures(textures: TextureData[]) {
+        this.textures = textures;
+        this.currentShader.textures =
+            this.textures.map(tex => {
+                if (tex.kind !== TextureKind.Normal && tex.kind !== TextureKind.Cubemap) {
+                    throw new Error("Invalid TextureKind");
+                }
+
+                const uniType =
+                    tex.kind === TextureKind.Normal ? "sampler2D" :
+                    tex.kind === TextureKind.Cubemap ? "samplerCube" :
+                    "UNREACHABLE";
+
+                return `uniform ${uniType} tex_${tex.name};`;
+            });
     }
 
     processError(e: WglError) {
