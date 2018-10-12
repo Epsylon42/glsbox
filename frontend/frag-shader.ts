@@ -1,7 +1,7 @@
 export default class FragShader {
     private libs: FragShader[] = [];
 
-    constructor(public source: string, public declarations: string[] = []) {}
+    constructor(public source: string, public uniforms: string[] = [], public textures: string[] = []) {}
 
     public compile(): string {
         let compiled = "";
@@ -10,7 +10,10 @@ export default class FragShader {
 precision mediump float;
 `;
 
-        for (let decl of this.declarations) {
+        for (let decl of this.uniforms) {
+            compiled += decl + "\n";
+        }
+        for (let decl of this.textures) {
             compiled += decl + "\n";
         }
 

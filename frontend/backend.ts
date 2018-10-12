@@ -3,7 +3,7 @@ import FragShader from './frag-shader.ts';
 export class ShaderStorage {
     static requestDefaultShader(): Promise<FragShader> {
         return Promise.resolve(new FragShader(`void main() {
-gl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
+    gl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
 }`, [
     'varying vec2 v_pos;',
     'uniform float u_time;',

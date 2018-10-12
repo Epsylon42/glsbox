@@ -9,12 +9,11 @@
 import { Vue, Component, Prop, Watch, Emit } from 'vue-property-decorator';
 import ShaderCompute from './shader-compute.ts';
 import FragShader from '../frag-shader.ts';
-import Wgl, { FloatUniform, FloatVecUniform, TextureCubeUniform, WglError } from 'wgl';
+import Wgl, { Uniform, FloatUniform, FloatVecUniform, TextureCubeUniform, WglError } from 'wgl';
 
 @Component
 export default class ShaderWindow extends Vue {
-    @Prop({ type: FragShader, required: false }) shader: FragShader | null = null;
-    
+    @Prop({ type: FragShader, required: false }) shader: FragShader | null = null; 
     @Watch('shader') shaderChanged(newShader: FragShader | null) {
         try {
             this.updateShader(newShader);
@@ -31,7 +30,7 @@ export default class ShaderWindow extends Vue {
     private shaderCompute: ShaderCompute | null = null;
     private timerId: number | null = null;
     private time: number = 0;
-    
+
     updateShader(shader: FragShader | null) {
         if (!shader) {
             if (this.timerId) {
