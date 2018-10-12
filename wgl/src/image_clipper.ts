@@ -8,8 +8,8 @@ class Clipper {
     }
 
     public clip(image: HTMLImageElement, sx: number, sy: number, wx: number, wy: number): string {
-        this.canvas.width = image.width;
-        this.canvas.height = image.height;
+        this.canvas.width = image.naturalWidth;
+        this.canvas.height = image.naturalHeight;
         this.ctx.drawImage(image, 0, 0);
 
         const data = this.ctx.getImageData(sx, sy, wx, wy);
@@ -18,9 +18,6 @@ class Clipper {
         this.ctx.putImageData(data, 0, 0);
 
         const url = this.canvas.toDataURL();
-
-        const img = new Image();
-        img.src = url;
 
         return url;
     }
@@ -43,8 +40,8 @@ export class CubemapPromise {
 }
 
 export default function sliceCubemap(image: HTMLImageElement): CubemapPromise {
-    const width = image.width / 4;
-    const height = image.height / 3;
+    const width = image.naturalWidth / 4;
+    const height = image.naturalHeight / 3;
 
     const start_positions: [number, number][] = [
         [width*2, height],
