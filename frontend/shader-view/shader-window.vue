@@ -10,12 +10,15 @@ import { Vue, Component, Prop, Watch, Emit } from 'vue-property-decorator';
 import ShaderCompute from './shader-compute.ts';
 import FragShader from '../frag-shader.ts';
 import Wgl, { Uniform, FloatUniform, FloatVecUniform, Texture2DUniform, TextureCubeUniform, WglError } from 'wgl';
-import { TextureData } from './textures.vue';
+import TextureData from '../texture-data.ts';
 import { TextureKind } from '../../common/texture-kind.ts';
+import { store } from './shader-store/store.ts';
 
 @Component
 export default class ShaderWindow extends Vue {
-    @Prop({ type: FragShader, required: false }) shader: FragShader | null = null; 
+    private get shader(): FragShader | null {
+        return store.getters.shader;
+    }
     @Watch('shader') shaderChanged(newShader: FragShader | null) {
         try {
             this.updateShader(newShader);
@@ -26,24 +29,6 @@ export default class ShaderWindow extends Vue {
                 throw e;
             }
         }
-    }
-    
-    @Prop({ required: true }) textures: TextureData[];
-    private get textureUniforms(): [string, Uniform][] {
-        return this.textures
-            .filter(tex => tex.image)
-            .map(tex => {
-                if (tex.kind !== TextureKind.Normal && tex.kind !== TextureKind.Cubemap) {
-                    throw new Error("Invalid TextureKind");
-                }
-                
-                const uni =
-                    tex.kind === TextureKind.Normal ? new Texture2DUniform(tex.image) :
-                    tex.kind === TextureKind.Cubemap ? new TextureCubeUniform(tex.image) :
-                    "UNREACHABLE";
-                
-                return ["tex_" + tex.name, uni] as [string, Uniform];
-            });
     }
     
     private gl: Wgl;
@@ -72,16 +57,13 @@ export default class ShaderWindow extends Vue {
                     ['u_resolution', new FloatVecUniform([400.0, 300.0])],
                 ];
 
-                this.shaderCompute.draw(uniforms.concat(this.textureUniforms));
+                this.shaderCompute.draw(uniforms.concat(store.getters.textureUniforms));
             }, 1/30 * 1000);
         }
     }
 
     mounted() {
         this.gl = new Wgl((this.$refs.shader_canvas as HTMLCanvasElement).getContext("webgl"));
-        if (this.shader) {
-            this.updateShader(this.shader);
-        }
     }
 
     destroyed() {

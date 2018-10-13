@@ -9,11 +9,9 @@
         <input
           type="text"
           v-model="tex.name"
-          @change="texUpdate"
-          @input="validateName(i)"
           >
 
-        <select v-model.number="tex.kind" @change="texUpdate">
+        <select v-model.number="tex.kind">
           <option v-for="opt in texKindVariants" :value="opt.value">
             {{ opt.text }}
           </option>
@@ -33,18 +31,10 @@
     
 import { Vue, Component, Emit } from 'vue-property-decorator';
 import { TextureKind } from '../../common/texture-kind.ts';
+import TextureData from '../texture-data.ts';
+import { store, Actions, Mutations } from './shader-store/store.ts';
 import Icon from 'vue-awesome/components/Icon.vue';
 import 'vue-awesome/icons/plus.js';
-
-export class TextureData {
-    constructor(
-        public src: string,
-        public name: string,
-        public kind: TextureKind = TextureKind.Normal
-    ) {}
-
-    public image: HTMLImageElement | null = null;
-}
 
 @Component({
     components: {
@@ -59,50 +49,42 @@ export default class Textures extends Vue {
         { text: "Cubemap",     value: TextureKind.Cubemap },
     ];
 
-    private textures: TextureData[] = [];
-    private files: [number, File][] = [];
+    private get textures(): TextureData[] {
+        return store.getters.textures.map((tex, i) => {
+            const obj = { ...tex };
+            Object.defineProperty(obj, "name", {
+                get() {
+                    return tex.name;
+                },
+                set(name: string) {
+                    store.dispatch(Actions.setTextureName, { i, name });
+                }
+            });
+            Object.defineProperty(obj, "kind", {
+                get() {
+                    return tex.kind;
+                },
+                set(kind: TextureKind) {
+                    store.dispatch(Actions.setTextureKind, { i, kind });
+                }
+            });
+            return obj;
+        });
+    }
     
     private addTexture(event) {
         const file = event.target.files[0];
         if (file) {
-            let name = file.name.replace(/\..+$/, "");
-            name = name.replace(/\W/g, "");
-
-            this.files.push([this.textures.length, file]);
-            this.textures.push(new TextureData(URL.createObjectURL(file), name));
+            store.dispatch(Actions.addTextureFile, file)
         }
-
-        this.$nextTick(() => {
-            this.texUpdate();
-        });
     }
 
     private removeTexture(i: number) {
-        this.textures.splice(i, 1);
-        const fileIndex = this.files.findIndex(([index]) => index === i);
-        if (fileIndex) {
-            this.files.splice(fileIndex, 0);
-        }
-
-        this.texUpdate();
+        store.dispatch(Actions.removeTexture, i);
     }
 
     private onLoad(i: number) {
-        this.textures[i].image = this.$refs.images[i];
-        this.texUpdate();
-    }
-
-    public getTextures(): TextureData[] {
-        return this.textures;
-    }
-
-    private texUpdate() {
-        this.$emit("texUpdate", this.textures);
-    }
-
-    private validateName(i: number) {
-        this.textures[i].name = this.textures[i].name.replace(/\W/g, "");
-        this.$forceUpdate();
+        store.commit(Mutations.setTextureImage, { i, image: this.$refs.images[i] });
     }
 }
 </script>

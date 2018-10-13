@@ -3,11 +3,8 @@
   
   <div class="window">
     <ShaderWindow
-      v-if="loaded"
       ref="window"
       class="display"
-      :shader="currentShader"
-      :textures="textures"
       @error="processError"
       >
     </ShaderWindow>
@@ -18,29 +15,21 @@
   </div>
   
   <div class="editor">
-    <ul class="args" v-if="currentShader">
-      <li v-for="decl in currentShader.uniforms">
-        <p>{{ decl }}</p>
-      </li>
-      <li v-for="decl in currentShader.textures">
-        <p>{{ decl }}</p>
+    <ul class="args">
+      <li v-for="uni in uniforms">
+        <p>{{ uni }}</p>
       </li>
     </ul>
 
     <textarea v-model="shaderSource"></textarea>
     
     <div class="controls">
-      <button @click="updateShader">Update</button>
+      <button @click="updateSource">Update</button>
     </div>
     
   </div>
 
-  <Textures
-    class="textures"
-    ref="textures"
-    @texUpdate="updateTextures"
-    >
-  </Textures>
+  <Textures class="textures"></Textures>
   
   <div class="comments">
     <p>Comments go here</p>
@@ -51,13 +40,15 @@
 
 <script lang="ts">
     
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
 import ShaderWindow from './shader-window.vue';
 import FragShader from '../frag-shader.ts';
-import Textures, { TextureData } from './textures.vue';
+import Textures from './textures.vue';
+import TextureData from '../texture-data.ts';
 import { WglError } from 'wgl';
 import { ShaderStorage } from '../backend.ts';
 import { TextureKind } from '../../common/texture-kind.ts';
+import { store, Mutations, Actions } from './shader-store/store.ts';
 
 @Component({
     components: {
@@ -66,53 +57,29 @@ import { TextureKind } from '../../common/texture-kind.ts';
     },
 })
 export default class ShaderView extends Vue {
-    @Prop({type: Number, required: false}) public shaderId: number | null;
-    private currentShader: FragShader | null = null;
-    
-    private shaderSource = "";
-    private loaded: boolean = false;
+    @Prop({ type: Number }) shaderId?: number;
 
-    private textures: TextureData[] = [];
-    
     mounted() {
-        var promise = (this.shaderId
-                       ? ShaderStorage.requestShader(this.shaderId)
-                       : ShaderStorage.requestDefaultShader());
-        
-        promise.then(shader => {
-            this.loaded = true;
-            this.$nextTick(() => {
-                this.currentShader = shader;
-                this.shaderSource = shader.source;
-            })
-        });
+        store.dispatch(Actions.requestShader, this.shaderId);
+    }
+
+    private get storedSource(): string {
+        return store.getters.source;;
+    }
+    @Watch('storedSource') storedSourceChanged(newSource: string) {
+        this.shaderSource = newSource;
+    }
+
+    private get uniforms(): string[] {
+        return store.getters.uniformStrings;
+    }
+
+    private shaderSource = "";
+
+    updateSource() {
+        store.dispatch(Actions.setSource, this.shaderSource);
     }
     
-    updateShader() {
-        this.currentShader = new FragShader(
-            this.shaderSource,
-            this.currentShader.uniforms,
-            this.currentShader.textures
-        );
-    }
-    
-    updateTextures(textures: TextureData[]) {
-        this.textures = textures;
-        this.currentShader.textures =
-            this.textures.map(tex => {
-                if (tex.kind !== TextureKind.Normal && tex.kind !== TextureKind.Cubemap) {
-                    throw new Error("Invalid TextureKind");
-                }
-
-                const uniType =
-                    tex.kind === TextureKind.Normal ? "sampler2D" :
-                    tex.kind === TextureKind.Cubemap ? "samplerCube" :
-                    "UNREACHABLE";
-
-                return `uniform ${uniType} tex_${tex.name};`;
-            });
-    }
-
     processError(e: WglError) {
         console.log(e);
     }

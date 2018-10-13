@@ -96,6 +96,12 @@ export default class Wgl {
         this.gl.clearDepth(1.0);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
+        for (let i = 0; i < 32; i++) {
+            this.gl.activeTexture(this.gl['TEXTURE' + i.toString()]);
+            this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+            this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, null);
+        }
+
         for (let [name, attr] of attributes) {
             const location = this.gl.getAttribLocation(prog.inner, name);
             attr.setAttribute(this.gl, location);
