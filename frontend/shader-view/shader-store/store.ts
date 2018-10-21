@@ -2,11 +2,12 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 import FragShader, { uniforms } from '../../frag-shader.ts';
 import TextureData from '../../texture-data.ts';
-import { ShaderStorage } from '../../backend.ts';
+import { ShaderStorage, SendShaderData } from '../../backend.ts';
 import { TextureKind } from '../../../common/texture-kind.ts';
 import { Uniform, Texture2DUniform, TextureCubeUniform } from 'wgl';
 
 export class StoreState {
+    public id?: number = null;
     public mainShader: FragShader | null = null;
     public textures: TextureData[] = [];
 }
@@ -26,6 +27,7 @@ export const Mutations = {
     setTextureImage: "setTextureImage",
     setTextureName: "setTextureName",
     setTextureKind: "setTextureKind",
+    setId: "setId",
 };
 
 export const Actions = {
@@ -36,6 +38,8 @@ export const Actions = {
     requestShader: "requestShader",
     removeTexture: "removeTexture",
     setSource: "setSource",
+
+    saveShader: "saveShader",
 };
 
 Vue.use(Vuex);
@@ -93,6 +97,10 @@ export const store = new Vuex.Store({
             state.mainShader = shader;
         },
 
+        [Mutations.setId] (state: StoreState, id?: number) {
+            state.id = id;
+        },
+
         [Mutations.setTextures] (state: StoreState, textures: TextureData[]) {
             state.textures = textures;
         },
@@ -131,7 +139,9 @@ export const store = new Vuex.Store({
             let name = file.name.replace(/\..+$/, "");
             name = name.replace(/\W/g, "");
 
-            dispatch(Actions.addTexture, new TextureData(URL.createObjectURL(file), name));
+            const data = new TextureData(URL.createObjectURL(file), name);
+            data.file = file;
+            dispatch(Actions.addTexture, data);
         },
 
         [Actions.addTexture] ({ state, commit }, texture: TextureData) {
@@ -157,13 +167,27 @@ export const store = new Vuex.Store({
         },
 
         [Actions.requestShader] ({ commit }, id?: number) {
-            const promise =
-                id ? ShaderStorage.requestShader(id) :
-                ShaderStorage.requestDefaultShader();
-
-            promise.then(shader => {
-                commit(Mutations.setShader, shader);
-            });
+            if (id) {
+                return ShaderStorage.requestShader(id)
+                    .then(shader => {
+                        commit(Mutations.setShader, shader.shader);
+                        commit(Mutations.setId, id);
+                        const textures = shader.textures.map(({ id, name, kind }) => {
+                            const data = new TextureData(`/api/textures/${id}`, name, kind);
+                            data.id = id;
+                            return data;
+                        });
+                        if (textures.length !== 0) {
+                            commit(Mutations.setTextures, textures);
+                            commit(Mutations.updateShaderTextures);
+                        }
+                    });
+            }  else {
+                return ShaderStorage.requestDefaultShader()
+                    .then(shader => {
+                        commit(Mutations.setShader, shader.shader);
+                    });
+            }
         },
 
         [Actions.removeTexture] ({ commit }, i: number) {
@@ -175,5 +199,12 @@ export const store = new Vuex.Store({
             commit(Mutations.setShader, new FragShader(source));
             commit(Mutations.updateShaderTextures);
         },
+
+        [Actions.saveShader] ({ state }) {
+            return ShaderStorage.postShader(
+                new SendShaderData(state.mainShader.source, state.textures),
+                state.id
+            );
+        }
     },
 });

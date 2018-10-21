@@ -25,6 +25,7 @@
     
     <div class="controls">
       <button @click="updateSource">Update</button>
+      <button @click="testUpload">Upload</button>
     </div>
     
   </div>
@@ -78,6 +79,11 @@ export default class ShaderView extends Vue {
 
     updateSource() {
         store.dispatch(Actions.setSource, this.shaderSource);
+    }
+
+    testUpload() {
+        this.updateSource();
+        store.dispatch(Actions.saveShader);
     }
     
     processError(e: WglError) {

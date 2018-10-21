@@ -25,16 +25,14 @@
         </div>
     </body>
 
-    {% for script in scripts %}
-    <script src="/scripts/{{ script }}"></script>
-    {% endfor %}
+    {{#scripts}}
+    <script src="/scripts/{{ src }}"></script>
+    {{/scripts}}
 
     <script>
-     {% for mt in mountPoints %}
-
-     {{ mt.lib }}.mount("{{ mt.mount }}");
-
-     {% endfor %}
+     {{#mountPoints}}
+     {{lib}}.mount("{{mount}}" {{#args}}, {{arg}}{{/args}});
+     {{/mountPoints}}
     </script>
 
 </html>

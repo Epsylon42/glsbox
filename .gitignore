@@ -74,4 +74,5 @@ typings/
 
 frontend-dist
 backend-dist
+data
 node_modules
