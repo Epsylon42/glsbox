@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
-import FragShader, { uniforms } from '../../frag-shader.ts';
+import FragShader, { Declaration, declarations } from '../../frag-shader.ts';
 import TextureData from '../../texture-data.ts';
 import { ShaderStorage, SendShaderData } from '../../backend.ts';
 import { TextureKind } from '../../../common/texture-kind.ts';
@@ -68,11 +68,11 @@ export const store = new Vuex.Store({
             }
         },
 
-        uniformStrings(state: StoreState): string[] {
+        declarations(state: StoreState): Declaration[] {
             if (state.mainShader) {
-                return uniforms.concat(state.mainShader.textures);
+                return declarations.concat(state.mainShader.textures);
             } else {
-                return uniforms;
+                return declarations;
             }
         },
 
@@ -108,15 +108,7 @@ export const store = new Vuex.Store({
         },
 
         [Mutations.updateShaderTextures] (state: StoreState) {
-            state.mainShader.textures = [];
-            for (let tex of state.textures) {
-                    const uniType =
-                        tex.kind === TextureKind.Normal ? "sampler2D" :
-                        tex.kind === TextureKind.Cubemap ? "samplerCube" :
-                        "UNREACHABLE";
-
-                state.mainShader.textures.push(`uniform ${uniType} tex_${tex.name};`);
-            }
+            state.mainShader.constructTextures(state.textures);
         },
 
         [Mutations.removeTexture] (state: StoreState, i: number) {

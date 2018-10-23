@@ -1,0 +1,9 @@
+{{#scripts}}
+<script src="/scripts/{{ src }}"></script>
+{{/scripts}}
+
+<script>
+ {{#mountPoints}}
+ {{lib}}.mount("{{mount}}" {{#args}}, {{arg}}{{/args}});
+ {{/mountPoints}}
+</script>

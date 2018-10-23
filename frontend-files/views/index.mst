@@ -2,37 +2,18 @@
 <html lang="en">
 
     <head>
-        <meta charset="utf-8">
-        <link rel="stylesheet" type="text/css" href="/styles/style.css">
+        {{> head}}
     </head>
 
     <body>
-        <nav>
-            <a href="/browse">Browse</a>
-            <a href="/create">Create</a>
-
-            <div id="profile">
-                <div id="profile-app"></div>
-            </div>
-        </nav>
+        {{> nav}}
 
         <div id="content">
             <div id="content-app"></div>
         </div>
 
-        <div id="footer">
-            <p>Copyrights or something</p>
-        </div>
+        {{> footer}}
     </body>
 
-    {{#scripts}}
-    <script src="/scripts/{{ src }}"></script>
-    {{/scripts}}
-
-    <script>
-     {{#mountPoints}}
-     {{lib}}.mount("{{mount}}" {{#args}}, {{arg}}{{/args}});
-     {{/mountPoints}}
-    </script>
-
+    {{> scripts}}
 </html>

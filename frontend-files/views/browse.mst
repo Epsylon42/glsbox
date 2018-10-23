@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        {{> head}}
+    </head>
+
+    <body>
+        {{> nav}}
+
+        <div id="content">
+            <ul class="shaders">
+                {{#shaders}}
+
+                <li>
+                    <a href="/view/{{id}}">
+                        <p>id: {{id}}</p>
+                    </a>
+                </li>
+
+                {{/shaders}}
+            </ul>
+        </div>
+
+        {{> footer}}
+    </body>
+
+    {{> scripts}}
+</html>

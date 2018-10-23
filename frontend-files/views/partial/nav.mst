@@ -1,0 +1,8 @@
+<nav>
+    <a href="/browse">Browse</a>
+    <a href="/create">Create</a>
+
+    <div id="profile">
+    <div id="profile-app"></div>
+    </div>
+</nav>

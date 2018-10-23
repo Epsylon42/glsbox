@@ -15,11 +15,13 @@
   </div>
   
   <div class="editor">
-    <ul class="args">
-      <li v-for="uni in uniforms">
-        <p>{{ uni }}</p>
-      </li>
-    </ul>
+    <table class="declarations">
+      <tr v-for="decl in declarations">
+        <td class="declaration-kind">{{ decl.kind }}</td>
+        <td class="declaration-type">{{ decl.type }}</td>
+        <td class="declaration-name">{{ decl.name }}</td>
+      </tr>
+    </table>
 
     <textarea v-model="shaderSource"></textarea>
     
@@ -43,7 +45,7 @@
     
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
 import ShaderWindow from './shader-window.vue';
-import FragShader from '../frag-shader.ts';
+import FragShader, { Declaration } from '../frag-shader.ts';
 import Textures from './textures.vue';
 import TextureData from '../texture-data.ts';
 import { WglError } from 'wgl';
@@ -71,8 +73,8 @@ export default class ShaderView extends Vue {
         this.shaderSource = newSource;
     }
 
-    private get uniforms(): string[] {
-        return store.getters.uniformStrings;
+    private get declarations(): Declaration[] {
+        return store.getters.declarations;
     }
 
     private shaderSource = "";
@@ -104,7 +106,7 @@ export default class ShaderView extends Vue {
     grid-template-columns: minmax(400px, auto) 50%;
     grid-template-rows: auto auto auto;
     grid-template-areas:
-        "window   editor"
+    "window   editor"
         ".        textures"
         "comments .";
     grid-row-gap: 20px;
@@ -166,5 +168,26 @@ export default class ShaderView extends Vue {
 
 .textures {
     grid-area: textures;
+}
+
+.declarations {
+    border-collapse: collapse;
+}
+
+.declarations tr, .declarations td {
+    border: 1px solid grey;
+    font-size: 10pt;
+}
+
+.declarations .declaration-kind {
+    background-color: #fdd;
+}
+
+.declarations .declaration-type {
+    background-color: #dfd;
+}
+
+.declarations .declaration-name {
+    background-color: #ddf;
 }
 </style>

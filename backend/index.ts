@@ -43,15 +43,34 @@ app.get("/create", (req, res) => {
     });
 });
 
-app.get("/edit/:id", (req, res) => {
+app.get("/browse", async (req, res) => {
+    try {
+        const shaders = await Shaders.findAll();
+
+        res.render("browse", {
+            styles: "browse.css",
+            scripts: [
+                { src: "profile.js" }
+            ],
+            mountPoints: [
+                {
+                lib: "profile",
+                mount: "#profile-app",
+            }
+            ],
+            shaders,
+        });
+    } catch (e) {
+        console.error(e);
+        res.status(500).send("Internal server error");
+    }
+});
+
+app.get("/view/:id", (req, res) => {
     res.render("index", {
         scripts: [
-            {
-                src: "view.js"
-            },
-            {
-                src: "profile.js"
-            }
+            { src: "view.js" },
+            { src: "profile.js" },
         ],
         mountPoints: [
             {
@@ -172,7 +191,7 @@ app.post("/api/shaders", (req, res) => {
 
             res.send(shader.id.toString());
         } catch (e) {
-            res.status(500).send(e.message);
+            res.status(500).send("Internal server error");
             throw e;
         }
     });
@@ -199,7 +218,8 @@ app.get("/api/shaders/:id", async (req, res) => {
             textures: textures,
         });
     } catch (e) {
-        res.status(500).send(e.message);
+        console.error(e);
+        res.status(500).send("Internal server error");
     }
 });
 
@@ -221,7 +241,8 @@ app.get("/api/textures/:id", async (req, res) => {
             }
         }
     } catch (e) {
-        res.status(500).send(e.message);
+        console.error(e);
+        res.status(500).send("Internal server error");
     }
 })
 
