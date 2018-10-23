@@ -10,6 +10,7 @@ export class StoreState {
     public id?: number = null;
     public mainShader: FragShader | null = null;
     public textures: TextureData[] = [];
+    public sendLock: boolean = false;
 }
 
 export interface IStore {
@@ -28,6 +29,7 @@ export const Mutations = {
     setTextureName: "setTextureName",
     setTextureKind: "setTextureKind",
     setId: "setId",
+    setSendLock: "setSendLock",
 };
 
 export const Actions = {
@@ -132,6 +134,10 @@ export const store = new Vuex.Store({
         [Mutations.setTextureKind] (state: StoreState, arg: { i: number, kind: TextureKind }) {
             state.textures[arg.i].kind = arg.kind;
         },
+
+        [Mutations.setSendLock] (state: StoreState, lock: boolean) {
+            state.sendLock = lock;
+        },
     },
 
     actions: {
@@ -200,11 +206,24 @@ export const store = new Vuex.Store({
             commit(Mutations.updateShaderTextures);
         },
 
-        [Actions.saveShader] ({ state }) {
-            return ShaderStorage.postShader(
-                new SendShaderData(state.mainShader.source, state.textures),
-                state.id
-            );
+        [Actions.saveShader] ({ state, commit }) {
+            if (state.sendLock) {
+                return Promise.reject(new Error("Another saving process is currently underway"));
+            } else {
+                commit(Mutations.setSendLock, true);
+                const promise = ShaderStorage.postShader(
+                    new SendShaderData(state.mainShader.source, state.textures),
+                    state.id
+                );
+                promise
+                    .then(id => {
+                        commit(Mutations.setId, id);
+                        commit(Mutations.setSendLock, false)
+                    })
+                    .catch(() => commit(Mutations.setSendLock, false));
+
+                return promise;
+            }
         }
     },
 });

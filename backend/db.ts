@@ -14,7 +14,8 @@ export enum UserRole {
 export const db = new Sequelize("postgres://tempuser:temppass@localhost:5432/glsbox", {
     define: {
         timestamps: false,
-    }
+    },
+    operatorsAliases: false,
 });
 
 
@@ -144,8 +145,8 @@ export const Shaders = db.define<ShadersInstance, ShadersAttributes>("shaders", 
 
 export interface ShaderTexturesAttributes {
     id?: number,
-    name: string,
     shaderId: number,
+    name: string,
     textureKind: TextureKind,
 }
 
@@ -160,12 +161,12 @@ export const ShaderTextures = db.define<ShaderTexturesInstance, ShaderTexturesAt
         primaryKey: true,
         allowNull: false,
     },
-    name: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-    },
     shaderId: {
         type: Sequelize.INTEGER,
+        allowNull: false,
+    },
+    name: {
+        type: Sequelize.TEXT,
         allowNull: false,
     },
     textureKind: {

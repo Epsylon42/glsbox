@@ -2,7 +2,7 @@ import Express from 'express';
 import Mustache from 'mustache-express';
 import BodyParser from 'busboy-body-parser';
 import path from 'path';
-import { Op as SeqOp } from 'sequelize';
+import Sequelize from 'sequelize';
 
 import { db, Shaders, ShaderTextures, Utils, FileStorage } from './db';
 import { TextureKind } from '../common/texture-kind';
@@ -88,90 +88,94 @@ app.get("/login", (req, res) => {
     });
 });
 
-app.post("/api/shaders", async (req, res) => {
-    try {
-        const files = (req as any).files;
-
-        if (!(req.body.code && req.body.textureOptions && files)) {
-            res.status(400).send("Invalid request");
-            return;
-        }
-
-        let textureOptions: { file?: number, id?: number, name: string, kind: TextureKind }[];
+app.post("/api/shaders", (req, res) => {
+    db.transaction(async transaction => {
         try {
-            textureOptions = JSON.parse(req.body.textureOptions);
-        } catch (e) {
-            res.status(400).send("Could not parse textureOptions");
-            return;
-        }
+            const files = (req as any).files;
 
-        const shader = req.body.id != undefined ?
-            await Shaders.findByPrimary(req.body.id) :
-            await Shaders.create({
-                owner: 0,
-                code: req.body.code,
-            });
+            if (!(req.body.code && req.body.textureOptions && files)) {
+                res.status(400).send("Invalid request");
+                return;
+            }
 
-        if (!shader) {
-            res.status(404).send("No shader with such id");
-            return;
-        }
+            let textureOptions: { file?: number, id?: number, name: string, kind: TextureKind }[];
+            try {
+                textureOptions = JSON.parse(req.body.textureOptions);
+            } catch (e) {
+                res.status(400).send("Could not parse textureOptions");
+                return;
+            }
 
-        if (req.body.id != undefined) {
-            await shader.update({
-                code: req.body.code,
-            });
-        }
+            const shader = req.body.id != undefined ?
+                await Shaders.findByPrimary(req.body.id, { transaction }) :
+                await Shaders.create({
+                    owner: 0,
+                    code: req.body.code,
+                }, { transaction });
 
-        const textureIds = textureOptions.filter(tex => tex.id != undefined).map(tex => tex.id);
-        if (textureIds.length !== 0) {
-            await ShaderTextures
-                .destroy({
-                    where: {
-                        shaderId: shader.id,
-                        id: {
-                            [SeqOp.notIn]: textureIds
-                        }
-                    }
-                });
-        }
+            if (!shader) {
+                res.status(404).send("No shader with such id");
+                return;
+                // this should not happen if the shader was just created
+                // so it's safe to return without rolling transaction back
+            }
 
-        await Promise.all(
-            textureOptions
-                .map(async (tex) => {
-                    try {
-                        if (tex.id != undefined) {
-                            const texEntry = await ShaderTextures.findByPrimary(tex.id);
-                            if (texEntry) {
-                                await texEntry.update({
+            if (req.body.id != undefined) {
+                await shader.update({ code: req.body.code }, { transaction });
+            }
+
+            const textureIds = textureOptions.filter(tex => tex.id != undefined).map(tex => tex.id);
+            if (textureIds.length !== 0) {
+                await ShaderTextures
+                    .destroy({
+                        where: {
+                            shaderId: shader.id,
+                            id: {
+                                [Sequelize.Op.notIn]: textureIds
+                            }
+                        },
+                        transaction
+                    });
+            }
+
+            await Promise.all(
+                textureOptions
+                    .map(async (tex) => {
+                        try {
+                            if (tex.id != undefined) {
+                                const texEntry = await ShaderTextures.findByPrimary(tex.id, { transaction });
+                                if (texEntry) {
+                                    await texEntry.update({
+                                        name: tex.name,
+                                        textureKind: tex.kind,
+                                    }, { transaction });
+                                }
+                            } else if (tex.file != undefined) {
+                                const texEntry = await ShaderTextures.create({
+                                    shaderId: shader.id,
                                     name: tex.name,
                                     textureKind: tex.kind,
-                                });
+                                }, { transaction });
+                                const file = files.textures[tex.file as number];
+
+                                await FileStorage.writeTexture(
+                                    texEntry.id,
+                                    file.name,
+                                    file.data
+                                );
                             }
-                        } else if (tex.file != undefined) {
-                            const texEntry = await ShaderTextures.create({
-                                shaderId: shader.id,
-                                name: tex.name,
-                                textureKind: tex.kind,
-                            });
-                            const file = files.textures[tex.file as number];
-
-                            await FileStorage.writeTexture(
-                                texEntry.id,
-                                file.name,
-                                file.data
-                            );
+                        } catch (e) {
+                            throw e;
                         }
-                    } catch (e) {
-                        throw e;
-                    }
-                })
-        );
+                    })
+            );
 
-        res.send(shader.id.toString());
-    } catch (e) {
-        res.status(500).send(e.message);
-    }
+            res.send(shader.id.toString());
+        } catch (e) {
+            res.status(500).send(e.message);
+            throw e;
+        }
+    });
 });
 
 app.get("/api/shaders/:id", async (req, res) => {
@@ -222,7 +226,7 @@ app.get("/api/textures/:id", async (req, res) => {
 })
 
 db.sync({ force: false }).then(() => {
-    console.log("database initialized");
+    console.log("Database initialized");
     app.listen(3000, () => {
         console.log("ready");
     });

@@ -30,14 +30,15 @@ gl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
         return new Promise((resolve, reject) => {
             const req = new XMLHttpRequest();
             req.open("GET", `/api/shaders/${id}`);
-            req.onerror = () => {
-                reject(new Error(req.responseText));
-            }
             req.onloadend = () => {
-                const data = JSON.parse(req.responseText);
-                const shader = new FragShader(data.code);
-                resolve(new ShaderData(shader, data.textures));
-            }
+                if (req.status === 200) {
+                    const data = JSON.parse(req.responseText);
+                    const shader = new FragShader(data.code);
+                    resolve(new ShaderData(shader, data.textures));
+                } else {
+                    reject(new Error(req.responseText));
+                }
+            };
             req.send();
         })
     }
@@ -74,11 +75,12 @@ gl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
         return new Promise((resolve, reject) => {
             const req = new XMLHttpRequest();
             req.open("POST", `/api/shaders`);
-            req.onerror = () => {
-                reject(new Error(req.responseText));
-            }
             req.onloadend = () => {
-                resolve(Number(req.responseText));
+                if (req.status === 200) {
+                    resolve(Number(req.responseText));
+                } else {
+                    reject(new Error(req.responseText));
+                }
             }
 
             req.send(form);

@@ -83,7 +83,10 @@ export default class ShaderView extends Vue {
 
     testUpload() {
         this.updateSource();
-        store.dispatch(Actions.saveShader);
+        store
+            .dispatch(Actions.saveShader)
+            .then(id => console.log(`Shader successfully saved with id ${id}`))
+            .catch(e => console.log("Saving error", e));
     }
     
     processError(e: WglError) {

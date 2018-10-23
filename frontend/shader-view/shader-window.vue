@@ -35,33 +35,31 @@ export default class ShaderWindow extends Vue {
     private shaderCompute: ShaderCompute | null = null;
     private timerId: number | null = null;
     private time: number = 0;
-
+    
     updateShader(shader: FragShader | null) {
-        if (!shader) {
-            if (this.timerId) {
-                clearInterval(this.timerId);
-                this.timerId = null;
-            }
-        } else {
-            if (!this.shaderCompute) {
-                this.shaderCompute = new ShaderCompute(this.shader, this.gl);
-            } else {
-                this.shaderCompute.setShader(shader);
-            }
-            
-            this.timerId = setInterval(() => {
-                this.time += 1/30;
-                
-                const uniforms: [string, Uniform][] = [
-                    ['u_time', new FloatUniform(this.time)],
-                    ['u_resolution', new FloatVecUniform([400.0, 300.0])],
-                ];
-
-                this.shaderCompute.draw(uniforms.concat(store.getters.textureUniforms));
-            }, 1/30 * 1000);
+        if (this.timerId) {
+            clearInterval(this.timerId);
+            this.timerId = null;
         }
-    }
 
+        if (!this.shaderCompute) {
+            this.shaderCompute = new ShaderCompute(this.shader, this.gl);
+        } else {
+            this.shaderCompute.setShader(shader);
+        }
+        
+        this.timerId = setInterval(() => {
+            this.time += 1/30;
+            
+            const uniforms: [string, Uniform][] = [
+                ['u_time', new FloatUniform(this.time)],
+                ['u_resolution', new FloatVecUniform([400.0, 300.0])],
+            ];
+            
+            this.shaderCompute.draw(uniforms.concat(store.getters.textureUniforms));
+        }, 1/30 * 1000);
+    }
+    
     mounted() {
         this.gl = new Wgl((this.$refs.shader_canvas as HTMLCanvasElement).getContext("webgl"));
     }
