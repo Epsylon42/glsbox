@@ -45,13 +45,15 @@
     
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
 import ShaderWindow from './shader-window.vue';
-import FragShader, { Declaration } from '../frag-shader.ts';
 import Textures from './textures.vue';
-import TextureData from '../texture-data.ts';
-import { WglError } from 'wgl';
+
 import { ShaderStorage } from '../backend.ts';
+import { store, Mutations, Actions } from './store/store.ts';
+import TextureData from './store/texture-data.ts';
+import FragShader, { Declaration } from './store/frag-shader.ts';
 import { TextureKind } from '../../common/texture-kind.ts';
-import { store, Mutations, Actions } from './shader-store/store.ts';
+
+import { WglError } from 'wgl';
 
 @Component({
     components: {

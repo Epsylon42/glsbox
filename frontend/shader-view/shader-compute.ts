@@ -1,5 +1,5 @@
 import Wgl, { WglProgram, Uniform, FloatVecAttribute, FloatUniform } from 'wgl';
-import FragShader from '../frag-shader.ts';
+import FragShader from './store/frag-shader.ts';
 
 const vertexShader = `
 #version 100

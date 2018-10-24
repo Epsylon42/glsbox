@@ -1,14 +1,19 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
-import FragShader, { Declaration, declarations } from '../../frag-shader.ts';
-import TextureData from '../../texture-data.ts';
+
+import FragShader, { Declaration, declarations } from './frag-shader.ts';
+import Preview from './preview.ts';
+import TextureData from './texture-data.ts';
+
 import { ShaderStorage, SendShaderData } from '../../backend.ts';
 import { TextureKind } from '../../../common/texture-kind.ts';
 import { Uniform, Texture2DUniform, TextureCubeUniform } from 'wgl';
 
 export class StoreState {
-    public id?: number = null;
-    public mainShader: FragShader | null = null;
+    public id?: number;
+    public mainShader?: FragShader;
+    public preview?: Preview;
+
     public textures: TextureData[] = [];
     public sendLock: boolean = false;
 }

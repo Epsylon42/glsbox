@@ -1,4 +1,4 @@
-import { TextureKind } from '../common/texture-kind.ts';
+import { TextureKind } from '../../../common/texture-kind.ts';
 import TextureData from './texture-data.ts';
 
 export class Declaration {

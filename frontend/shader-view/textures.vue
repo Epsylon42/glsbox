@@ -30,9 +30,11 @@
 <script lang="ts">
     
 import { Vue, Component, Emit } from 'vue-property-decorator';
+
+import { store, Actions, Mutations } from './store/store.ts';
+import TextureData from './store/texture-data.ts';
 import { TextureKind } from '../../common/texture-kind.ts';
-import TextureData from '../texture-data.ts';
-import { store, Actions, Mutations } from './shader-store/store.ts';
+
 import Icon from 'vue-awesome/components/Icon.vue';
 import 'vue-awesome/icons/plus.js';
 

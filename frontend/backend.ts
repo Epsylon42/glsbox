@@ -1,5 +1,5 @@
-import FragShader from './frag-shader.ts';
-import TextureData from './texture-data.ts';
+import FragShader from './shader-view/store/frag-shader.ts';
+import TextureData from './shader-view/store/texture-data.ts';
 import { TextureKind } from '../common/texture-kind.ts';
 
 export class ShaderData {

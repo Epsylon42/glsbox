@@ -7,12 +7,14 @@
 <script lang="ts">
     
 import { Vue, Component, Prop, Watch, Emit } from 'vue-property-decorator';
-import ShaderCompute from './shader-compute.ts';
-import FragShader from '../frag-shader.ts';
-import Wgl, { Uniform, FloatUniform, FloatVecUniform, Texture2DUniform, TextureCubeUniform, WglError } from 'wgl';
-import TextureData from '../texture-data.ts';
+
+import { store } from './store/store.ts';
+import FragShader from './store/frag-shader.ts';
+import TextureData from './store/texture-data.ts';
 import { TextureKind } from '../../common/texture-kind.ts';
-import { store } from './shader-store/store.ts';
+
+import ShaderCompute from './shader-compute.ts';
+import Wgl, { Uniform, FloatUniform, FloatVecUniform, Texture2DUniform, TextureCubeUniform, WglError } from 'wgl';
 
 @Component
 export default class ShaderWindow extends Vue {

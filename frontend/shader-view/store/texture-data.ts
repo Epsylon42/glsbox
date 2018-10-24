@@ -1,4 +1,4 @@
-import { TextureKind } from '../common/texture-kind.ts';
+import { TextureKind } from '../../../common/texture-kind.ts';
 
 export default class TextureData {
     constructor(
