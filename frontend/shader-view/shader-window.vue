@@ -37,6 +37,10 @@ export default class ShaderWindow extends Vue {
     private shaderCompute: ShaderCompute | null = null;
     private timerId: number | null = null;
     private time: number = 0;
+
+    public get canvas(): HTMLCanvasElement {
+        return this.$refs.shader_canvas as HTMLCanvasElement;
+    }
     
     updateShader(shader: FragShader | null) {
         if (this.timerId) {

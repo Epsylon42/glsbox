@@ -2,10 +2,11 @@ import FragShader from './shader-view/store/frag-shader.ts';
 import TextureData from './shader-view/store/texture-data.ts';
 import { TextureKind } from '../common/texture-kind.ts';
 
-export class ShaderData {
+export class RecvShaderData {
     constructor(
         public shader: FragShader,
-        public textures: { id: number, name: string, kind: TextureKind }[],
+        public textures: TextureData[] = [],
+        public preview?: string,
     ) {}
 }
 
@@ -13,20 +14,19 @@ export class SendShaderData {
     constructor(
         public code: string,
         public textures: TextureData[],
+        public preview?: Blob,
     ) {};
 }
 
 export module ShaderStorage {
-    export function requestDefaultShader(): Promise<ShaderData> {
-        return Promise.resolve(new ShaderData(
+    export function requestDefaultShader(): Promise<RecvShaderData> {
+        return Promise.resolve(new RecvShaderData(
             new FragShader(`void main() {
 gl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
-}`),
-            []
-        ));
+}`)));
     }
 
-    export function requestShader(id: number): Promise<ShaderData> {
+    export function requestShader(id: number): Promise<RecvShaderData> {
         return new Promise((resolve, reject) => {
             const req = new XMLHttpRequest();
             req.open("GET", `/api/shaders/${id}`);
@@ -34,7 +34,15 @@ gl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
                 if (req.status === 200) {
                     const data = JSON.parse(req.responseText);
                     const shader = new FragShader(data.code);
-                    resolve(new ShaderData(shader, data.textures));
+                    resolve(new RecvShaderData(
+                        shader,
+                        data.textures.map(({ id, name, kind }) => {
+                            const data = new TextureData(`/api/textures/${id}`, name, kind);
+                            data.id = id;
+                            return data;
+                        }),
+                        data.preview
+                    ));
                 } else {
                     reject(new Error(req.responseText));
                 }
@@ -47,6 +55,9 @@ gl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
         const form = new FormData();
         if (id) {
             form.append("id", id.toString());
+        }
+        if (data.preview) {
+            form.append("preview", data.preview, "preview.png");
         }
 
         form.append("code", data.code);

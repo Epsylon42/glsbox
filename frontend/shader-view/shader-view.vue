@@ -13,6 +13,16 @@
       <p>Controls go here</p>
     </div>
   </div>
+
+  <div class="info">
+    <div class="preview" v-if="preview">
+      <div class="preview-header">
+        <p>Preview</p>
+        <button @click="removePreview">X</button>
+      </div>
+      <img :src="preview.url">
+    </div>
+  </div>
   
   <div class="editor">
     <table class="declarations">
@@ -28,6 +38,7 @@
     <div class="controls">
       <button @click="updateSource">Update</button>
       <button @click="testUpload">Upload</button>
+      <button @click="takePreview">Take Preview</button>
     </div>
     
   </div>
@@ -51,6 +62,7 @@ import { ShaderStorage } from '../backend.ts';
 import { store, Mutations, Actions } from './store/store.ts';
 import TextureData from './store/texture-data.ts';
 import FragShader, { Declaration } from './store/frag-shader.ts';
+import Preview from './store/preview.ts';
 import { TextureKind } from '../../common/texture-kind.ts';
 
 import { WglError } from 'wgl';
@@ -68,8 +80,10 @@ export default class ShaderView extends Vue {
         store.dispatch(Actions.requestShader, this.shaderId);
     }
 
+    private shaderSource = "";
+
     private get storedSource(): string {
-        return store.getters.source;;
+        return store.getters.source;
     }
     @Watch('storedSource') storedSourceChanged(newSource: string) {
         this.shaderSource = newSource;
@@ -79,7 +93,9 @@ export default class ShaderView extends Vue {
         return store.getters.declarations;
     }
 
-    private shaderSource = "";
+    private get preview(): Preview | null {
+        return store.getters.preview;
+    }
 
     updateSource() {
         store.dispatch(Actions.setSource, this.shaderSource);
@@ -91,6 +107,14 @@ export default class ShaderView extends Vue {
             .dispatch(Actions.saveShader)
             .then(id => console.log(`Shader successfully saved with id ${id}`))
             .catch(e => console.log("Saving error", e));
+    }
+
+    takePreview() {
+        store.dispatch(Actions.setPreviewFromCanvas, (this.$refs.window as ShaderWindow).canvas);
+    }
+
+    removePreview() {
+        store.dispatch(Actions.removePreview);
     }
     
     processError(e: WglError) {
@@ -109,7 +133,7 @@ export default class ShaderView extends Vue {
     grid-template-rows: auto auto auto;
     grid-template-areas:
     "window   editor"
-        ".        textures"
+        "info     textures"
         "comments .";
     grid-row-gap: 20px;
 }
@@ -142,6 +166,44 @@ export default class ShaderView extends Vue {
     
     height: 30px;
     background-color: white;
+}
+
+.info {
+    grid-area: info;
+}
+
+.info > .preview {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 120px;
+    border: 1px solid grey;
+    border-radius: 15px;
+}
+
+.info > .preview > .preview-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+    background-color: white;
+    border-radius: 15px 15px 0 0;
+    padding: 5px;
+}
+
+.info > .preview p {
+    margin: 0;
+}
+
+.info > .preview button {
+    border-width: 0;
+    padding: 5px;
+}
+
+.info > .preview > img {
+    height: 90px;
+    border-radius: 0 0 15px 15px;
 }
 
 .editor {

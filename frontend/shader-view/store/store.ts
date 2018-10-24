@@ -10,9 +10,9 @@ import { TextureKind } from '../../../common/texture-kind.ts';
 import { Uniform, Texture2DUniform, TextureCubeUniform } from 'wgl';
 
 export class StoreState {
-    public id?: number;
-    public mainShader?: FragShader;
-    public preview?: Preview;
+    public id?: number = null;
+    public mainShader?: FragShader = null;
+    public preview?: Preview = null;
 
     public textures: TextureData[] = [];
     public sendLock: boolean = false;
@@ -35,6 +35,7 @@ export const Mutations = {
     setTextureKind: "setTextureKind",
     setId: "setId",
     setSendLock: "setSendLock",
+    setPreview: "setPreview",
 };
 
 export const Actions = {
@@ -45,6 +46,8 @@ export const Actions = {
     requestShader: "requestShader",
     removeTexture: "removeTexture",
     setSource: "setSource",
+    setPreviewFromCanvas: "setPreviewFromCanvas",
+    removePreview: "removePreview",
 
     saveShader: "saveShader",
 };
@@ -79,6 +82,10 @@ export const store = new Vuex.Store({
             } else {
                 return declarations;
             }
+        },
+
+        preview(state: StoreState): Preview | null {
+            return state.preview;
         },
 
         textureUniforms(state: StoreState): [string, Uniform][] {
@@ -135,6 +142,10 @@ export const store = new Vuex.Store({
         [Mutations.setSendLock] (state: StoreState, lock: boolean) {
             state.sendLock = lock;
         },
+
+        [Mutations.setPreview] (state: StoreState, preview: Preview) {
+            state.preview = preview;
+        },
     },
 
     actions: {
@@ -175,14 +186,12 @@ export const store = new Vuex.Store({
                     .then(shader => {
                         commit(Mutations.setShader, shader.shader);
                         commit(Mutations.setId, id);
-                        const textures = shader.textures.map(({ id, name, kind }) => {
-                            const data = new TextureData(`/api/textures/${id}`, name, kind);
-                            data.id = id;
-                            return data;
-                        });
-                        if (textures.length !== 0) {
-                            commit(Mutations.setTextures, textures);
+                        if (shader.textures.length !== 0) {
+                            commit(Mutations.setTextures, shader.textures);
                             commit(Mutations.updateShaderTextures);
+                        }
+                        if (shader.preview) {
+                            commit(Mutations.setPreview, new Preview(shader.preview));
                         }
                     });
             }  else {
@@ -203,13 +212,32 @@ export const store = new Vuex.Store({
             commit(Mutations.updateShaderTextures);
         },
 
-        [Actions.saveShader] ({ state, commit }) {
+        [Actions.setPreviewFromCanvas] ({ commit }, canvas: HTMLCanvasElement) {
+            //FIXME: sometimes the preview taken is a blank image
+
+            canvas.toBlob(blob => {
+                commit(Mutations.setPreview, new Preview(
+                    canvas.toDataURL("image/png"),
+                    blob
+                ));
+            })
+        },
+
+        [Actions.removePreview] ({ commit }) {
+            commit(Mutations.setPreview, null);
+        },
+
+        [Actions.saveShader] ({ state, commit }): Promise<number> {
             if (state.sendLock) {
                 return Promise.reject(new Error("Another saving process is currently underway"));
             } else {
                 commit(Mutations.setSendLock, true);
                 const promise = ShaderStorage.postShader(
-                    new SendShaderData(state.mainShader.source, state.textures),
+                    new SendShaderData(
+                        state.mainShader.source,
+                        state.textures,
+                        state.preview && state.preview.blob,
+                    ),
                     state.id
                 );
                 promise

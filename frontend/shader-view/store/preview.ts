@@ -1,4 +1,6 @@
 export default class Preview {
-    url?: string;
-    blob?: Blob;
+    constructor(
+        public url?: string,
+        public blob?: Blob,
+    ) {}
 }
