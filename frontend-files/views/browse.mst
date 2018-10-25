@@ -13,9 +13,20 @@
                 {{#shaders}}
 
                 <li>
-                    <a href="/view/{{id}}">
+                    <div class="preview">
+                        <a href="/view/{{id}}">
+                            {{#previewUrl}}
+                            <img src="{{.}}">
+                            {{/previewUrl}}
+                            {{^previewUrl}}
+                            <div class="placeholder"></div>
+                            {{/previewUrl}}
+                        </a>
+                    </div>
+
+                    <div class="data">
                         <p>id: {{id}}</p>
-                    </a>
+                    </div>
                 </li>
 
                 {{/shaders}}

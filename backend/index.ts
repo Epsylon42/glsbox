@@ -139,23 +139,33 @@ app.post("/api/shaders", (req, res) => {
                 // so it's safe to return without rolling transaction back
             }
 
-            if (req.body.id != undefined) {
-                await shader.update({ code: req.body.code }, { transaction });
+            {
+                let update: { code?: string, previewUrl?: string | null } = {};
+                if (req.body.id != undefined) {
+                    update.code = req.body.code;
+                }
+                if (files.preview) {
+                    update.previewUrl = await FileStorage.writePreview(shader.id, files.preview[0].data);
+                } else if (!req.body.keep_preview) {
+                    await FileStorage.removePreview(shader.id);
+                    update.previewUrl = null;
+                }
+
+                await shader.update(update, { transaction });
             }
 
             const textureIds = textureOptions.filter(tex => tex.id != undefined).map(tex => tex.id);
-            if (textureIds.length !== 0) {
-                await ShaderTextures
-                    .destroy({
-                        where: {
-                            shaderId: shader.id,
-                            id: {
-                                [Sequelize.Op.notIn]: textureIds
-                            }
-                        },
-                        transaction
-                    });
-            }
+            //TODO: physically remove textures
+            await ShaderTextures
+                .destroy({
+                    where: {
+                        shaderId: shader.id,
+                        id: {
+                            [Sequelize.Op.notIn]: textureIds
+                        }
+                    },
+                    transaction
+                });
 
             await Promise.all(
                 textureOptions
@@ -170,18 +180,22 @@ app.post("/api/shaders", (req, res) => {
                                     }, { transaction });
                                 }
                             } else if (tex.file != undefined) {
+                                const file = files.textures[tex.file as number];
+
                                 const texEntry = await ShaderTextures.create({
                                     shaderId: shader.id,
                                     name: tex.name,
                                     textureKind: tex.kind,
+                                    url: ""
                                 }, { transaction });
-                                const file = files.textures[tex.file as number];
 
-                                await FileStorage.writeTexture(
+                                const url = await FileStorage.writeTexture(
                                     texEntry.id,
                                     file.name,
                                     file.data
                                 );
+
+                                await texEntry.update({ url }, { transaction });
                             }
                         } catch (e) {
                             throw e;
@@ -244,7 +258,30 @@ app.get("/api/textures/:id", async (req, res) => {
         console.error(e);
         res.status(500).send("Internal server error");
     }
-})
+});
+
+app.get("/api/preview/:id", async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            res.status(400).send("Invalid id");
+            return;
+        }
+
+        try {
+            res.sendFile(await FileStorage.getPreviewPath(id));
+        } catch (e) {
+            if (e.message === "Preview does not exist") {
+                res.status(404).send(e.message);
+            } else {
+                throw e;
+            }
+        }
+    } catch (e) {
+        console.error(e);
+        res.status(500).send("Internal server error");
+    }
+});
 
 db.sync({ force: false }).then(() => {
     console.log("Database initialized");

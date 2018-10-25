@@ -191,7 +191,7 @@ export const store = new Vuex.Store({
                             commit(Mutations.updateShaderTextures);
                         }
                         if (shader.preview) {
-                            commit(Mutations.setPreview, new Preview(shader.preview));
+                            commit(Mutations.setPreview, shader.preview);
                         }
                     });
             }  else {
@@ -214,10 +214,12 @@ export const store = new Vuex.Store({
 
         [Actions.setPreviewFromCanvas] ({ commit }, canvas: HTMLCanvasElement) {
             canvas.toBlob(blob => {
-                commit(Mutations.setPreview, new Preview(
+                const preview = new Preview(
                     canvas.toDataURL("image/png"),
                     blob
-                ));
+                );
+                preview.save = true;
+                commit(Mutations.setPreview, preview);
             })
         },
 
@@ -234,13 +236,14 @@ export const store = new Vuex.Store({
                     new SendShaderData(
                         state.mainShader.source,
                         state.textures,
-                        state.preview && state.preview.blob,
+                        state.preview,
                     ),
                     state.id
                 );
                 promise
                     .then(id => {
                         commit(Mutations.setId, id);
+                        commit(Mutations.setPreview, new Preview(state.preview.url, state.preview.blob));
                         commit(Mutations.setSendLock, false)
                     })
                     .catch(() => commit(Mutations.setSendLock, false));

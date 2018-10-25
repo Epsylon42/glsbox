@@ -1,12 +1,13 @@
 import FragShader from './shader-view/store/frag-shader.ts';
 import TextureData from './shader-view/store/texture-data.ts';
+import Preview from './shader-view/store/preview.ts';
 import { TextureKind } from '../common/texture-kind.ts';
 
 export class RecvShaderData {
     constructor(
         public shader: FragShader,
         public textures: TextureData[] = [],
-        public preview?: string,
+        public preview?: Preview,
     ) {}
 }
 
@@ -14,7 +15,7 @@ export class SendShaderData {
     constructor(
         public code: string,
         public textures: TextureData[],
-        public preview?: Blob,
+        public preview?: Preview,
     ) {};
 }
 
@@ -36,12 +37,12 @@ gl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
                     const shader = new FragShader(data.code);
                     resolve(new RecvShaderData(
                         shader,
-                        data.textures.map(({ id, name, kind }) => {
-                            const data = new TextureData(`/api/textures/${id}`, name, kind);
+                        data.textures.map(({ id, name, kind, url }) => {
+                            const data = new TextureData(url, name, kind);
                             data.id = id;
                             return data;
                         }),
-                        data.preview
+                        data.previewUrl && new Preview(data.previewUrl),
                     ));
                 } else {
                     reject(new Error(req.responseText));
@@ -57,7 +58,11 @@ gl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
             form.append("id", id.toString());
         }
         if (data.preview) {
-            form.append("preview", data.preview, "preview.png");
+            if (data.preview.save && data.preview.blob) {
+                form.append("preview", data.preview.blob, "preview.png");
+            } else {
+                form.append("keep_preview", "true");
+            }
         }
 
         form.append("code", data.code);
