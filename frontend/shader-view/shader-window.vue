@@ -33,41 +33,56 @@ export default class ShaderWindow extends Vue {
         }
     }
     
+    @Prop({ type: Boolean, default: false }) public timePause: boolean;
+    @Prop({ type: Boolean, default: false }) public updatePause: boolean;
+    
     private gl: Wgl;
     private shaderCompute: ShaderCompute | null = null;
     private timerId: number | null = null;
     private time: number = 0;
 
+    public get shaderTime(): number {
+        return this.time;
+    }
+    
     public get canvas(): HTMLCanvasElement {
         return this.$refs.shader_canvas as HTMLCanvasElement;
     }
-    
-    updateShader(shader: FragShader | null) {
-        if (this.timerId) {
-            clearInterval(this.timerId);
-            this.timerId = null;
-        }
 
+    public resetTime() {
+        this.time = 0;
+    }
+    
+    private updateShader(shader: FragShader | null) {
         if (!this.shaderCompute) {
             this.shaderCompute = new ShaderCompute(this.shader, this.gl);
         } else {
             this.shaderCompute.setShader(shader);
         }
         
-        this.timerId = setInterval(() => {
-            this.time += 1/30;
-            
-            const uniforms: [string, Uniform][] = [
-                ['u_time', new FloatUniform(this.time)],
-                ['u_resolution', new FloatVecUniform([400.0, 300.0])],
-            ];
-            
-            this.shaderCompute.draw(uniforms.concat(store.getters.textureUniforms));
-        }, 1/30 * 1000);
+        if (!this.timerId) {
+            this.timerId = setInterval(() => {
+                if (!this.timePause){
+                    this.time += 1/30;
+                }
+                
+                if (!this.updatePause) {
+                    const uniforms: [string, Uniform][] = [
+                        ['u_time', new FloatUniform(this.time)],
+                        ['u_resolution', new FloatVecUniform([400.0, 300.0])],
+                    ];
+                    
+                    this.shaderCompute.draw(uniforms.concat(store.getters.textureUniforms));
+                }
+            }, 1/30 * 1000);
+        }
     }
     
     mounted() {
-        this.gl = new Wgl((this.$refs.shader_canvas as HTMLCanvasElement).getContext("webgl"));
+        this.gl = new Wgl(
+            (this.$refs.shader_canvas as HTMLCanvasElement)
+                .getContext("webgl", { preserveDrawingBuffer: true })
+        );
     }
 
     destroyed() {

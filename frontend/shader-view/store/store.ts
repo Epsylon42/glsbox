@@ -213,8 +213,6 @@ export const store = new Vuex.Store({
         },
 
         [Actions.setPreviewFromCanvas] ({ commit }, canvas: HTMLCanvasElement) {
-            //FIXME: sometimes the preview taken is a blank image
-
             canvas.toBlob(blob => {
                 commit(Mutations.setPreview, new Preview(
                     canvas.toDataURL("image/png"),

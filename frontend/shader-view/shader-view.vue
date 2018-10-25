@@ -5,12 +5,21 @@
     <ShaderWindow
       ref="window"
       class="display"
+      :timePause="timePause"
+      :updatePause="updatePause"
       @error="processError"
       >
     </ShaderWindow>
-
+    
     <div class="controls">
-      <p>Controls go here</p>
+      <button @click="resetTime" title="reset time">
+        <Icon name="redo" />
+      </button>
+      <button @click="timePause = !timePause" title="toggle time">
+        <Icon name="play" v-if="timePause" />
+        <Icon name="pause" v-else />
+      </button>
+      <p>{{ shaderTime }}</p>
     </div>
   </div>
 
@@ -36,9 +45,15 @@
     <textarea v-model="shaderSource"></textarea>
     
     <div class="controls">
-      <button @click="updateSource">Update</button>
-      <button @click="testUpload">Upload</button>
-      <button @click="takePreview">Take Preview</button>
+      <button @click="updateSource" title="run this code">
+        <Icon name="arrow-left" />
+      </button>
+      <button @click="takePreview" title="take preview">
+        <Icon name="camera" />
+      </button>
+      <button @click="upload" title="save">
+        <Icon name="save" />
+      </button>
     </div>
     
   </div>
@@ -67,17 +82,40 @@ import { TextureKind } from '../../common/texture-kind.ts';
 
 import { WglError } from 'wgl';
 
+import Icon from 'vue-awesome/components/Icon.vue';
+import 'vue-awesome/icons/play.js';
+import 'vue-awesome/icons/pause.js';
+import 'vue-awesome/icons/redo.js';
+import 'vue-awesome/icons/arrow-left.js';
+import 'vue-awesome/icons/save.js';
+import 'vue-awesome/icons/camera.js';
+
 @Component({
     components: {
         ShaderWindow,
         Textures,
+        Icon,
     },
 })
 export default class ShaderView extends Vue {
     @Prop({ type: Number }) shaderId?: number;
-
+    
     mounted() {
         store.dispatch(Actions.requestShader, this.shaderId);
+        this.$watch(
+            () => (this.$refs.window as ShaderWindow).shaderTime,
+            time => {
+                this.shaderTime = (Math.round(time * 100) / 100).toString();
+                const dot = this.shaderTime.indexOf(".");
+                if (dot !== -1) {
+                    while (this.shaderTime.length - dot < 3) {
+                        this.shaderTime += "0";
+                    }
+                } else {
+                    this.shaderTime += ".00";
+                }
+            }
+        );
     }
 
     private shaderSource = "";
@@ -97,11 +135,20 @@ export default class ShaderView extends Vue {
         return store.getters.preview;
     }
 
+
+    private shaderTime: string = "";
+    private timePause: boolean = false;
+    private updatePause: boolean = false;
+
     updateSource() {
         store.dispatch(Actions.setSource, this.shaderSource);
     }
 
-    testUpload() {
+    resetTime() {
+        (this.$refs.window as ShaderWindow).resetTime();
+    }
+
+    upload() {
         this.updateSource();
         store
             .dispatch(Actions.saveShader)
@@ -110,7 +157,11 @@ export default class ShaderView extends Vue {
     }
 
     takePreview() {
-        store.dispatch(Actions.setPreviewFromCanvas, (this.$refs.window as ShaderWindow).canvas);
+        store
+            .dispatch(
+                Actions.setPreviewFromCanvas,
+                (this.$refs.window as ShaderWindow).canvas
+            );
     }
 
     removePreview() {
@@ -166,6 +217,37 @@ export default class ShaderView extends Vue {
     
     height: 30px;
     background-color: white;
+    
+    padding-left: 5px;
+    padding-right: 5px;
+
+    font-family: monospace;
+}
+
+.controls p {
+    margin: 0;
+}
+
+.controls button {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+    background-color: white;
+    padding: 0;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.controls button svg {
+    height: 100%;
+    width: auto;
+}
+
+.controls button:active svg {
+    color: black;
 }
 
 .info {
