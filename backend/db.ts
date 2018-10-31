@@ -91,6 +91,8 @@ export const Users = db.define<UsersInstance, UsersAttributes>("users", {
 
 export interface ShadersAttributes {
     id?: number,
+    name: string,
+    description?: string,
     owner: number,
     published?: boolean,
     creationDate?: Date,
@@ -102,6 +104,7 @@ export interface ShadersAttributes {
 
 export interface ShadersInstance extends Sequelize.Instance<ShadersAttributes>, ShadersAttributes {
     id: number,
+    description: string,
     published: boolean,
     creationDate: Date,
     likeCount: number,
@@ -112,6 +115,14 @@ export const Shaders = db.define<ShadersInstance, ShadersAttributes>("shaders", 
         type: Sequelize.INTEGER,
         autoIncrement: true,
         primaryKey: true,
+        allowNull: false,
+    },
+    name: {
+        type: Sequelize.STRING,
+        allowNull: false,
+    },
+    description: {
+        type: Sequelize.STRING,
         allowNull: false,
     },
     owner: {

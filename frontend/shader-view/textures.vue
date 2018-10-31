@@ -1,17 +1,17 @@
 <template>
   <div class="textures">
-    <div class="texture" v-for="tex, i in textures">
-      <img ref="images" :src="tex.src" @load="onLoad(i)">
+    <div class="texture" v-for="tex in textures">
+      <img ref="images" :src="tex.data.src" @load="onLoad(tex.index)">
       <div class="texture-controls">
 
-        <button @click="removeTexture(i)">remove</button>
+        <button @click="removeTexture(tex.index)">remove</button>
 
         <input
           type="text"
-          v-model="tex.name"
+          v-model="tex.data.name"
           >
 
-        <select v-model.number="tex.kind">
+        <select v-model.number="tex.data.kind">
           <option v-for="opt in texKindVariants" :value="opt.value">
             {{ opt.text }}
           </option>
@@ -51,25 +51,24 @@ export default class Textures extends Vue {
         { text: "Cubemap",     value: TextureKind.Cubemap },
     ];
 
-    private get textures(): TextureData[] {
-        return store.getters.textures.map((tex, i) => {
-            const obj = { ...tex };
-            Object.defineProperty(obj, "name", {
-                get() {
-                    return tex.name;
+    private get textures(): { data: TextureData, index: number }[] {
+        return store.getters.activeTextures.map(([ i, tex ]) => {
+            const obj =  {
+                data: {
+                    ...tex,
                 },
-                set(name: string) {
-                    store.dispatch(Actions.setTextureName, { i, name });
-                }
+                index: i,
+            };
+
+            Object.defineProperty(obj.data, "name", {
+                get: () => tex.name,
+                set: name => store.dispatch(Actions.setTextureName, { i, name }),
             });
-            Object.defineProperty(obj, "kind", {
-                get() {
-                    return tex.kind;
-                },
-                set(kind: TextureKind) {
-                    store.dispatch(Actions.setTextureKind, { i, kind });
-                }
+            Object.defineProperty(obj.data, "kind", {
+                get: () => tex.kind,
+                set: kind => store.dispatch(Actions.setTextureKind, { i, kind }),
             });
+
             return obj;
         });
     }

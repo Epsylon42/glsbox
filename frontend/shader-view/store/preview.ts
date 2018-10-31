@@ -1,5 +1,5 @@
 export default class Preview {
-    public save: boolean = false;
+    public deleted: boolean = false;
 
     constructor(
         public url?: string,

@@ -6,7 +6,6 @@ module.exports = {
     entry: {
         view: './frontend/view.ts',
         profile: './frontend/profile.ts',
-        login: './frontend/login.ts',
     },
     output: {
         filename: '[name].js',

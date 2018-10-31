@@ -2,7 +2,15 @@
     <a href="/browse">Browse</a>
     <a href="/create">Create</a>
 
-    <div id="profile">
-    <div id="profile-app"></div>
+    <div id="profile" class="profile">
+        {{^user}}
+        <a href="/login">Login</a>
+        <a href="/register">Register</a>
+        {{/user}}
+
+        {{#user}}
+        <p>{{username}}</p>
+        <a href="/logout">Logout</a>
+        {{/user}}
     </div>
 </nav>

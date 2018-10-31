@@ -10,4 +10,5 @@ export default class TextureData {
     public image: HTMLImageElement | null = null;
     public file?: File = null;
     public id?: number = null;
+    public deleted: boolean = false;
 }

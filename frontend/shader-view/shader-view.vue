@@ -31,6 +31,12 @@
       </div>
       <img :src="preview.url">
     </div>
+
+    <span>Name: <input v-model="name"></span>
+    <div>
+      <p>Description</p>
+      <textarea v-model="description" />
+    </div>
   </div>
   
   <div class="editor">
@@ -125,6 +131,20 @@ export default class ShaderView extends Vue {
     }
     @Watch('storedSource') storedSourceChanged(newSource: string) {
         this.shaderSource = newSource;
+    }
+
+    private get name(): string {
+        return store.getters.name;
+    }
+    private set name(name: string) {
+        store.commit(Mutations.setName, name);
+    }
+
+    private get description(): string {
+        return store.getters.description;
+    }
+    private set description(description: string) {
+        store.commit(Mutations.setDescription, description);
     }
 
     private get declarations(): Declaration[] {
