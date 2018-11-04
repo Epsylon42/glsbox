@@ -58,35 +58,23 @@ app.get("/", (req, res) => {
 app.get("/create", (req, res) => {
     res.render("index", {
         user: req.user,
-        scripts: [
-            {
-                src: "view.js"
-            },
-        ],
-        mountPoints: [
-            {
-                lib: "view",
-                mount: "#content-app",
-            },
-        ]
+        scripts: "view.js",
+        mountPoints: {
+            lib: "view",
+            mount: "#content-app",
+        }
     });
 });
 
 app.get("/view/:id", (req, res) => {
     res.render("index", {
         user: req.user,
-        scripts: [
-            { src: "view.js" },
-        ],
-        mountPoints: [
-            {
-                lib: "view",
-                mount: "#content-app",
-                args: {
-                    arg: req.params.id,
-                }
-            },
-        ]
+        scripts: "view.js",
+        mountPoints: {
+            lib: "view",
+            mount: "#content-app",
+            args: req.params.id,
+        },
     });
 });
 
@@ -106,18 +94,33 @@ app.get("/browse", async (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-    res.render("login");
+    res.render("auth", {
+        user: req.user,
+        scripts: "auth.js",
+        mountPoints: {
+            lib: "auth",
+            mount: "#auth-app",
+            args: "\"login\"",
+        }
+    });
 });
 
 app.post("/login", Passport.authenticate('local', { failureRedirect: '/login', successRedirect: '/' }));
 
 app.get("/register", (req, res) => {
-    res.render("register");
+    res.render("auth", {
+        user: req.user,
+        scripts: "auth.js",
+        mountPoints: {
+            lib: "auth",
+            mount: "#auth-app",
+            args: "\"register\"",
+        }
+    });
 });
 
 app.post("/register", async (req, res) => {
     try {
-        console.log(req);
         if (!(req.body.username && req.body.password)) {
             res.status(400).send("Invalid request");
             return;

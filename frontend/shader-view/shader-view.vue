@@ -24,19 +24,7 @@
   </div>
 
   <div class="info">
-    <div class="preview" v-if="preview">
-      <div class="preview-header">
-        <p>Preview</p>
-        <button @click="removePreview">X</button>
-      </div>
-      <img :src="preview.url">
-    </div>
-
-    <span>Name: <input v-model="name"></span>
-    <div>
-      <p>Description</p>
-      <textarea v-model="description" />
-    </div>
+    <Info />
   </div>
   
   <div class="editor">
@@ -53,9 +41,6 @@
     <div class="controls">
       <button @click="updateSource" title="run this code">
         <Icon name="arrow-left" />
-      </button>
-      <button @click="takePreview" title="take preview">
-        <Icon name="camera" />
       </button>
       <button @click="upload" title="save">
         <Icon name="save" />
@@ -78,6 +63,7 @@
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
 import ShaderWindow from './shader-window.vue';
 import Textures from './textures.vue';
+import Info from './info.vue';
 
 import { ShaderStorage } from '../backend.ts';
 import { store, Mutations, Actions } from './store/store.ts';
@@ -94,12 +80,12 @@ import 'vue-awesome/icons/pause.js';
 import 'vue-awesome/icons/redo.js';
 import 'vue-awesome/icons/arrow-left.js';
 import 'vue-awesome/icons/save.js';
-import 'vue-awesome/icons/camera.js';
 
 @Component({
     components: {
         ShaderWindow,
         Textures,
+        Info,
         Icon,
     },
 })
@@ -133,28 +119,10 @@ export default class ShaderView extends Vue {
         this.shaderSource = newSource;
     }
 
-    private get name(): string {
-        return store.getters.name;
-    }
-    private set name(name: string) {
-        store.commit(Mutations.setName, name);
-    }
-
-    private get description(): string {
-        return store.getters.description;
-    }
-    private set description(description: string) {
-        store.commit(Mutations.setDescription, description);
-    }
 
     private get declarations(): Declaration[] {
         return store.getters.declarations;
     }
-
-    private get preview(): Preview | null {
-        return store.getters.preview;
-    }
-
 
     private shaderTime: string = "";
     private timePause: boolean = false;
@@ -176,18 +144,6 @@ export default class ShaderView extends Vue {
             .catch(e => console.log("Saving error", e));
     }
 
-    takePreview() {
-        store
-            .dispatch(
-                Actions.setPreviewFromCanvas,
-                (this.$refs.window as ShaderWindow).canvas
-            );
-    }
-
-    removePreview() {
-        store.dispatch(Actions.removePreview);
-    }
-    
     processError(e: WglError) {
         console.log(e);
     }
@@ -207,6 +163,7 @@ export default class ShaderView extends Vue {
         "info     textures"
         "comments .";
     grid-row-gap: 20px;
+    grid-column-gap: 50px;
 }
 
 .window {
@@ -272,40 +229,6 @@ export default class ShaderView extends Vue {
 
 .info {
     grid-area: info;
-}
-
-.info > .preview {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    width: 120px;
-    border: 1px solid grey;
-    border-radius: 15px;
-}
-
-.info > .preview > .preview-header {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-
-    background-color: white;
-    border-radius: 15px 15px 0 0;
-    padding: 5px;
-}
-
-.info > .preview p {
-    margin: 0;
-}
-
-.info > .preview button {
-    border-width: 0;
-    padding: 5px;
-}
-
-.info > .preview > img {
-    height: 90px;
-    border-radius: 0 0 15px 15px;
 }
 
 .editor {

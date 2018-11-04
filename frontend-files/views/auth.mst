@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+
+    <head>
+        {{> head}}
+    </head>
+
+    <body>
+        {{> nav}}
+
+        <div id="content">
+            <div id="auth-app"></div>
+        </div>
+
+        {{> footer}}
+    </body>
+
+    {{> scripts}}
+</html>
