@@ -207,48 +207,110 @@ export const ShaderTextures = db.define<ShaderTexturesInstance, ShaderTexturesAt
     },
 });
 
+
+export interface CommentsAttributes {
+    id?: number,
+    author: number,
+    text: string,
+    parentShader: number,
+    parentComment?: number,
+}
+
+export interface CommentsInstance extends Sequelize.Instance<CommentsAttributes>, CommentsAttributes {
+    id: number,
+}
+
+export interface CommentExt {
+    author: { id: number, username: string };
+    children: (CommentsInstance & CommentExt)[];
+}
+
+export const Comments = db.define<CommentsInstance, CommentsAttributes>("comments", {
+    id: {
+        type: Sequelize.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+        allowNull: false,
+    },
+    author: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+    },
+    text: {
+        type: Sequelize.TEXT,
+        allowNull: false,
+    },
+    parentShader: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+    },
+    parentComment: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+    },
+});
+
 export module Utils {
-    export async function checkUserPassword(id: number, password: string) {
-        try {
-            const user = await Users.findByPrimary(
-                id,
-                { attributes: ["passwordHash", "passwordSalt"] }
-            );
-
-            if (!user) {
-                throw new Error(`User ${id} does not exist`);
-            }
-
-            const salt = user.passwordSalt;
-            const hash = crypto.createHash("sha256").update(password + salt).digest("base64");
-
-            return user.passwordHash === hash;
-        } catch (e) {
-            throw e;
+    export async function getComments(shader: number, parent?: number, depth: number = 10): Promise<(CommentsInstance & CommentExt)[]> {
+        if (depth === 0) {
+            return Promise.resolve([]);
         }
+
+        const comments =
+            parent != null ?
+            await Comments.findAll({ where: { parentShader: shader, parentComment: parent } }) :
+            await Comments.findAll({ where: { parentShader: shader, parentComment: null } });
+
+        return Promise.all(comments.map(async comment => {
+            const [children, author] = await Promise.all([
+                getComments(shader, comment.id, depth - 1),
+                Users.findByPrimary(comment.author)
+            ]);
+
+            return {
+                ...(comment as any).dataValues,
+                children,
+                author: author && {
+                    id: author.id,
+                    username: author.username,
+                },
+            };
+        }));
+    }
+
+    export async function checkUserPassword(id: number, password: string) {
+        const user = await Users.findByPrimary(
+            id,
+            { attributes: ["passwordHash", "passwordSalt"] }
+        );
+
+        if (!user) {
+            throw new Error(`User ${id} does not exist`);
+        }
+
+        const salt = user.passwordSalt;
+        const hash = crypto.createHash("sha256").update(password + salt).digest("base64");
+
+        return user.passwordHash === hash;
     }
 
     export async function publishShader(id: number): Promise<void> {
-        try {
-            const shader = await Shaders.findByPrimary(
-                id,
-                { attributes: ["published", "publishedDate"] }
-            );
+        const shader = await Shaders.findByPrimary(
+            id,
+            { attributes: ["published", "publishedDate"] }
+        );
 
-            if (!shader) {
-                throw new Error(`Shader ${id} does not exist`);
-            }
-
-            if (shader.published) {
-                throw new Error("shader is already published");
-            }
-
-            await shader.update({
-                published: true,
-                publishingDate: new Date(),
-            });
-        } catch (e) {
-            throw e;
+        if (!shader) {
+            throw new Error(`Shader ${id} does not exist`);
         }
+
+        if (shader.published) {
+            throw new Error("shader is already published");
+        }
+
+        await shader.update({
+            published: true,
+            publishingDate: new Date(),
+        });
     }
 }

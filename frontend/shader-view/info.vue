@@ -28,7 +28,7 @@
       <textarea placeholder="description" v-model="description" v-if="canSave" />
 
       <p v-if="canSave">Description preview:</p>
-      <div class="immutable" v-html="descriptionHTML" />
+      <div class="immutable" :class="{ 'description-preview': canSave }" v-html="descriptionHTML" />
     </div>
   </div>
 </template>
@@ -40,6 +40,8 @@ import { Vue, Component } from 'vue-property-decorator';
 import { store, Mutations, Actions } from './store/store.ts';
 import Preview from './store/preview.ts';
 import ShaderWindow from './shader-window.vue';
+
+import { MDConverter } from './converter.ts';
 
 import Icon from 'vue-awesome/components/Icon.vue';
 import 'vue-awesome/icons/camera.js';
@@ -66,7 +68,7 @@ export default class Info extends Vue {
     }
 
     private get descriptionHTML(): string {
-        return store.getters.descriptionHTML;
+        return MDConverter.makeHtml(store.getters.description);
     }
 
     private get preview(): Preview | null {
@@ -163,6 +165,11 @@ export default class Info extends Vue {
     padding: 0px;
     width: 100%;
     background-color: white;
+    min-height: 20px;
+}
+
+.description-preview {
+    border: 1px solid grey;
 }
 
 button {

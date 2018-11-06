@@ -1,13 +1,12 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 
-import { Converter as MDConverter } from 'showdown';
-
 import FragShader, { Declaration, declarations } from './frag-shader.ts';
 import Preview from './preview.ts';
 import TextureData from './texture-data.ts';
+import CommentData, { GenericComment } from './comment.ts';
 
-import { ShaderStorage, PostShaderData, PatchShaderData, RecvShaderData } from '../../backend.ts';
+import { ShaderStorage, PostShaderData, PatchShaderData, RecvShaderData, CommentStorage } from '../../backend.ts';
 import { TextureKind } from '../../../common/texture-kind.ts';
 import { Uniform, Texture2DUniform, TextureCubeUniform } from 'wgl';
 
@@ -22,13 +21,13 @@ export class StoreState {
     public mainShader?: FragShader = null;
     public preview?: Preview = null;
 
+    public rootComment: GenericComment = new GenericComment();
+
     public name: string = "";
     public description: string = "";
 
     public textures: TextureData[] = [];
     public sendLock: boolean = false;
-
-    public converter = new MDConverter();
 }
 
 export const Mutations = {
@@ -46,6 +45,7 @@ export const Mutations = {
     setPreview: "setPreview",
     setUser: "setUser",
     setOwner: "setOwner",
+    setRootComment: "setRootComment",
 };
 
 export const Actions = {
@@ -59,6 +59,8 @@ export const Actions = {
     setSource: "setSource",
     setPreviewFromCanvas: "setPreviewFromCanvas",
     removePreview: "removePreview",
+    requestComment: "requestComment",
+    gotoPrevComment: "gotoPrevComment",
 
     saveShader: "saveShader",
 };
@@ -71,6 +73,10 @@ export const store = new Vuex.Store({
     state: new StoreState(),
 
     getters: {
+        id(state: StoreState): number | null {
+            return state.id;
+        },
+
         user(state: StoreState): number | null {
             return state.user;
         },
@@ -99,10 +105,6 @@ export const store = new Vuex.Store({
 
         description(state: StoreState): string {
             return state.description;
-        },
-
-        descriptionHTML(state: StoreState): string {
-            return state.converter.makeHtml(state.description);
         },
 
         source(state: StoreState): string {
@@ -145,6 +147,10 @@ export const store = new Vuex.Store({
                     return ["tex_" + tex.name, uni] as [string, Uniform];
                 })
         },
+
+        rootComment(state: StoreState): GenericComment {
+            return state.rootComment;
+        }
     },
 
     mutations: {
@@ -216,6 +222,10 @@ export const store = new Vuex.Store({
 
         [Mutations.setPreview] (state: StoreState, preview?: Preview) {
             state.preview = preview;
+        },
+
+        [Mutations.setRootComment] (state: StoreState, comment: GenericComment) {
+            state.rootComment = comment;
         },
     },
 
@@ -303,6 +313,28 @@ export const store = new Vuex.Store({
                 );
                 preview.deleted = true;
                 commit(Mutations.setPreview, preview);
+            }
+        },
+
+        [Actions.requestComment] ({ state, commit }, parent?: number): Promise<void> {
+            console.log(state.id);
+            if (state.id != null) {
+                return CommentStorage
+                    .requestComments(state.id, parent)
+                    .then(comments => {
+                        const comment = new GenericComment(comments);
+                        comment.topComment = state.rootComment;
+                        comment.topComment = state.rootComment;
+                        commit(Mutations.setRootComment, comment);
+                    });
+            } else {
+                return Promise.resolve();
+            }
+        },
+
+        [Actions.gotoPrevComment] ({ state, commit }) {
+            if (state.rootComment instanceof CommentData) {
+                commit(Mutations.setRootComment, state.rootComment.topComment);
             }
         },
 

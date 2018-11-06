@@ -2,6 +2,7 @@ import FragShader from './shader-view/store/frag-shader.ts';
 import TextureData from './shader-view/store/texture-data.ts';
 import Preview from './shader-view/store/preview.ts';
 import { TextureKind } from '../common/texture-kind.ts';
+import CommentData from './shader-view/store/comment.ts';
 
 export class RecvShaderData {
     constructor(
@@ -204,17 +205,63 @@ gl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
     }
 }
 
-export class User {
-    public id: number;
-    public name: string;
+export class SendCommentData {
+    constructor(
+        public author: number,
+        public text: string,
+        public parentShader: number,
+        public parentComment?: number,
+    ) {}
 }
 
-export module UserStorage {
-    export function currentUser(): Promise<User | null> {
-        return Promise.resolve(null);
+export module CommentStorage {
+    export function requestComments(shader: number, parent?: number): Promise<CommentData[]> {
+        return new Promise((resolve, reject) => {
+            const req = new XMLHttpRequest();
+            if (parent != null) {
+                req.open("GET", `/api/comments/${shader}?parent=${parent}`);
+            } else {
+                req.open("GET", `/api/comments/${shader}`);
+            }
+            req.onloadend = () => {
+                if (req.status === 200) {
+                    try {
+                        const arr = JSON.parse(req.responseText);
+                        resolve(arr.map(el => CommentData.fromObject(el)));
+                    } catch (e) {
+                        reject(e);
+                    }
+                } else {
+                    reject(new Error(req.responseText));
+                }
+            }
+            req.send();
+        });
     }
 
-    export function requestUser(id: number): Promise<User> {
-        return Promise.reject("Backend not implemented");
+    export function postComment(data: SendCommentData): Promise<CommentData> {
+        const form = new FormData();
+        form.append("author", data.author.toString());
+        form.append("text", data.text);
+        if (data.parentComment != null) {
+            form.append("parentComment", data.parentComment.toString());
+        }
+
+        return new Promise((resolve, reject) => {
+            const req = new XMLHttpRequest();
+            req.open("POST", `/comments/${data.parentShader}`);
+            req.onloadend = () => {
+                if (req.status === 200) {
+                    try {
+                        resolve(CommentData.fromObject(JSON.parse(req.responseText)));
+                    } catch (e) {
+                        reject(e);
+                    }
+                } else {
+                    reject(new Error(req.responseText));
+                }
+            };
+            req.send(form);
+        });
     }
 }

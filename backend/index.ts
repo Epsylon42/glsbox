@@ -9,7 +9,7 @@ import Session from 'express-session';
 
 import { Converter as MDConverter } from 'showdown';
 
-import { db, Users, Shaders, ShaderTextures, Utils, UserRole, UsersInstance } from './db';
+import { db, Users, Shaders, ShaderTextures, Comments, Utils, UserRole, UsersInstance } from './db';
 import { Transaction as FileTransaction } from './file-storage';
 import { TextureKind } from '../common/texture-kind';
 
@@ -441,6 +441,64 @@ app.get("/api/shaders/:id", async (req, res) => {
             ...shader.dataValues,
             textures: textures,
         });
+    } catch (e) {
+        console.error(e);
+        res.status(500).send("Internal server error");
+    }
+});
+
+app.get("/api/comments/:shaderId", async (req, res) => {
+    const depth = req.query.depth;
+    const parent = req.query.parent;
+
+    try {
+        res.json(await Utils.getComments(req.params.shaderId, parent, depth));
+    } catch (e) {
+        console.error(e);
+        res.status(500).send("Internal server error");
+    }
+});
+
+app.post("/comments/:shaderId", async (req, res) => {
+    try {
+
+        const id = Number(req.params.shaderId);
+        if (!Number.isFinite(id)) {
+            res.status(400).send("Invalid shader id");
+            return;
+        }
+        const author = Number(req.body.author);
+        if (!Number.isFinite(author)) {
+            res.status(400).send("Invalid author id");
+            return;
+        }
+
+        if (!await Shaders.findByPrimary(id)) {
+            res.status(404).send("Parent shader not found");
+        }
+
+
+        let parentComment: number | undefined;
+        if (req.body.parentComment != null) {
+            parentComment = Number(req.body.parentComment);
+            if (!Number.isFinite(parentComment)) {
+                res.status(400).send("Invalid parent comment id");
+                return;
+            }
+
+            if (!await Comments.findByPrimary(req.body.parentComment)) {
+                res.status(404).send("Parent comment not found");
+            }
+        }
+
+        const comment = await Comments.create({
+            author: author,
+            text: req.body.text || "",
+            parentShader: id,
+            parentComment,
+        });
+
+        res.json(comment);
     } catch (e) {
         console.error(e);
         res.status(500).send("Internal server error");

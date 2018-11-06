@@ -51,7 +51,7 @@
 
   <Textures class="textures" />
   
-  <Comments class="comments" />
+  <Comment :comment="rootComment" class="comments" />
   
 </div>
 </template>
@@ -62,13 +62,13 @@ import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
 import ShaderWindow from './shader-window.vue';
 import Textures from './textures.vue';
 import Info from './info.vue';
-import Comments from './comments.vue';
+import Comment from './comment.vue';
 
 import { ShaderStorage } from '../backend.ts';
 import { store, Mutations, Actions } from './store/store.ts';
 import TextureData from './store/texture-data.ts';
 import FragShader, { Declaration } from './store/frag-shader.ts';
-import Preview from './store/preview.ts';
+import { GenericComment } from './store/comment.ts';
 import { TextureKind } from '../../common/texture-kind.ts';
 
 import { WglError } from 'wgl';
@@ -85,7 +85,7 @@ import 'vue-awesome/icons/save.js';
         ShaderWindow,
         Textures,
         Info,
-        Comments,
+        Comment,
         Icon,
     },
 })
@@ -127,6 +127,10 @@ export default class ShaderView extends Vue {
 
     private get declarations(): Declaration[] {
         return store.getters.declarations;
+    }
+
+    private get rootComment(): GenericComment {
+        return store.getters.rootComment;
     }
 
     private shaderTime: string = "";
