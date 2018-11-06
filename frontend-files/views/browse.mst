@@ -11,7 +11,6 @@
         <div id="content">
             <ul class="shaders">
                 {{#shaders}}
-
                 <li>
                     <div class="preview">
                         <a href="/view/{{id}}">
@@ -25,11 +24,13 @@
                     </div>
 
                     <div class="data">
-                        <p>id: {{id}}</p>
+                        <p><a href="/view/{{id}}">{{name}}</a></p>
+                        <div class="description">{{{ descriptionHTML }}}</div>
                     </div>
                 </li>
-
                 {{/shaders}}
+
+                <li class="phantom" />
             </ul>
         </div>
 

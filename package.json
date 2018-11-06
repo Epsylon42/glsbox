@@ -5,6 +5,7 @@
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
+        "qbuild-frontend": "cp -R frontend-files/* frontend-dist/",
         "build-frontend": "webpack && cp -R frontend-files/* frontend-dist/",
         "build-backend": "tsc -p backend/tsconfig.json && mkdir -p data/textures data/previews",
         "start": "npm run build-frontend && npm run build-backend && node backend-dist/backend/index.js",

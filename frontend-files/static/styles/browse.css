@@ -1,7 +1,10 @@
 .shaders {
     list-style: none;
+
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-around;
 
     padding-left: 40px;
     padding-right: 40px;
@@ -14,13 +17,23 @@
 
     background-color: grey;
 
-    height: 120px;
-    border-radius: 15px;
+    min-height: 120px;
+
+    width: 40%;
+    min-width: 300px;
     margin-bottom: 25px;
-    padding-left: 25px;
-    padding-right: 25px;
+
+    padding: 25px;
+
     border: 1px solid grey;
-    background-color: #b0b0ba;
+    background-color: #f9f9f9;
+    box-shadow: 2px 2px 2px;
+}
+
+.phantom {
+    width: 40%;
+    height: 120px;
+    opacity: 0;
 }
 
 .preview {
@@ -36,8 +49,28 @@
 }
 
 .preview > a > img, .preview > a > .placeholder {
-    width: 100%;
-    height: 100%;
+    width: 120px;
+    height: 90px;
     border-radius: 15px;
     background-color: black;
+}
+
+.data {
+    width: 100%;
+    height: 100%;
+}
+
+.data > p {
+    margin: 0;
+    margin-bottom: 10px;
+
+    padding: 5px;
+    background-color: white;
+    width: 100%;
+}
+
+.data > .description {
+    background-color: white;
+    padding: 5px;
+    width: 100%;
 }

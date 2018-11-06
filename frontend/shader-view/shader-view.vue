@@ -49,11 +49,9 @@
     
   </div>
 
-  <Textures class="textures"></Textures>
+  <Textures class="textures" />
   
-  <div class="comments">
-    <p>Comments go here</p>
-  </div>
+  <Comments class="comments" />
   
 </div>
 </template>
@@ -64,6 +62,7 @@ import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
 import ShaderWindow from './shader-window.vue';
 import Textures from './textures.vue';
 import Info from './info.vue';
+import Comments from './comments.vue';
 
 import { ShaderStorage } from '../backend.ts';
 import { store, Mutations, Actions } from './store/store.ts';
@@ -86,6 +85,7 @@ import 'vue-awesome/icons/save.js';
         ShaderWindow,
         Textures,
         Info,
+        Comments,
         Icon,
     },
 })
@@ -164,9 +164,9 @@ export default class ShaderView extends Vue {
     grid-template-columns: minmax(400px, auto) 50%;
     grid-template-rows: auto auto auto;
     grid-template-areas:
-    "window   editor"
+        "window   editor"
         "info     textures"
-        "comments .";
+        "comments comments";
     grid-row-gap: 20px;
     grid-column-gap: 50px;
 }
@@ -257,7 +257,6 @@ export default class ShaderView extends Vue {
 
 .comments {
     grid-area: comments;
-    border: 2px dotted red;
 }
 
 .textures {

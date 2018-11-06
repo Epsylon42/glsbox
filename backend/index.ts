@@ -7,6 +7,8 @@ import Passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import Session from 'express-session';
 
+import { Converter as MDConverter } from 'showdown';
+
 import { db, Users, Shaders, ShaderTextures, Utils, UserRole, UsersInstance } from './db';
 import { Transaction as FileTransaction } from './file-storage';
 import { TextureKind } from '../common/texture-kind';
@@ -81,13 +83,18 @@ app.get("/view/:id", (req, res) => {
 });
 
 app.get("/browse", async (req, res) => {
+    const conv = new MDConverter();
+
     try {
         const shaders = await Shaders.findAll();
 
         res.render("browse", {
             user: req.user,
             styles: "browse.css",
-            shaders,
+            shaders: shaders.map(shader => {
+                (shader as any).descriptionHTML = conv.makeHtml(shader.description);
+                return shader;
+            }),
         });
     } catch (e) {
         console.error(e);
