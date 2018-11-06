@@ -1,14 +1,15 @@
 <template>
   <div class="info">
-    <div class="preview">
+
+    <div class="preview" v-if="canSave">
       <div class="preview-header">
         <p>Preview</p>
 
-        <button @click="removePreview" v-if="preview && canSave">
+        <button @click="removePreview" v-if="preview">
           <Icon name="trash" />
         </button>
 
-        <button @click="takePreview" v-else-if="canSave">
+        <button @click="takePreview" v-else>
           <Icon name="camera" />
         </button>
 
@@ -19,17 +20,15 @@
     </div>
 
     <div class="name">
-      <p>Name:</p>
-
-      <input type="text" v-model="name" v-if="canSave">
+      <input type="text" placeholder="name" v-model="name" v-if="canSave">
       <p class="immutable" v-else>{{ name }}</p>
     </div>
 
     <div class="description">
-      <p>Description:</p>
+      <textarea placeholder="description" v-model="description" v-if="canSave" />
 
-      <textarea v-model="description" v-if="canSave" />
-      <p class="immutable" v-else>{{ description }}</p>
+      <p v-if="canSave">Description preview:</p>
+      <div class="immutable" v-html="descriptionHTML" />
     </div>
   </div>
 </template>
@@ -66,6 +65,10 @@ export default class Info extends Vue {
         store.commit(Mutations.setDescription, description);
     }
 
+    private get descriptionHTML(): string {
+        return store.getters.descriptionHTML;
+    }
+
     private get preview(): Preview | null {
         return store.getters.preview;
     }
@@ -94,17 +97,13 @@ export default class Info extends Vue {
 <style scoped>
 
 .info {
-    display: grid;
-    grid-template-rows: auto auto;
-    grid-template-columns: 150px auto;
-    grid-template-areas:
-    "preview name"
-        "preview description";
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
 }
 
 .preview {
-    grid-area: preview;
-    
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -142,7 +141,7 @@ export default class Info extends Vue {
 
 
 .name {
-    grid-area: name;
+    width: 100%;
 }
 
 .name .immutable {
@@ -151,19 +150,18 @@ export default class Info extends Vue {
 }
 
 .description {
-    grid-area: description;
+    width: 100%;
 }
 
 .description textarea {
     resize: vertical;
     width: 100%;
-    height: 100%;
 }
 
 .description .immutable {
     margin: 0;
+    padding: 0px;
     width: 100%;
-    height: 100%;
     background-color: white;
 }
 

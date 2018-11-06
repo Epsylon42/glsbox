@@ -1,6 +1,8 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 
+import { Converter as MDConverter } from 'showdown';
+
 import FragShader, { Declaration, declarations } from './frag-shader.ts';
 import Preview from './preview.ts';
 import TextureData from './texture-data.ts';
@@ -25,13 +27,8 @@ export class StoreState {
 
     public textures: TextureData[] = [];
     public sendLock: boolean = false;
-}
 
-export interface IStore {
-    getters: {
-        getUniformStrings: string[],
-        getTextureUniforms: [string, Uniform][],
-    },
+    public converter = new MDConverter();
 }
 
 export const Mutations = {
@@ -102,6 +99,10 @@ export const store = new Vuex.Store({
 
         description(state: StoreState): string {
             return state.description;
+        },
+
+        descriptionHTML(state: StoreState): string {
+            return state.converter.makeHtml(state.description);
         },
 
         source(state: StoreState): string {
