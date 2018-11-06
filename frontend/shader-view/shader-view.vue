@@ -24,7 +24,7 @@
   </div>
 
   <div class="info">
-    <Info />
+    <Info v-if="showInfo" />
   </div>
   
   <div class="editor">
@@ -42,7 +42,7 @@
       <button @click="updateSource" title="run this code">
         <Icon name="arrow-left" />
       </button>
-      <button @click="upload" title="save">
+      <button @click="upload" title="save" v-if="canSave">
         <Icon name="save" />
       </button>
     </div>
@@ -90,10 +90,7 @@ import 'vue-awesome/icons/save.js';
     },
 })
 export default class ShaderView extends Vue {
-    @Prop({ type: Number }) shaderId?: number;
-    
     mounted() {
-        store.dispatch(Actions.requestShader, this.shaderId);
         this.$watch(
             () => (this.$refs.window as ShaderWindow).shaderTime,
             time => {
@@ -119,6 +116,14 @@ export default class ShaderView extends Vue {
         this.shaderSource = newSource;
     }
 
+    private get canSave(): boolean {
+        return store.getters.canSave;
+    }
+
+    private get showInfo(): boolean {
+        // don't show info if you are not logged in and are editing a new shader
+        return !(store.getters.user == null && store.getters.owner == null);
+    }
 
     private get declarations(): Declaration[] {
         return store.getters.declarations;

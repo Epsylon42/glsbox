@@ -62,6 +62,7 @@ app.get("/create", (req, res) => {
         mountPoints: {
             lib: "view",
             mount: "#content-app",
+            args: ["null", req.user && req.user.id || "null"],
         }
     });
 });
@@ -73,7 +74,7 @@ app.get("/view/:id", (req, res) => {
         mountPoints: {
             lib: "view",
             mount: "#content-app",
-            args: req.params.id,
+            args: [req.params.id, req.user && req.user.id || "null"],
         },
     });
 });

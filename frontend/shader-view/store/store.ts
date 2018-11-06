@@ -10,6 +10,12 @@ import { TextureKind } from '../../../common/texture-kind.ts';
 import { Uniform, Texture2DUniform, TextureCubeUniform } from 'wgl';
 
 export class StoreState {
+    // current logged in user
+    public user?: number = null;
+
+    // owner of the shader
+    public owner?: number = null;
+
     public id?: number = null;
     public mainShader?: FragShader = null;
     public preview?: Preview = null;
@@ -41,6 +47,8 @@ export const Mutations = {
     setId: "setId",
     setSendLock: "setSendLock",
     setPreview: "setPreview",
+    setUser: "setUser",
+    setOwner: "setOwner",
 };
 
 export const Actions = {
@@ -66,6 +74,18 @@ export const store = new Vuex.Store({
     state: new StoreState(),
 
     getters: {
+        user(state: StoreState): number | null {
+            return state.user;
+        },
+
+        owner(state: StoreState): number | null {
+            return state.owner;
+        },
+
+        canSave(state: StoreState): boolean {
+            return state.user != null && state.user === state.owner;
+        },
+
         shader(state: StoreState): FragShader | null {
             return state.mainShader;
         },
@@ -127,6 +147,14 @@ export const store = new Vuex.Store({
     },
 
     mutations: {
+        [Mutations.setUser] (state: StoreState, user?: number) {
+            state.user = user;
+        },
+
+        [Mutations.setOwner] (state: StoreState, owner?: number) {
+            state.owner = owner;
+        },
+
         [Mutations.setShader] (state: StoreState, shader: FragShader) {
             state.mainShader = shader;
         },
@@ -222,13 +250,14 @@ export const store = new Vuex.Store({
             commit(Mutations.updateShaderTextures);
         },
 
-        [Actions.setShader] ({ commit }, shader: RecvShaderData) {
+        [Actions.setShader] ({ state, commit }, shader: RecvShaderData) {
             commit(Mutations.setShader, shader.shader);
             if (shader.id >= 0) {
                 commit(Mutations.setId, shader.id);
             } else {
                 commit(Mutations.setId, null);
             }
+            commit(Mutations.setOwner, shader.owner != null ? shader.owner : state.user);
             commit(Mutations.setName, shader.name);
             commit(Mutations.setDescription, shader.description);
             commit(Mutations.setTextures, shader.textures);
@@ -238,10 +267,10 @@ export const store = new Vuex.Store({
             }
         },
 
-        [Actions.requestShader] ({ dispatch }, id?: number) {
-            (id ?
-                ShaderStorage.requestShader(id) :
-                ShaderStorage.requestDefaultShader())
+        [Actions.requestShader] ({ dispatch }, id?: number): Promise<void> {
+            return (id ?
+                    ShaderStorage.requestShader(id) :
+                    ShaderStorage.requestDefaultShader())
                 .then(shader => dispatch(Actions.setShader, shader))
         },
 

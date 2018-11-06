@@ -10,6 +10,7 @@ export class RecvShaderData {
         public name: string = "",
         public description: string = "",
         public textures: TextureData[] = [],
+        public owner?: number,
         public preview?: Preview,
     ) {}
 
@@ -24,7 +25,15 @@ export class RecvShaderData {
             return data;
         });
 
-        return new RecvShaderData(data.id, shader, data.name || "", data.description || "", textures, preview);
+        return new RecvShaderData(
+            data.id,
+            shader,
+            data.name || "",
+            data.description || "",
+            textures,
+            data.owner,
+            preview
+        );
     }
 }
 

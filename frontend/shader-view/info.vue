@@ -4,11 +4,11 @@
       <div class="preview-header">
         <p>Preview</p>
 
-        <button @click="removePreview" v-if="preview">
+        <button @click="removePreview" v-if="preview && canSave">
           <Icon name="trash" />
         </button>
 
-        <button @click="takePreview" v-else>
+        <button @click="takePreview" v-else-if="canSave">
           <Icon name="camera" />
         </button>
 
@@ -20,12 +20,16 @@
 
     <div class="name">
       <p>Name:</p>
-      <input type="text" v-model="name">
+
+      <input type="text" v-model="name" v-if="canSave">
+      <p class="immutable" v-else>{{ name }}</p>
     </div>
 
     <div class="description">
       <p>Description:</p>
-      <textarea v-model="description" />
+
+      <textarea v-model="description" v-if="canSave" />
+      <p class="immutable" v-else>{{ description }}</p>
     </div>
   </div>
 </template>
@@ -64,6 +68,10 @@ export default class Info extends Vue {
 
     private get preview(): Preview | null {
         return store.getters.preview;
+    }
+
+    private get canSave(): boolean {
+        return store.getters.canSave;
     }
 
 
@@ -143,6 +151,12 @@ export default class Info extends Vue {
 
 .description textarea {
     resize: vertical;
+    width: 100%;
+    height: 100%;
+}
+
+.description .immutable {
+    margin: 0;
     width: 100%;
     height: 100%;
 }
