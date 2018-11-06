@@ -7,7 +7,8 @@ import Passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import Session from 'express-session';
 
-import { db, Users, Shaders, ShaderTextures, Utils, FileStorage, UserRole, UsersInstance } from './db';
+import { db, Users, Shaders, ShaderTextures, Utils, UserRole, UsersInstance } from './db';
+import { Transaction as FileTransaction } from './file-storage';
 import { TextureKind } from '../common/texture-kind';
 
 Passport.use(new LocalStrategy((username, password, done) => {
@@ -202,6 +203,8 @@ app.post("/shaders", (req, res) => {
     const files = (req as any).files;
 
     db.transaction(async transaction => {
+        const ftrans = new FileTransaction();
+
         try {
             const shader = await Shaders.create({
                 owner: req.user.id,
@@ -211,8 +214,11 @@ app.post("/shaders", (req, res) => {
             }, { transaction });
 
             if (files.preview) {
+                const fdata = await ftrans.writeFile(files.preview[0].data, "glsbox-previews");
+
                 await shader.update({
-                    previewUrl: await FileStorage.writePreview(shader.id, files.preview[0].data),
+                    previewUrl: fdata.url,
+                    previewKey: fdata.id,
                 }, { transaction });
             }
 
@@ -221,24 +227,21 @@ app.post("/shaders", (req, res) => {
                     textureOptions.map(async opt => {
                         const file = files.textures[opt.file];
 
+                        const fdata = await ftrans.writeFile(file.data, "glsbox-textures");
+
                         //TODO verify data
                         const tex = await ShaderTextures.create({
                             shaderId: shader.id,
                             name: opt.name,
                             textureKind: opt.kind,
-                            url: "",
+                            url: fdata.url,
+                            key: fdata.id,
                         }, { transaction });
-
-                        const url = await FileStorage.writeTexture(
-                            tex.id,
-                            file.name,
-                            file.data
-                        );
-
-                        await tex.update({ url }, { transaction });
                     })
                 );
             }
+
+            await ftrans.commit();
 
             res.json({
                 ...(shader as any).dataValues,
@@ -247,6 +250,8 @@ app.post("/shaders", (req, res) => {
         } catch (e) {
             console.error(e);
             res.status(500).send("Internal server error");
+            await ftrans.rollback();
+            throw e;
         }
     });
 });
@@ -303,6 +308,8 @@ app.patch("/shaders/:id", (req, res) => {
     const files = (req as any).files;
 
     db.transaction(async transaction => {
+        const ftrans = new FileTransaction();
+
         try {
             const shader = await Shaders.findByPrimary(id, { transaction });
             if (!shader) {
@@ -315,6 +322,7 @@ app.patch("/shaders/:id", (req, res) => {
                 description?: string,
                 code?: string,
                 previewUrl?: string | null,
+                previewKey?: string | null,
             } = {};
 
             if (req.body.name) {
@@ -326,12 +334,15 @@ app.patch("/shaders/:id", (req, res) => {
             if (req.body.code) {
                 update.code = req.body.code;
             }
-            if (req.body.deletePreview || files.preview) {
-                await FileStorage.removePreview(shader.id);
+            if ((req.body.deletePreview || files.preview) && shader.previewKey) {
+                await ftrans.removeFile(shader.previewKey);
                 update.previewUrl = null;
+                update.previewKey = null;
             }
             if (files.preview) {
-                update.previewUrl = await FileStorage.writePreview(shader.id, files.preview[0].data);
+                const fdata = await ftrans.writeFile(files.preview[0].data, "glsbox-previews");
+                update.previewUrl = fdata.url;
+                update.previewKey = fdata.id;
             }
             await shader.update(update, { transaction });
 
@@ -347,14 +358,15 @@ app.patch("/shaders/:id", (req, res) => {
 
                             if (opt.delete) {
                                 await Promise.all([
-                                    FileStorage.removeTexture(tex.id),
-                                    tex.destroy()
+                                    ftrans.removeFile(tex.key),
+                                    tex.destroy({ transaction })
                                 ]);
                             } else {
                                 const update: {
                                     name?: string,
                                     kind?: TextureKind,
                                     url?: string,
+                                    key?: string,
                                 } = {
                                     name: opt.name,
                                     kind: opt.kind,
@@ -362,8 +374,10 @@ app.patch("/shaders/:id", (req, res) => {
 
                                 if (opt.file && files.textures && files.textures[opt.file]) {
                                     //TODO: report errors if there's no files
-                                    await FileStorage.removeTexture(tex.id);
-                                    update.url = await FileStorage.writeTexture(opt.id, opt.name || tex.name, files.textures[opt.file]);
+                                    await ftrans.removeFile(tex.key);
+                                    const fdata = await ftrans.writeFile(files.textures[opt.file], "glsbox-textures");
+                                    update.url = fdata.url;
+                                    update.key = fdata.id;
                                 }
 
                                 await tex.update(update, { transaction });
@@ -371,24 +385,21 @@ app.patch("/shaders/:id", (req, res) => {
                         } else if (opt.file != null && opt.name && opt.kind != null) {
                             const file = files.textures[opt.file];
 
+                            const fdata = await ftrans.writeFile(file.data, "glsbox-textures");
+
                             const tex = await ShaderTextures.create({
                                 shaderId: shader.id,
                                 name: opt.name,
                                 textureKind: opt.kind,
-                                url: ""
+                                url: fdata.url,
+                                key: fdata.id,
                             }, { transaction });
-
-                            const url = await FileStorage.writeTexture(
-                                tex.id,
-                                file.name,
-                                file.data,
-                            );
-
-                            await tex.update({ url }, { transaction });
                         }
                     })
                 );
             }
+
+            await ftrans.commit();
 
             res.json({
                 ...(shader as any).dataValues,
@@ -397,6 +408,8 @@ app.patch("/shaders/:id", (req, res) => {
         } catch (e) {
             console.error(e);
             res.status(500).send("Internal server error");
+            await ftrans.rollback();
+            throw e;
         }
     });
 });
@@ -421,52 +434,6 @@ app.get("/api/shaders/:id", async (req, res) => {
             ...shader.dataValues,
             textures: textures,
         });
-    } catch (e) {
-        console.error(e);
-        res.status(500).send("Internal server error");
-    }
-});
-
-app.get("/api/textures/:id", async (req, res) => {
-    try {
-        const id = Number(req.params.id);
-        if (!Number.isFinite(id)) {
-            res.status(400).send("Invalid id");
-            return;
-        }
-
-        try {
-            res.sendFile(await FileStorage.getTexturePath(id));
-        } catch (e) {
-            if (e.message === "Texture does not exist") {
-                res.status(404).send(e.message);
-            } else {
-                throw e;
-            }
-        }
-    } catch (e) {
-        console.error(e);
-        res.status(500).send("Internal server error");
-    }
-});
-
-app.get("/api/preview/:id", async (req, res) => {
-    try {
-        const id = Number(req.params.id);
-        if (!Number.isFinite(id)) {
-            res.status(400).send("Invalid id");
-            return;
-        }
-
-        try {
-            res.sendFile(await FileStorage.getPreviewPath(id));
-        } catch (e) {
-            if (e.message === "Preview does not exist") {
-                res.status(404).send(e.message);
-            } else {
-                throw e;
-            }
-        }
     } catch (e) {
         console.error(e);
         res.status(500).send("Internal server error");

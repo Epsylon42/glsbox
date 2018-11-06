@@ -145,6 +145,11 @@ export default class Info extends Vue {
     grid-area: name;
 }
 
+.name .immutable {
+    padding: 5px;
+    background-color: white;
+}
+
 .description {
     grid-area: description;
 }
@@ -159,6 +164,7 @@ export default class Info extends Vue {
     margin: 0;
     width: 100%;
     height: 100%;
+    background-color: white;
 }
 
 button {

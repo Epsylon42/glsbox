@@ -99,7 +99,9 @@ export interface ShadersAttributes {
     publishingDate?: Date,
     likeCount?: number,
     code: string,
+
     previewUrl?: string,
+    previewKey?: string,
 }
 
 export interface ShadersInstance extends Sequelize.Instance<ShadersAttributes>, ShadersAttributes {
@@ -156,6 +158,10 @@ export const Shaders = db.define<ShadersInstance, ShadersAttributes>("shaders", 
         type: Sequelize.TEXT,
         allowNull: true,
     },
+    previewKey: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+    },
 });
 
 
@@ -165,6 +171,7 @@ export interface ShaderTexturesAttributes {
     name: string,
     textureKind: TextureKind,
     url: string,
+    key: string,
 }
 
 export interface ShaderTexturesInstance extends Sequelize.Instance<ShaderTexturesAttributes>, ShaderTexturesAttributes {
@@ -191,6 +198,10 @@ export const ShaderTextures = db.define<ShaderTexturesInstance, ShaderTexturesAt
         allowNull: false,
     },
     url: {
+        type: Sequelize.TEXT,
+        allowNull: false,
+    },
+    key: {
         type: Sequelize.TEXT,
         allowNull: false,
     },
@@ -236,81 +247,6 @@ export module Utils {
                 published: true,
                 publishingDate: new Date(),
             });
-        } catch (e) {
-            throw e;
-        }
-    }
-}
-
-export module FileStorage {
-    const storagePath = path.join(path.dirname(path.dirname(__dirname)), "data");
-
-    export async function writeTexture(id: number, filename: string, texture: Buffer): Promise<string> {
-        try {
-            const texDir = path.join(storagePath, "textures", id.toString());
-            await fs.mkdir(texDir);
-            await fs.writeFile(path.join(texDir, filename), texture);
-            return `/api/textures/${id}`;
-        } catch (e) {
-            throw e;
-        }
-    }
-
-    export async function removeTexture(id: number) {
-        try {
-            const texDir = path.join(storagePath, "textures", id.toString());
-            if (await fs.pathExists(texDir)) {
-                await fs.remove(texDir);
-            }
-        } catch (e) {
-            throw e;
-        }
-    }
-
-    export async function getTexturePath(id: number): Promise<string> {
-        try {
-            const texDir = path.join(storagePath, "textures", id.toString());
-            if (!await fs.pathExists(texDir)) {
-                throw new Error("Texture does not exist")
-            }
-
-            const files = await fs.readdir(texDir);
-            if (files.length === 0) {
-                throw new Error("Texture does not exist");
-            }
-
-            return path.join(texDir, files[0]);
-        } catch (e) {
-            throw e;
-        }
-    }
-
-    export function writePreview(id: number, preview: Buffer): Promise<string> {
-        const previewDir = path.join(storagePath, "previews");
-        return fs
-            .writeFile(path.join(previewDir, `${id}.png`), preview)
-            .then(() => `/api/preview/${id}`);
-    }
-
-    export async function removePreview(id: number) {
-        try {
-            const preview = path.join(storagePath, "previews", `${id}.png`);
-            if (await fs.pathExists(preview)) {
-                await fs.remove(preview);
-            }
-        } catch (e) {
-            throw e;
-        }
-    }
-
-    export async function getPreviewPath(id: number): Promise<string> {
-        try {
-            const preview = path.join(storagePath, "previews", `${id}.png`);
-            if (!await fs.pathExists(preview)) {
-                throw new Error("Preview does not exist");
-            }
-
-            return preview;
         } catch (e) {
             throw e;
         }
