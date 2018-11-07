@@ -60,7 +60,7 @@ export default class Comment extends Vue {
     private get canEdit(): boolean {
         return this.asComment
             && store.getters.user != null
-            && store.getters.user === this.comment.author;
+            && store.getters.user.id === this.comment.author;
     }
     
     private get asComment(): CommentData | null {

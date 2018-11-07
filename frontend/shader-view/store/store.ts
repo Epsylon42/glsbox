@@ -6,13 +6,13 @@ import Preview from './preview.ts';
 import TextureData from './texture-data.ts';
 import CommentData, { GenericComment } from './comment.ts';
 
-import { ShaderStorage, PostShaderData, PatchShaderData, RecvShaderData, CommentStorage } from '../../backend.ts';
+import { ShaderStorage, PostShaderData, PatchShaderData, RecvShaderData, CommentStorage, UserStorage, RecvUser } from '../../backend.ts';
 import { TextureKind } from '../../../common/texture-kind.ts';
 import { Uniform, Texture2DUniform, TextureCubeUniform } from 'wgl';
 
 export class StoreState {
     // current logged in user
-    public user?: number = null;
+    public user?: RecvUser = null;
 
     // owner of the shader
     public owner?: number = null;
@@ -78,7 +78,7 @@ export const store = new Vuex.Store({
             return state.id;
         },
 
-        user(state: StoreState): number | null {
+        user(state: StoreState): RecvUser | null {
             return state.user;
         },
 
@@ -87,7 +87,7 @@ export const store = new Vuex.Store({
         },
 
         canSave(state: StoreState): boolean {
-            return state.user != null && state.user === state.owner;
+            return state.user && state.user.id === state.owner;
         },
 
         shader(state: StoreState): FragShader | null {
@@ -155,7 +155,7 @@ export const store = new Vuex.Store({
     },
 
     mutations: {
-        [Mutations.setUser] (state: StoreState, user?: number) {
+        [Mutations.setUser] (state: StoreState, user?: RecvUser) {
             state.user = user;
         },
 
