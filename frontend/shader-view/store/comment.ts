@@ -3,6 +3,7 @@ export class GenericComment {
     public author?: number = null;
     public text?: string = null;
     public parentComment?: number = null;
+    public lastEdited?: Date = null;
 
     public topComment: GenericComment = this;
 
@@ -23,13 +24,13 @@ export default class CommentData extends GenericComment {
         public author: number,
         public text: string,
         public parentComment: number | null = null,
-        children: CommentData[] = [],
-        public childrenTruncated: boolean = false,
     ) {
-        super(children);
+        super();
     }
 
+    public authorUsername?: string;
     public topComment: GenericComment = new GenericComment();
+    public childrenTruncated: boolean = false;
 
     public static fromObject(obj: any): CommentData {
         if (!(obj.id != null && obj.author != null && obj.text)) {
@@ -44,13 +45,33 @@ export default class CommentData extends GenericComment {
             children = obj.children;
         }
 
-        return new CommentData(
+        let authorId: number;
+        if (typeof obj.author === "number") {
+            authorId = obj.author;
+        } else {
+            authorId = obj.author.id;
+        }
+
+        const data = new CommentData(
             obj.id,
-            obj.author,
+            authorId,
             obj.text,
             obj.parentComment,
-            children.map(child => CommentData.fromObject(child)),
-            truncated,
         );
+
+        if (obj.author.username) {
+            data.authorUsername = obj.author.username;
+        }
+
+        data.childrenTruncated = truncated;
+        data.children = children.map(child => CommentData.fromObject(child));
+
+        if (obj.lastEdited) {
+            data.lastEdited = new Date(obj.lastEdited);
+        }
+
+        data.authorUsername = obj.author.username;
+
+        return data;
     }
 }

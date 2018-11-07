@@ -46,6 +46,7 @@ export const Mutations = {
     setUser: "setUser",
     setOwner: "setOwner",
     setRootComment: "setRootComment",
+    modifyComment: "modifyComment",
 };
 
 export const Actions = {
@@ -227,6 +228,10 @@ export const store = new Vuex.Store({
         [Mutations.setRootComment] (state: StoreState, comment: GenericComment) {
             state.rootComment = comment;
         },
+
+        [Mutations.modifyComment] (state: StoreState, args: { comment: Comment, callback: (comment: Comment) => void }) {
+            args.callback(args.comment);
+        }
     },
 
     actions: {
@@ -317,7 +322,6 @@ export const store = new Vuex.Store({
         },
 
         [Actions.requestComment] ({ state, commit }, parent?: number): Promise<void> {
-            console.log(state.id);
             if (state.id != null) {
                 return CommentStorage
                     .requestComments(state.id, parent)

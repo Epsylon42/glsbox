@@ -11,20 +11,21 @@
     
     <div class="controls">
       <button @click="reply" v-if="canReply">reply</button>
+      <button @click="edit" v-if="canEdit">edit</button>
     </div>
     
   </div>
   
-  <div class="editor" v-if="replyText != null">
-    <textarea v-model="replyText" />
+  <div class="editor" v-if="sendText != null">
+    <textarea v-model="sendText" />
     
     <div class="controls">
-      <button @click="sendReply">send</button>
-      <button @click="cancelReply">cancel</button>
+      <button @click="sendEditor">send</button>
+      <button @click="cancelEditor">cancel</button>
     </div>
     
-    <p v-if="replyText.length > 0">Preview</p>
-    <div class="reply-preview" v-html="replyHTML" v-if="replyText.length > 0" />
+    <p v-if="sendText.length > 0">Preview</p>
+    <div class="reply-preview" v-html="sendHTML" v-if="sendText.length > 0" />
   </div>
   
   <ul class="children">
@@ -40,20 +41,26 @@
     
 import { Vue, Component, Prop } from 'vue-property-decorator';
 
-import { store } from './store/store.ts';
+import { store, Mutations } from './store/store.ts';
 import CommentData, { GenericComment } from './store/comment.ts';
-import { SendCommentData, CommentStorage } from '../backend.ts';
+import { SendCommentData, PatchCommentData, CommentStorage } from '../backend.ts';
 
 import { MDConverter } from './converter.ts';
 
 @Component
 export default class Comment extends Vue {
     @Prop({ type: GenericComment, required: true }) comment: GenericComment;
-
+    
     private get canReply(): boolean {
         return store.getters.user != null && store.getters.id != null;
     }
-
+    
+    private get canEdit(): boolean {
+        return this.asComment
+            && store.getters.user != null
+            && store.getters.user === this.comment.author;
+    }
+    
     private get asComment(): CommentData | null {
         if (this.comment instanceof CommentData) {
             return this.comment as CommentData;
@@ -61,48 +68,75 @@ export default class Comment extends Vue {
             return null;
         }
     }
-
+    
     private get id(): string {
         return `comment-${this.comment.id || "root"}`;
     }
-
+    
     private get commentHTML(): string {
         return MDConverter.makeHtml(this.asComment.text);
     }
-
+    
     private get children(): CommentData[] {
         return this.comment.children;
     }
-
-
-    private replyText?: string = null;
-
+    
+    
+    private sendText?: string = null;
+    private sendReply: boolean = true;
+    
     private reply() {
-        this.replyText = "";
+        this.sendText = "";
+        this.sendReply = true;
+    }
+    
+    private edit() {
+        this.sendText = this.comment.text;
+        this.sendReply = false;
+    }
+    
+    private cancelEditor() {
+        this.sendText = null;
+    }
+    
+    private sendEditor() {
+        const data = this.sendText as string;
+        this.sendText = null;
+        
+        if (this.sendReply) {
+            CommentStorage
+                .postComment(new SendCommentData(
+                    data,
+                    store.getters.id as number,
+                    this.comment.id,
+                ))
+                .then(comment => {
+                    store.commit(Mutations.modifyComment, {
+                        comment: this.comment,
+                        callback: com => com.children.push(comment)
+                    });
+                });
+        } else {
+            CommentStorage
+                .patchComment(new PatchCommentData(
+                    this.comment.id,
+                    data,
+                ))
+                .then(comment => {
+                    store.commit(Mutations.modifyComment, {
+                        comment: this.comment,
+                        callback: com => {
+                            com.text = comment.text;
+                            com.lastEdited = comment.lastEdited;
+                        }
+                    });
+                });
+        }
+
     }
 
-    private cancelReply() {
-        this.replyText = null;
-    }
-
-    private sendReply() {
-        const reply = this.replyText as string;
-        this.replyText = null;
-
-        CommentStorage
-            .postComment(new SendCommentData(
-                store.getters.user as number,
-                reply,
-                store.getters.id as number,
-                this.comment.id,
-            ))
-            .then(comment => {
-                this.comment.children.push(comment);
-            });
-    }
-
-    private get replyHTML(): string {
-        return MDConverter.makeHtml(this.replyText);
+    private get sendHTML(): string {
+        return MDConverter.makeHtml(this.sendText);
     }
 }
 </script>

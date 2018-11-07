@@ -171,10 +171,16 @@ gl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
 
 export class SendCommentData {
     constructor(
-        public author: number,
         public text: string,
         public parentShader: number,
         public parentComment?: number,
+    ) {}
+}
+
+export class PatchCommentData {
+    constructor(
+        public id: number,
+        public text: string,
     ) {}
 }
 
@@ -193,18 +199,37 @@ export module CommentStorage {
     }
 
     export function postComment(data: SendCommentData): Promise<CommentData> {
-        const form = new FormData();
-        form.append("author", data.author.toString());
-        form.append("text", data.text);
-        if (data.parentComment != null) {
-            form.append("parentComment", data.parentComment.toString());
-        }
-
-        return fetch(`/comments/${data.parentShader}`, {
+        return fetch("/api/comments", {
             method: "POST",
-            body: form,
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data),
         })
             .then(response => response.json())
             .then(json => CommentData.fromObject(json));
+    }
+
+    export function patchComment(data: PatchCommentData): Promise<CommentData> {
+        return fetch("/api/comments", {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data),
+        })
+            .then(response => response.json())
+            .then(json => CommentData.fromObject(json));
+    }
+
+    function deleteComment(id: number): Promise<void> {
+        return fetch("/api/comments", {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ id })
+        })
+            .then(() => {});
     }
 }

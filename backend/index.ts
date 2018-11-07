@@ -1,6 +1,7 @@
 import Express from 'express';
 import Mustache from 'mustache-express';
-import BodyParser from 'busboy-body-parser';
+import BusboyBodyParser from 'busboy-body-parser';
+import BodyParser from 'body-parser';
 import path from 'path';
 import Sequelize from 'sequelize';
 import Passport from 'passport';
@@ -45,7 +46,8 @@ Passport.deserializeUser((id: number, done) => {
 const app = Express();
 
 app.use(Express.static(path.join("frontend-dist", "static")));
-app.use(BodyParser({ limit: "10mb", multi: true }))
+app.use(BusboyBodyParser({ limit: "10mb", multi: true }))
+app.use(BodyParser.json());
 app.use(Session({ secret: process.env.SESSION_SECRET || "default_secret" }));
 app.use(Passport.initialize());
 app.use(Passport.session());
@@ -459,24 +461,29 @@ app.get("/api/comments/:shaderId", async (req, res) => {
     }
 });
 
-app.post("/comments/:shaderId", async (req, res) => {
+app.post("/api/comments", async (req, res) => {
     try {
-        const id = Number(req.params.shaderId);
-        if (!Number.isFinite(id)) {
-            res.status(400).send("Invalid shader id");
+        if (!req.user) {
+            res.status(401).send("Unauthenticated");
             return;
         }
+
+        if (!req.body) {
+            res.status(400).send("No request body");
+            return;
+        }
+
+        if (!(req.body.parentShader != null && req.body.text)) {
+            res.status(400).send("Invalid request");
+            return;
+        }
+
+        const id = req.body.parentShader;
 
         if (!await Shaders.findByPrimary(id)) {
             res.status(404).send("Parent shader not found");
             return;
         }
-
-        if (!(req.body.author != null && req.body.text)) {
-            res.status(400).send("Invalid request");
-            return;
-        }
-
 
         let parentComment: number | undefined;
         if (req.body.parentComment != null) {
@@ -487,13 +494,51 @@ app.post("/comments/:shaderId", async (req, res) => {
         }
 
         const comment = await Comments.create({
-            author: req.body.author,
-            text: req.body.text || "",
-            parentShader: id,
+            author: req.user.id,
+            text: req.body.text,
+            parentShader: req.body.parentShader,
             parentComment,
         });
 
         res.json(comment);
+    } catch (e) {
+        console.error(e);
+        res.status(500).send("Internal server error");
+    }
+});
+
+app.patch("/api/comments", async (req, res) => {
+    try {
+        if (!req.user) {
+            res.status(401).send("Unauthenticated");
+            return;
+        }
+
+        if (!req.body) {
+            res.status(400).send("No request body");
+            return;
+        }
+
+        if (!(req.body.id != null && req.body.text)) {
+            res.status(400).send("Invalid request");
+            return;
+        }
+
+        const comment = await Comments.findByPrimary(req.body.id);
+        if (!comment) {
+            res.status(404).send("Comment not found");
+            return;
+        }
+
+        if (comment.author !== req.user.id) {
+            res.status(403).send("You are not allowed to edit this comment");
+            return;
+        }
+
+        res.json(await comment.update({
+            text: req.body.text,
+            lastEdited: new Date(),
+        }));
     } catch (e) {
         console.error(e);
         res.status(500).send("Internal server error");
