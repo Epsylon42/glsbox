@@ -15,8 +15,7 @@ export class RecvShaderData {
         public preview?: Preview,
     ) {}
 
-    public static fromResponse(str: string): RecvShaderData {
-        const data = JSON.parse(str);
+    public static fromJson(data: any): RecvShaderData {
         const shader = new FragShader(data.code);
         //append time to force reload image if it is already loaded
         const preview = data.previewUrl && new Preview(data.previewUrl + `#${new Date().getTime()}`);
@@ -69,22 +68,9 @@ gl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
     }
 
     export function requestShader(id: number): Promise<RecvShaderData> {
-        return new Promise((resolve, reject) => {
-            const req = new XMLHttpRequest();
-            req.open("GET", `/api/shaders/${id}`);
-            req.onloadend = () => {
-                if (req.status === 200) {
-                    try {
-                        resolve(RecvShaderData.fromResponse(req.responseText));
-                    } catch (e) {
-                        reject(e);
-                    }
-                } else {
-                    reject(new Error(req.responseText));
-                }
-            };
-            req.send();
-        })
+        return fetch(`/api/shaders/${id}`)
+            .then(response => response.json())
+            .then(json => RecvShaderData.fromJson(json));
     }
 
     export function postShader(data: PostShaderData): Promise<RecvShaderData> {
@@ -117,23 +103,12 @@ gl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
             form.append("textureOptions", JSON.stringify(textureOptions));
         }
 
-        return new Promise((resolve, reject) => {
-            const req = new XMLHttpRequest();
-            req.open("POST", `/shaders`);
-            req.onloadend = () => {
-                if (req.status === 200) {
-                    try {
-                        resolve(RecvShaderData.fromResponse(req.responseText));
-                    } catch (e) {
-                        reject(e);
-                    }
-                } else {
-                    reject(new Error(req.responseText));
-                }
-            }
-
-            req.send(form);
-        });
+        return fetch(`/shaders`, {
+            method: "POST",
+            body: form,
+        })
+            .then(response => response.json())
+            .then(json => RecvShaderData.fromJson(json));
     }
 
     export function patchShader(data: PatchShaderData): Promise<RecvShaderData> {
@@ -185,23 +160,12 @@ gl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
             form.append("textureOptions", JSON.stringify(textureOptions));
         }
 
-        return new Promise((resolve, reject) => {
-            const req = new XMLHttpRequest();
-            req.open("PATCH", `/shaders/${data.id}`);
-            req.onloadend = () => {
-                if (req.status === 200) {
-                    try {
-                        resolve(RecvShaderData.fromResponse(req.responseText));
-                    } catch (e) {
-                        reject(e);
-                    }
-                } else {
-                    reject(new Error(req.responseText));
-                }
-            }
-
-            req.send(form);
-        });
+        return fetch(`/shaders/${data.id}`, {
+            method: "PATCH",
+            body: form,
+        })
+            .then(response => response.json())
+            .then(json => RecvShaderData.fromJson(json));
     }
 }
 
@@ -216,27 +180,16 @@ export class SendCommentData {
 
 export module CommentStorage {
     export function requestComments(shader: number, parent?: number): Promise<CommentData[]> {
-        return new Promise((resolve, reject) => {
-            const req = new XMLHttpRequest();
-            if (parent != null) {
-                req.open("GET", `/api/comments/${shader}?parent=${parent}`);
-            } else {
-                req.open("GET", `/api/comments/${shader}`);
-            }
-            req.onloadend = () => {
-                if (req.status === 200) {
-                    try {
-                        const arr = JSON.parse(req.responseText);
-                        resolve(arr.map(el => CommentData.fromObject(el)));
-                    } catch (e) {
-                        reject(e);
-                    }
-                } else {
-                    reject(new Error(req.responseText));
-                }
-            }
-            req.send();
-        });
+        let promise: Promise<Response>;
+        if (parent != null) {
+            promise = fetch(`/api/comments/${shader}?parent=${parent}`);
+        } else {
+            promise = fetch(`/api/comments/${shader}`);
+        }
+
+        return promise
+            .then(response => response.json())
+            .then(json => json.map(el => CommentData.fromObject(el)));
     }
 
     export function postComment(data: SendCommentData): Promise<CommentData> {
@@ -247,21 +200,11 @@ export module CommentStorage {
             form.append("parentComment", data.parentComment.toString());
         }
 
-        return new Promise((resolve, reject) => {
-            const req = new XMLHttpRequest();
-            req.open("POST", `/comments/${data.parentShader}`);
-            req.onloadend = () => {
-                if (req.status === 200) {
-                    try {
-                        resolve(CommentData.fromObject(JSON.parse(req.responseText)));
-                    } catch (e) {
-                        reject(e);
-                    }
-                } else {
-                    reject(new Error(req.responseText));
-                }
-            };
-            req.send(form);
-        });
+        return fetch(`/comments/${data.parentShader}`, {
+            method: "POST",
+            body: form,
+        })
+            .then(response => response.json())
+            .then(json => CommentData.fromObject(json));
     }
 }
