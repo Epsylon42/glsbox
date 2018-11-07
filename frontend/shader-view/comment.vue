@@ -4,7 +4,9 @@
   <div class="comment-head">
 
     <div class="comment-info" v-if="asComment">
-
+      <p><a :href="info.author.ref">{{info.author.username}}</a></p>
+      <p>posted {{info.posted}}</p>
+      <p v-if="info.edited">edited {{info.edited}}</p>
     </div>
     
     <div class="comment-text" v-html="commentHTML" v-if="asComment" />
@@ -67,6 +69,20 @@ export default class Comment extends Vue {
         } else {
             return null;
         }
+    }
+
+    private get info(): object {
+        const edited = this.comment.lastEdited;
+        const posted = this.comment.posted;
+
+        return {
+            author: {
+                ref: `/users/${this.comment.author}`,
+                username: this.comment.authorUsername,
+            },
+            edited: edited && `${edited.toLocaleDateString()} | ${edited.toLocaleTimeString()}`,
+            posted: posted && `${posted.toLocaleDateString()} | ${posted.toLocaleTimeString()}`,
+        };
     }
     
     private get id(): string {
@@ -149,6 +165,26 @@ export default class Comment extends Vue {
     padding: 5px;
     
     background-color: #f9f9f9;
+}
+
+.comment-info {
+    display: flex;
+    flex-direction: row;
+}
+
+.comment-info p {
+    margin: 0;
+    margin-left: 20px;
+    font-size: 10pt;
+    color: grey;
+}
+
+.comment-info p:first-child {
+    margin-left: 0;
+}
+
+.comment-info a {
+    text-decoration: none;
 }
 
 button {

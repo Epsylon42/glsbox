@@ -4,6 +4,8 @@ export class GenericComment {
     public text?: string = null;
     public parentComment?: number = null;
     public lastEdited?: Date = null;
+    public posted?: Date = null;
+    public authorUsername?: string = null;
 
     public topComment: GenericComment = this;
 
@@ -24,11 +26,11 @@ export default class CommentData extends GenericComment {
         public author: number,
         public text: string,
         public parentComment: number | null = null,
+        public posted: Date = new Date(),
     ) {
         super();
     }
 
-    public authorUsername?: string;
     public topComment: GenericComment = new GenericComment();
     public childrenTruncated: boolean = false;
 
@@ -57,6 +59,7 @@ export default class CommentData extends GenericComment {
             authorId,
             obj.text,
             obj.parentComment,
+            new Date(obj.posted),
         );
 
         if (obj.author.username) {

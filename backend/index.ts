@@ -500,7 +500,19 @@ app.post("/api/comments", async (req, res) => {
             parentComment,
         });
 
-        res.json(comment);
+        const author = await Users.findByPrimary(comment.author);
+        if (author) {
+            res.json({
+                ...(comment as any).dataValues,
+                author: {
+                    id: author.id,
+                    username: author.username,
+                },
+            })
+        } else {
+            res.json(comment);
+        }
+
     } catch (e) {
         console.error(e);
         res.status(500).send("Internal server error");

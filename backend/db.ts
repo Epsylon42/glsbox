@@ -214,11 +214,13 @@ export interface CommentsAttributes {
     text: string,
     parentShader: number,
     parentComment?: number,
+    posted?: Date,
     lastEdited?: Date,
 }
 
 export interface CommentsInstance extends Sequelize.Instance<CommentsAttributes>, CommentsAttributes {
     id: number,
+    posted: Date,
 }
 
 export interface CommentExt {
@@ -248,6 +250,11 @@ export const Comments = db.define<CommentsInstance, CommentsAttributes>("comment
     parentComment: {
         type: Sequelize.INTEGER,
         allowNull: true,
+    },
+    posted: {
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.NOW,
+        allowNull: false,
     },
     lastEdited: {
         type: Sequelize.DATE,
