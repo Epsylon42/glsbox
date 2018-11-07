@@ -2,6 +2,7 @@ import FragShader from './shader-view/store/frag-shader.ts';
 import TextureData from './shader-view/store/texture-data.ts';
 import Preview from './shader-view/store/preview.ts';
 import { TextureKind } from '../common/texture-kind.ts';
+import { UserRole } from '../common/user-role.ts';
 import CommentData from './shader-view/store/comment.ts';
 
 export class RecvShaderData {
@@ -231,5 +232,53 @@ export module CommentStorage {
             body: JSON.stringify({ id })
         })
             .then(() => {});
+    }
+}
+
+
+export class RecvUser {
+    constructor(
+        public id: number,
+        public username: string,
+        public role: UserRole,
+    ) {}
+
+    public email?: string;
+    public shaders: { id: number, name: string }[] = [];
+
+    public static fromJson(obj: any): RecvUser {
+        if (!(obj.id != null && obj.username && obj.role != null)) {
+            throw new Error("Not enought fields");
+        }
+
+        const user = new RecvUser(
+            obj.id,
+            obj.username,
+            obj.role
+        );
+
+        if (obj.email) {
+            user.email = obj.email;
+        }
+
+        if (obj.shaders) {
+            user.shaders = obj.shaders;
+        }
+
+        return user;
+    }
+}
+
+export module UserStorage {
+    export function requestUser(id: number): Promise<RecvUser> {
+        return fetch(`/api/users/${id}`)
+            .then(response => response.json())
+            .then(json => RecvUser.fromJson(json));
+    }
+
+    export function requestMe(): Promise<RecvUser> {
+        return fetch("/api/users/me")
+            .then(response => response.json())
+            .then(json => RecvUser.fromJson(json));
     }
 }

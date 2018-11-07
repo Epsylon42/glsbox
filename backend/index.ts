@@ -10,7 +10,7 @@ import Session from 'express-session';
 
 import { Converter as MDConverter } from 'showdown';
 
-import { db, Users, Shaders, ShaderTextures, Comments, Utils, UserRole, UsersInstance } from './db';
+import { db, Users, Shaders, ShaderTextures, Comments, Utils, UsersInstance } from './db';
 import { Transaction as FileTransaction } from './file-storage';
 import { TextureKind } from '../common/texture-kind';
 
@@ -104,6 +104,18 @@ app.get("/browse", async (req, res) => {
     }
 });
 
+app.get("/users/:id", async (req, res) => {
+    res.render("index", {
+        user: req.user,
+        scripts: "user.js",
+        mountPoints: {
+            lib: "user",
+            mount: "#content-app",
+            args: req.params.id,
+        }
+    });
+});
+
 app.get("/login", (req, res) => {
     res.render("auth", {
         user: req.user,
@@ -145,7 +157,6 @@ app.post("/register", async (req, res) => {
         const user = await Users.create({
             username: req.body.username,
             password: req.body.password,
-            role: UserRole.user,
         });
 
         req.login(user, err => {
@@ -556,6 +567,44 @@ app.patch("/api/comments", async (req, res) => {
         res.status(500).send("Internal server error");
     }
 });
+
+app.get("/api/users/me", (req, res) => {
+    if (!req.user) {
+        res.status(401).send("Unaunenticated");
+        return;
+    }
+
+    res.redirect(`/api/users/${req.user.id}`);
+});
+
+app.get("/api/users/:id", async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            res.status(400).send("Invalid id");
+            return;
+        }
+
+        const user = await Users.findByPrimary(id);
+        if (!user) {
+            res.status(404).send("User not found");
+            return;
+        }
+
+        const shaders = await Shaders.findAll({ where: { owner: user.id } });
+
+        res.json({
+            id: user.id,
+            username: user.username,
+            role: user.role,
+            email: user.email || null,
+            shaders: shaders.map(shader => ({ id: shader.id, name: shader.name })),
+        });
+    } catch (e) {
+        console.error(e);
+        res.status(500).send("Internal server error");
+    }
+})
 
 db.sync({ force: false }).then(() => {
     console.log("Database initialized");

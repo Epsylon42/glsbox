@@ -4,12 +4,7 @@ import path from 'path';
 
 import crypto from 'crypto';
 import { TextureKind } from '../common/texture-kind';
-
-export enum UserRole {
-    admin = 0,
-    moderator,
-    user,
-}
+import { UserRole } from '../common/user-role';
 
 export const db = new Sequelize("postgres://tempuser:temppass@localhost:5432/glsbox", {
     define: {
@@ -22,7 +17,7 @@ export const db = new Sequelize("postgres://tempuser:temppass@localhost:5432/gls
 export interface UsersAttributes {
     id?: number,
     username: string,
-    role: UserRole,
+    role?: UserRole,
     registrationDate?: Date,
     passwordHash?: string,
     passwordSalt?: string,
@@ -32,6 +27,7 @@ export interface UsersAttributes {
 
 export interface UsersInstance extends Sequelize.Instance<UsersAttributes>, UsersAttributes {
     id: number,
+    role: UserRole,
     registrationDate: Date,
     passwordHash: string,
     passwordSalt: string,
@@ -52,7 +48,7 @@ export const Users = db.define<UsersInstance, UsersAttributes>("users", {
     },
     role: {
         type: Sequelize.SMALLINT,
-        defaultValue: UserRole.user,
+        defaultValue: UserRole.User,
         allowNull: false,
     },
     registrationDate: {
