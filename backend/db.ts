@@ -6,7 +6,7 @@ import crypto from 'crypto';
 import { TextureKind } from '../common/texture-kind';
 import { UserRole } from '../common/user-role';
 
-export const db = new Sequelize("postgres://tempuser:temppass@localhost:5432/glsbox", {
+export const db = new Sequelize(process.env.DATABASE_URL || "postgres://tempuser:temppass@localhost:5432/glsbox", {
     define: {
         timestamps: false,
     },
