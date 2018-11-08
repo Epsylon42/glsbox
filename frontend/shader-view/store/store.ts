@@ -87,7 +87,7 @@ export const store = new Vuex.Store({
         },
 
         canSave(state: StoreState): boolean {
-            return state.user && state.user.id === state.owner;
+            return state.user && (state.user.id === state.owner || state.id == null);
         },
 
         shader(state: StoreState): FragShader | null {
