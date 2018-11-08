@@ -608,7 +608,7 @@ app.get("/api/users/:id", async (req, res) => {
 
 db.sync({ force: false }).then(() => {
     console.log("Database initialized");
-    app.listen(3000, () => {
+    app.listen(process.env.PORT || 3000, () => {
         console.log("ready");
     });
 }).catch(err => {
