@@ -22,7 +22,7 @@ export class Transaction {
                 if (err) {
                     reject(err);
                 } else {
-                    const data = new FileData(res.url, res.public_id);
+                    const data = new FileData(res.secure_url || res.url, res.public_id);
                     this.uploaded.push(data.id);
                     resolve(data);
                 }
