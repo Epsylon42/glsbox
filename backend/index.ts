@@ -10,7 +10,7 @@ import Session from 'express-session';
 
 import { Converter as MDConverter } from 'showdown';
 
-import { db, Users, Shaders, ShaderTextures, Comments, Utils, UsersInstance } from './db';
+import { db, Users, Shaders, ShaderTextures, ShaderTexturesInstance, Comments, Utils, UsersInstance } from './db';
 import { Transaction as FileTransaction } from './file-storage';
 import { TextureKind } from '../common/texture-kind';
 
@@ -242,15 +242,16 @@ app.post("/shaders", (req, res) => {
                 }, { transaction });
             }
 
+            let textures: ShaderTexturesInstance[] = [];
             if (files.textures && textureOptions) {
-                await Promise.all(
+                textures = await Promise.all(
                     textureOptions.map(async opt => {
                         const file = files.textures[opt.file];
 
                         const fdata = await ftrans.writeFile(file.data, "glsbox-textures");
 
                         //TODO verify data
-                        const tex = await ShaderTextures.create({
+                        return ShaderTextures.create({
                             shaderId: shader.id,
                             name: opt.name,
                             textureKind: opt.kind,
@@ -265,7 +266,7 @@ app.post("/shaders", (req, res) => {
 
             res.json({
                 ...(shader as any).dataValues,
-                textures: await ShaderTextures.findAll({ where: { shaderId: shader.id } }),
+                textures,
             });
         } catch (e) {
             console.error(e);
