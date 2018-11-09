@@ -20,8 +20,8 @@ export class RecvShaderData {
         const shader = new FragShader(data.code);
         //append time to force reload image if it is already loaded
         const preview = data.previewUrl && new Preview(data.previewUrl + `#${new Date().getTime()}`);
-        const textures = data.textures.map(({ id, name, kind, url }) => {
-            const data = new TextureData(url, name, kind);
+        const textures = data.textures.map(({ id, name, textureKind, url }) => {
+            const data = new TextureData(url, name, textureKind);
             data.id = id;
             return data;
         });
