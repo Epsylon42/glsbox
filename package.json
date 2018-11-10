@@ -16,6 +16,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@types/codemirror": "0.0.67",
         "@types/express": "^4.16.0",
         "@types/express-session": "^1.15.11",
         "@types/fs-extra": "^5.0.4",
@@ -25,9 +26,11 @@
         "@types/showdown": "^1.7.5",
         "busboy-body-parser": "^0.3.2",
         "cloudinary": "^1.11.0",
+        "codemirror": "^5.41.0",
         "express": "^4.16.3",
         "express-session": "^1.15.6",
         "fs-extra": "^7.0.0",
+        "glsl-editor": "^1.0.0",
         "mustache-express": "^1.2.8",
         "passport": "^0.4.0",
         "passport-local": "^1.0.0",
@@ -37,6 +40,7 @@
         "showdown": "^1.8.7",
         "vue": "^2.5.17",
         "vue-awesome": "^3.1.3",
+        "vue-codemirror": "^4.0.5",
         "vue-property-decorator": "^7.0.0",
         "vuex": "^3.0.1",
         "wgl": "file:wgl"

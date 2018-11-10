@@ -36,7 +36,7 @@
       </tr>
     </table>
 
-    <textarea v-model="shaderSource"></textarea>
+    <VueCodemirror v-model="shaderSource" :options="cmOptions" />
     
     <div class="controls">
       <button class="svg-button" @click="updateSource" title="run this code">
@@ -69,6 +69,13 @@ import Textures from './textures.vue';
 import Info from './info.vue';
 import Comment from './comment.vue';
 
+import { CodeMirror as CM, codemirror as VueCodemirror } from 'vue-codemirror';
+import 'codemirror/lib/codemirror.css';
+import 'codemirror/theme/ambiance.css';
+
+import * as glsl from 'glsl-editor/glsl';
+glsl(CM);
+
 import { ShaderStorage } from '../backend.ts';
 import { store, Mutations, Actions } from './store/store.ts';
 import TextureData from './store/texture-data.ts';
@@ -93,9 +100,15 @@ import 'vue-awesome/icons/spinner.js';
         Info,
         Comment,
         Icon,
+        VueCodemirror,
     },
 })
 export default class ShaderView extends Vue {
+    private cmOptions = {
+        lineNumbers: true,
+        mode: "glsl",
+    };
+
     mounted() {
         this.$watch(
             () => (this.$refs.window as ShaderWindow).shaderTime,
