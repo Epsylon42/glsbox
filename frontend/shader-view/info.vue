@@ -5,11 +5,11 @@
       <div class="preview-header">
         <p>Preview</p>
 
-        <button @click="removePreview" v-if="preview">
+        <button class="svg-button" @click="removePreview" v-if="preview">
           <Icon name="trash" />
         </button>
 
-        <button @click="takePreview" v-else>
+        <button class="svg-button" @click="takePreview" v-else>
           <Icon name="camera" />
         </button>
 
@@ -19,16 +19,16 @@
       <div class="preview-placeholder" v-else />
     </div>
 
-    <div class="name">
+    <div class="name-box">
       <input type="text" placeholder="name" v-model="name" v-if="canSave">
-      <p class="immutable" v-else>{{ name }}</p>
+      <p class="immutable text-box" v-else>{{ name }}</p>
     </div>
 
-    <div class="description">
+    <div class="description-box">
       <textarea placeholder="description" v-model="description" v-if="canSave" />
 
       <p v-if="canSave">Description preview:</p>
-      <div class="immutable" :class="{ 'description-preview': canSave }" v-html="descriptionHTML" />
+      <div class="immutable text-box" :class="{ 'description-preview': canSave }" v-html="descriptionHTML" />
     </div>
   </div>
 </template>
@@ -127,70 +127,31 @@ export default class Info extends Vue {
     height: 30px;
 }
 
-.preview p {
-    margin: 0;
-}
-
-.preview button {
-    border-width: 0;
-    padding: 5px;
-}
-
 .preview > img, .preview-placeholder {
     height: 90px;
     border-radius: 0 0 15px 15px;
 }
 
 
-.name {
+.name-box, .description-box {
     width: 100%;
 }
 
-.name .immutable {
-    padding: 5px;
-    background-color: white;
+.name-box .immutable {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
 }
 
-.description {
-    width: 100%;
-}
-
-.description textarea {
+.description-box textarea {
     resize: vertical;
     width: 100%;
 }
 
-.description .immutable {
+.immutable {
     margin: 0;
-    padding: 0px;
     width: 100%;
-    background-color: white;
     min-height: 20px;
-}
-
-.description-preview {
-    border: 1px solid grey;
-}
-
-button {
-    display: flex;
-    flex-direction: row;
-    align-content: center;
-    justify-content: center;
-    
-    border: none;
-    background-color: rgba(0, 0, 0, 0);
-    padding-left: 5px;
-    padding-right: 5px;
-}
-
-button svg {
-    height: 100%;
-    width: auto;
-}
-
-button:active svg {
-    color: black;
 }
 
 p {

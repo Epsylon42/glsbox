@@ -1,6 +1,6 @@
 <template>
   <div class="auth">
-    <component class="form" :is="form" />
+    <component class="form card" :is="form" />
   </div>
 </template>
 
@@ -47,9 +47,6 @@ export default class Auth extends Vue {
 
     margin-top: 100px;
     min-height: 200px;
-    padding: 10px;
-    box-shadow: 2px 2px 2px;
-    background-color: #f9f9f9;
 }
 
 .auth h1 {

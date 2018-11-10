@@ -32,13 +32,7 @@ nav a {
     padding-left: 10px;
     padding-right: 10px;
 
-    color: #06f;
-    text-decoration: none;
     font-size: 14pt;
-}
-
-nav a:visited {
-    color: #c3f;
 }
 
 #profile {
@@ -53,4 +47,52 @@ nav a:visited {
     grid-area: footer;
     background-color: #222;
     color: #ddd;
+}
+
+
+a {
+    color: #06f;
+    text-decoration: none;
+}
+
+a:visited {
+    color: #c3f;
+}
+
+
+
+.text-box {
+    background-color: #f9f9f9;
+    border: 2px solid #ddd;
+    border-radius: 2px;
+    padding: 5px;
+}
+
+.card {
+    padding: 25px;
+    border: 1px solid grey;
+    background-color: #e9e9f9;
+    box-shadow: 2px 2px 2px;
+}
+
+.svg-button {
+    display: flex;
+    flex-direction: row;
+    align-content: center;
+    justify-content: center;
+
+    border: none;
+    background-color: rgba(0,0,0,0);
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.svg-button svg {
+    height: 100%;
+    width: auto;
+    color: grey;
+}
+
+.svg-button:active svg {
+    color: black;
 }

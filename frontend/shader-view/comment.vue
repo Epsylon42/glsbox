@@ -1,33 +1,35 @@
 <template>
 <div class="comment" :id="id">
   
-  <div class="comment-head">
+  <div class="text-box comment-body" v-if="isComment">
 
-    <div class="comment-info" v-if="asComment">
+    <div class="comment-info">
       <p><a :href="info.author.ref">{{info.author.username}}</a></p>
       <p>posted {{info.posted}}</p>
       <p v-if="info.edited">edited {{info.edited}}</p>
     </div>
     
-    <div class="comment-text" v-html="commentHTML" v-if="asComment" />
+    <div class="comment-text" v-html="commentHTML" />
     
     <div class="controls">
-      <button @click="reply" v-if="canReply">reply</button>
-      <button @click="edit" v-if="canEdit">edit</button>
+      <a class="comment-button" :href="permalink">permalink</a>
+      <button class="comment-button" @click="reply" v-if="canReply">reply</button>
+      <button class="comment-button" @click="edit" v-if="canEdit">edit</button>
     </div>
     
   </div>
+  <button class="comment-button" @click="reply" v-else-if="canReply">comment</button>
   
   <div class="editor" v-if="sendText != null">
     <textarea v-model="sendText" />
     
     <div class="controls">
-      <button @click="sendEditor">send</button>
-      <button @click="cancelEditor">cancel</button>
+      <button class="comment-button" @click="sendEditor">send</button>
+      <button class="comment-button" @click="cancelEditor">cancel</button>
     </div>
     
     <p v-if="sendText.length > 0">Preview</p>
-    <div class="reply-preview" v-html="sendHTML" v-if="sendText.length > 0" />
+    <div class="text-box" v-html="sendHTML" v-if="sendText.length > 0" />
   </div>
   
   <ul class="children">
@@ -52,23 +54,19 @@ import { MDConverter } from './converter.ts';
 @Component
 export default class Comment extends Vue {
     @Prop({ type: GenericComment, required: true }) comment: GenericComment;
-    
+
     private get canReply(): boolean {
         return store.getters.user != null && store.getters.id != null;
     }
     
     private get canEdit(): boolean {
-        return this.asComment
+        return this.isComment
             && store.getters.user != null
             && store.getters.user.id === this.comment.author;
     }
     
-    private get asComment(): CommentData | null {
-        if (this.comment instanceof CommentData) {
-            return this.comment as CommentData;
-        } else {
-            return null;
-        }
+    private get isComment(): boolean {
+        return this.comment instanceof CommentData;
     }
 
     private get info(): object {
@@ -88,9 +86,17 @@ export default class Comment extends Vue {
     private get id(): string {
         return `comment-${this.comment.id || "root"}`;
     }
+
+    private get permalink(): string {
+        if (this.comment.id != null) {
+            return `${store.getters.link}?comment=${this.comment.id}`
+        } else {
+            
+        }
+    }
     
     private get commentHTML(): string {
-        return MDConverter.makeHtml(this.asComment.text);
+        return MDConverter.makeHtml(this.comment.text);
     }
     
     private get children(): CommentData[] {
@@ -159,12 +165,9 @@ export default class Comment extends Vue {
 
 <style scoped>
 
-.comment-head {
+.comment-body {
     display: flex;
     flex-direction: column;
-    padding: 5px;
-    
-    background-color: #f9f9f9;
 }
 
 .comment-info {
@@ -183,15 +186,6 @@ export default class Comment extends Vue {
     margin-left: 0;
 }
 
-.comment-info a {
-    text-decoration: none;
-}
-
-button {
-    border: none;
-    padding: 0;
-}
-
 .editor {
     padding-left: 20px;
 }
@@ -202,8 +196,13 @@ button {
     padding-left: 20px;
 }
 
-.reply-preview {
-    border: 1px solid grey;
-    background-color: #f9f9f9;
+.comment-button {
+    border: none;
+    padding: 0;
+    margin-left: 2px;
+    margin-right: 2px;
+    background-color: rgba(0,0,0,0);
+    color: grey;
+    font-size: 10pt;
 }
 </style>

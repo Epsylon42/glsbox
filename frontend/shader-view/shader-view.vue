@@ -12,10 +12,10 @@
     </ShaderWindow>
     
     <div class="controls">
-      <button @click="resetTime" title="reset time">
+      <button class="svg-button" @click="resetTime" title="reset time">
         <Icon name="redo" />
       </button>
-      <button @click="timePause = !timePause" title="toggle time">
+      <button class="svg-button" @click="timePause = !timePause" title="toggle time">
         <Icon name="play" v-if="timePause" />
         <Icon name="pause" v-else />
       </button>
@@ -39,10 +39,10 @@
     <textarea v-model="shaderSource"></textarea>
     
     <div class="controls">
-      <button @click="updateSource" title="run this code">
+      <button class="svg-button" @click="updateSource" title="run this code">
         <Icon name="arrow-left" />
       </button>
-      <button @click="upload" title="save" v-if="canSave">
+      <button class="svg-button" @click="upload" title="save" v-if="canSave">
         <Icon name="save" />
       </button>
     </div>
@@ -208,32 +208,6 @@ export default class ShaderView extends Vue {
     padding-right: 5px;
 
     font-family: monospace;
-}
-
-.controls p {
-    margin: 0;
-}
-
-.controls button {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-
-    border: none;
-    background-color: white;
-    padding: 0;
-    padding-left: 5px;
-    padding-right: 5px;
-}
-
-.controls button svg {
-    height: 100%;
-    width: auto;
-}
-
-.controls button:active svg {
-    color: black;
 }
 
 .info {

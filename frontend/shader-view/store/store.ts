@@ -151,7 +151,15 @@ export const store = new Vuex.Store({
 
         rootComment(state: StoreState): GenericComment {
             return state.rootComment;
-        }
+        },
+
+        link(state: StoreState): string {
+            if (state.id == null) {
+                return "/create";
+            } else {
+                return `/view/${state.id}`;
+            }
+        },
     },
 
     mutations: {

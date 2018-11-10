@@ -11,7 +11,7 @@
         <div id="content">
             <ul class="shaders">
                 {{#shaders}}
-                <li>
+                <li class="card">
                     <div class="preview">
                         <a href="/view/{{id}}">
                             {{#previewUrl}}
@@ -24,13 +24,13 @@
                     </div>
 
                     <div class="data">
-                        <p><a href="/view/{{id}}">{{name}}</a></p>
-                        <div class="description">{{{ descriptionHTML }}}</div>
+                        <p class="text-box"><a href="/view/{{id}}">{{name}}</a></p>
+                        <div class="description text-box">{{{ descriptionHTML }}}</div>
                     </div>
                 </li>
                 {{/shaders}}
 
-                <li class="phantom" />
+                <li class="phantom card" />
             </ul>
         </div>
 
