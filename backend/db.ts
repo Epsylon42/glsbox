@@ -221,8 +221,10 @@ export interface CommentsInstance extends Sequelize.Instance<CommentsAttributes>
 
 export interface CommentExt {
     author: { id: number, username: string };
-    children: (CommentsInstance & CommentExt)[];
+    children: CommentExt[];
 }
+
+export type CommentTree = { root: true, children: (CommentExt & CommentsInstance)[] } | (CommentExt & CommentsInstance);
 
 export const Comments = db.define<CommentsInstance, CommentsAttributes>("comments", {
     id: {
@@ -259,7 +261,7 @@ export const Comments = db.define<CommentsInstance, CommentsAttributes>("comment
 });
 
 export module Utils {
-    export async function getComments(shader: number, parent?: number, depth: number = 10): Promise<(CommentsInstance & CommentExt)[]> {
+    async function getComments(shader: number, parent?: number, depth: number = 10): Promise<(CommentExt & CommentsInstance)[]> {
         if (depth === 0) {
             return Promise.resolve([]);
         }
@@ -284,6 +286,31 @@ export module Utils {
                 },
             };
         }));
+    }
+
+    export async function getComment(shader: number, commentId?: number, depth: number = 10): Promise<CommentTree> {
+        if (commentId == null) {
+            return {
+                root: true,
+                children: await getComments(shader, commentId, depth),
+            };
+        } else {
+            const comment = await Comments.findByPrimary(commentId);
+            if (!comment) {
+                throw new Error("Comment not found");
+            }
+
+            const author = await Users.findByPrimary(comment.author);
+
+            return {
+                ...(comment as any).dataValues,
+                children: await getComments(shader, commentId, depth-1),
+                author: author && {
+                    id: author.id,
+                    username: author.username,
+                }
+            };
+        }
     }
 
     export async function checkUserPassword(id: number, password: string) {

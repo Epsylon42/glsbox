@@ -133,7 +133,12 @@ export default class Info extends Vue {
 }
 
 
-.name-box, .description-box {
+.name-box {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.description-box {
     width: 100%;
 }
 

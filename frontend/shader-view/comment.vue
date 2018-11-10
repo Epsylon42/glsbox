@@ -1,9 +1,24 @@
 <template>
 <div class="comment" :id="id">
+
+  <div ref="marker" style="display: none;" />
   
-  <div class="text-box comment-body" v-if="isComment">
+  <a class="full-tree comment-button svg-button" :href="fullTreeLink" v-if="isRoot && isComment">
+    <Icon name="arrow-up" />
+    View full comment tree
+  </a>
+
+  <div class="text-box comment-body" :class="{ focus: isFocused() }" @click="focus" v-if="isComment">
 
     <div class="comment-info">
+      <div class="comment-nav">
+        <a class="svg-button" :href="parentLink" v-if="parentLink" title="go to parent comment">
+          <Icon name="hashtag" />
+        </a>
+        <a class="svg-button" :href="nextLink" v-if="nextLink" title="go to next comment">
+          <Icon name="arrow-down" />
+        </a>
+      </div>
       <p><a :href="info.author.ref">{{info.author.username}}</a></p>
       <p>posted {{info.posted}}</p>
       <p v-if="info.edited">edited {{info.edited}}</p>
@@ -33,8 +48,12 @@
   </div>
   
   <ul class="children">
-    <li v-for="child in children">
-      <Comment :comment="child" />
+    <li v-for="child, i in children">
+      <Comment
+        :comment="child"
+        :parentId="comment.id"
+        :nextId="children[i+1] && children[i+1].id"
+        />
     </li>
   </ul>
   
@@ -51,9 +70,29 @@ import { SendCommentData, PatchCommentData, CommentStorage } from '../backend.ts
 
 import { MDConverter } from './converter.ts';
 
-@Component
+import Icon from 'vue-awesome/components/Icon.vue';
+import 'vue-awesome/icons/arrow-up.js';
+import 'vue-awesome/icons/hashtag.js';
+import 'vue-awesome/icons/arrow-down.js';
+
+@Component({
+    components: {
+        Icon,
+    }
+})
 export default class Comment extends Vue {
+    @Prop({ type: Boolean, default: false }) isRoot: boolean;
     @Prop({ type: GenericComment, required: true }) comment: GenericComment;
+    @Prop({ type: Number, default: null }) parentId: number;
+    @Prop({ type: Number, default: null }) nextId: number;
+
+    public focus() {
+        store.commit(Mutations.setFocusedComment, this.$refs.marker);
+    }
+
+    private isFocused(): boolean {
+        return this.$refs.marker === store.getters.focusedComment;
+    }
 
     private get canReply(): boolean {
         return store.getters.user != null && store.getters.id != null;
@@ -67,6 +106,22 @@ export default class Comment extends Vue {
     
     private get isComment(): boolean {
         return this.comment instanceof CommentData;
+    }
+
+    private get parentLink(): string | null {
+        if (this.parentId != null) {
+            return `#comment-${this.parentId}`;
+        } else {
+            return null;
+        }
+    }
+
+    private get nextLink(): string | null {
+        if (this.nextId != null) {
+            return `#comment-${this.nextId}`;
+        } else {
+            return null;
+        }
     }
 
     private get info(): object {
@@ -87,11 +142,15 @@ export default class Comment extends Vue {
         return `comment-${this.comment.id || "root"}`;
     }
 
+    private get fullTreeLink(): string {
+        return store.getters.link;
+    }
+
     private get permalink(): string {
         if (this.comment.id != null) {
             return `${store.getters.link}?comment=${this.comment.id}`
         } else {
-            
+            return store.getters.link;
         }
     }
     
@@ -165,9 +224,19 @@ export default class Comment extends Vue {
 
 <style scoped>
 
+.full-tree {
+    width: fit-content;
+    width: -moz-fit-content;
+    width: -webkit-fit-content;
+}
+
 .comment-body {
     display: flex;
     flex-direction: column;
+}
+
+.comment-body.focus {
+    border-color: #88f
 }
 
 .comment-info {
@@ -175,16 +244,26 @@ export default class Comment extends Vue {
     flex-direction: row;
 }
 
-.comment-info p {
+.comment-info > * {
     margin: 0;
-    margin-left: 20px;
+    margin-right: 20px;
     font-size: 10pt;
     color: grey;
 }
 
-.comment-info p:first-child {
-    margin-left: 0;
+.comment-info > *:first-child {
+    margin-right: 5px;
 }
+
+.comment-nav {
+    display: flex;
+    flex-direction: row;
+}
+
+.comment-nav .svg-button {
+    padding: 0;
+}
+
 
 .editor {
     padding-left: 20px;

@@ -7,8 +7,6 @@ export class GenericComment {
     public posted?: Date = null;
     public authorUsername?: string = null;
 
-    public topComment: GenericComment = this;
-
     constructor(
         public children: CommentData[] = []
     ) {}
@@ -31,8 +29,15 @@ export default class CommentData extends GenericComment {
         super();
     }
 
-    public topComment: GenericComment = new GenericComment();
     public childrenTruncated: boolean = false;
+
+    public static fromObjectMaybeRoot(obj: any): GenericComment {
+        if (obj.root && obj.children) {
+            return new GenericComment(obj.children.map(child => CommentData.fromObject(child)));
+        } else {
+            return CommentData.fromObject(obj);
+        }
+    }
 
     public static fromObject(obj: any): CommentData {
         if (!(obj.id != null && obj.author != null && obj.text)) {

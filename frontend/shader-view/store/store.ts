@@ -28,6 +28,8 @@ export class StoreState {
 
     public textures: TextureData[] = [];
     public sendLock: boolean = false;
+
+    public focusedComment?: HTMLElement = null;
 }
 
 export const Mutations = {
@@ -47,6 +49,7 @@ export const Mutations = {
     setOwner: "setOwner",
     setRootComment: "setRootComment",
     modifyComment: "modifyComment",
+    setFocusedComment: "setFocusedComment",
 };
 
 export const Actions = {
@@ -61,7 +64,6 @@ export const Actions = {
     setPreviewFromCanvas: "setPreviewFromCanvas",
     removePreview: "removePreview",
     requestComment: "requestComment",
-    gotoPrevComment: "gotoPrevComment",
 
     saveShader: "saveShader",
 };
@@ -160,6 +162,10 @@ export const store = new Vuex.Store({
                 return `/view/${state.id}`;
             }
         },
+
+        focusedComment(state: StoreState): HTMLElement | null {
+            return state.focusedComment;
+        },
     },
 
     mutations: {
@@ -239,7 +245,11 @@ export const store = new Vuex.Store({
 
         [Mutations.modifyComment] (state: StoreState, args: { comment: Comment, callback: (comment: Comment) => void }) {
             args.callback(args.comment);
-        }
+        },
+
+        [Mutations.setFocusedComment] (state: StoreState, comment: HTMLElement) {
+            state.focusedComment = comment;
+        },
     },
 
     actions: {
@@ -329,24 +339,13 @@ export const store = new Vuex.Store({
             }
         },
 
-        [Actions.requestComment] ({ state, commit }, parent?: number): Promise<void> {
+        [Actions.requestComment] ({ state, commit }, comment?: number): Promise<void> {
             if (state.id != null) {
                 return CommentStorage
-                    .requestComments(state.id, parent)
-                    .then(comments => {
-                        const comment = new GenericComment(comments);
-                        comment.topComment = state.rootComment;
-                        comment.topComment = state.rootComment;
-                        commit(Mutations.setRootComment, comment);
-                    });
+                    .requestComment(state.id, comment)
+                    .then(comment => commit(Mutations.setRootComment, comment));
             } else {
                 return Promise.resolve();
-            }
-        },
-
-        [Actions.gotoPrevComment] ({ state, commit }) {
-            if (state.rootComment instanceof CommentData) {
-                commit(Mutations.setRootComment, state.rootComment.topComment);
             }
         },
 

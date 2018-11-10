@@ -51,7 +51,7 @@
 
   <Textures class="textures" />
   
-  <Comment :comment="rootComment" class="comments" />
+  <Comment :comment="rootComment" :isRoot="true" class="comments" />
   
 </div>
 </template>

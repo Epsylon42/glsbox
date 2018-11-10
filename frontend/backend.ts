@@ -3,7 +3,7 @@ import TextureData from './shader-view/store/texture-data.ts';
 import Preview from './shader-view/store/preview.ts';
 import { TextureKind } from '../common/texture-kind.ts';
 import { UserRole } from '../common/user-role.ts';
-import CommentData from './shader-view/store/comment.ts';
+import CommentData, { GenericComment } from './shader-view/store/comment.ts';
 
 export class RecvShaderData {
     constructor(
@@ -186,17 +186,17 @@ export class PatchCommentData {
 }
 
 export module CommentStorage {
-    export function requestComments(shader: number, parent?: number): Promise<CommentData[]> {
+    export function requestComment(shader: number, comment?: number): Promise<GenericComment> {
         let promise: Promise<Response>;
-        if (parent != null) {
-            promise = fetch(`/api/comments/${shader}?parent=${parent}`);
+        if (comment != null) {
+            promise = fetch(`/api/comments/${shader}?comment=${comment}`);
         } else {
             promise = fetch(`/api/comments/${shader}`);
         }
 
         return promise
             .then(response => response.json())
-            .then(json => json.map(el => CommentData.fromObject(el)));
+            .then(json => CommentData.fromObjectMaybeRoot(json));
     }
 
     export function postComment(data: SendCommentData): Promise<CommentData> {

@@ -79,7 +79,7 @@ app.get("/view/:id", (req, res) => {
         mountPoints: {
             lib: "view",
             mount: "#content-app",
-            args: [req.params.id, req.user && req.user.id || "null"],
+            args: [req.params.id, req.user && req.user.id || "null", req.query.comment || "null"],
         },
     });
 });
@@ -463,10 +463,10 @@ app.get("/api/shaders/:id", async (req, res) => {
 
 app.get("/api/comments/:shaderId", async (req, res) => {
     const depth = req.query.depth;
-    const parent = req.query.parent;
+    const comment = req.query.comment;
 
     try {
-        res.json(await Utils.getComments(req.params.shaderId, parent, depth));
+        res.json(await Utils.getComment(req.params.shaderId, comment, depth));
     } catch (e) {
         console.error(e);
         res.status(500).send("Internal server error");
