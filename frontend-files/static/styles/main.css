@@ -100,3 +100,9 @@ a:visited {
 .svg-button:active svg {
     color: black;
 }
+
+
+.error {
+    border-color: #f00;
+    background-color: #fdd;
+}

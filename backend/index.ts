@@ -592,15 +592,47 @@ app.get("/api/users/:id", async (req, res) => {
             return;
         }
 
-        const shaders = await Shaders.findAll({ where: { owner: user.id } });
-
         res.json({
             id: user.id,
             username: user.username,
             role: user.role,
             email: user.email || null,
-            shaders: shaders.map(shader => ({ id: shader.id, name: shader.name })),
         });
+    } catch (e) {
+        console.error(e);
+        res.status(500).send("Internal server error");
+    }
+});
+
+app.get("/api/users/:id/shaders", async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            res.status(400).send("Invalid id");
+        }
+
+        const shaders = await Shaders.findAll({ where: { owner: id } });
+
+        res.json(shaders);
+    } catch (e) {
+        console.error(e);
+        res.status(500).send("Internal server error");
+    }
+});
+
+app.get("/api/users/:id/comments", async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            res.status(400).send("Invalid id");
+        }
+
+        const comments = await Comments.findAll({ where: { author: id }, group: "parentShader" });
+
+        console.log(comments);
+        throw new Error("a");
+
+        res.json(comments);
     } catch (e) {
         console.error(e);
         res.status(500).send("Internal server error");

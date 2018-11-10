@@ -1,10 +1,19 @@
 <template>
   <div class="user">
-    <p class="error" v-if="error">
+    <p class="text-box error" v-if="error">
       {{ error }}
     </p>
 
-    <div class="user-data" v-else>
+    <div class="user-data card" v-else>
+
+      <div class="user-header">
+        <button @click="selectProfile">Profile</button>
+        <button @click="selectShaders">Shaders</button>
+        <button @click="selectComments">Comments</button>
+      </div>
+
+      <component :is="component" />
+
     </div>
   </div>
 </template>
@@ -15,28 +24,59 @@ import { Vue, Component, Prop } from 'vue-property-decorator';
 import { RecvUser, UserStorage } from '../backend.ts';
 import { UserRole } from '../../common/user-role.ts';
 
+import Profile from './profile.vue';
+
+import { store, Actions } from './store.ts';
+
 @Component
 export default class User extends Vue {
-    @Prop({ type: Number, default: null }) id?: number;
+    @Prop({ type: Number, required: true }) id: number;
 
-    private user?: RecvUser = null;
-    private myRole?: UserRole = null;
     private error?: string = null;
+    private component?: typeof Vue = null;
 
     mounted() {
-        UserStorage
-            .requestUser(this.id)
-            .then(user => this.user = user)
+        store
+            .dispatch(Actions.init, this.id)
+            .then(() => this.selectProfile())
             .catch(err => this.error = err.message);
+    }
 
-        UserStorage
-            .requestMe()
-            .then(user => this.myRole = user.role)
-            .catch(() => {});
+    private selectProfile() {
+        this.component = Profile;
+    }
+
+    private selectShaders() {
+        
+    }
+
+    private selectComments() {
+        
     }
 }
 </script>
 
 <style scoped>
+
+.user {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 200px;
+}
+
+.error {
+    width: 50%;
+}
+
+.user-data {
+    display: flex;
+    flex-direction: column;
+    width: 75%;
+}
+
+.user-header {
+    height: 30px;
+}
 
 </style>

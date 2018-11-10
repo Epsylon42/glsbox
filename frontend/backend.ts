@@ -243,9 +243,7 @@ export class RecvUser {
         public role: UserRole,
     ) {}
 
-    public email?: string;
-    public shaders: { id: number, name: string }[] = [];
-
+    public email?: string = null;
     public static fromJson(obj: any): RecvUser {
         if (!(obj.id != null && obj.username && obj.role != null)) {
             throw new Error("Not enought fields");
@@ -259,10 +257,6 @@ export class RecvUser {
 
         if (obj.email) {
             user.email = obj.email;
-        }
-
-        if (obj.shaders) {
-            user.shaders = obj.shaders;
         }
 
         return user;
