@@ -47,6 +47,10 @@
         <Icon v-else name="save" />
       </button>
     </div>
+
+    <p class="text-box error" v-if="error != null">
+      {{ error }}
+    </p>
     
   </div>
 
@@ -143,7 +147,9 @@ export default class ShaderView extends Vue {
     private timePause: boolean = false;
     private updatePause: boolean = false;
 
+    private error?: string = null;
     updateSource() {
+        this.error = null;
         store.dispatch(Actions.setSource, this.shaderSource);
     }
 
@@ -160,7 +166,8 @@ export default class ShaderView extends Vue {
     }
 
     processError(e: WglError) {
-        console.log(e);
+        this.error = e.message;
+        console.error(e);
     }
 }
 </script>
@@ -189,8 +196,10 @@ export default class ShaderView extends Vue {
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    justify-content: flex-start;
     
     width: 400px;
+    height: 100%;
 }
 
 .window .display {
