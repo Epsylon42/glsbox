@@ -42,8 +42,9 @@
       <button class="svg-button" @click="updateSource" title="run this code">
         <Icon name="arrow-left" />
       </button>
-      <button class="svg-button" @click="upload" title="save" v-if="canSave">
-        <Icon name="save" />
+      <button class="svg-button" @click="upload" :title="isSaving ? 'saving' : 'save'" v-if="canSave">
+        <Icon v-if="isSaving" name="spinner" pulse />
+        <Icon v-else name="save" />
       </button>
     </div>
     
@@ -79,6 +80,7 @@ import 'vue-awesome/icons/pause.js';
 import 'vue-awesome/icons/redo.js';
 import 'vue-awesome/icons/arrow-left.js';
 import 'vue-awesome/icons/save.js';
+import 'vue-awesome/icons/spinner.js';
 
 @Component({
     components: {
@@ -118,6 +120,10 @@ export default class ShaderView extends Vue {
 
     private get canSave(): boolean {
         return store.getters.canSave;
+    }
+
+    private get isSaving(): boolean {
+        return store.getters.isSaving;
     }
 
     private get showInfo(): boolean {

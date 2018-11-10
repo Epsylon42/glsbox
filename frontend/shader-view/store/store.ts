@@ -166,6 +166,10 @@ export const store = new Vuex.Store({
         focusedComment(state: StoreState): HTMLElement | null {
             return state.focusedComment;
         },
+
+        isSaving(state: StoreState): boolean {
+            return state.sendLock;
+        },
     },
 
     mutations: {
