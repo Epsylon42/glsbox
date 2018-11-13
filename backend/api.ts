@@ -4,21 +4,37 @@ import Passport from 'passport';
 import { db, Users, Shaders, ShaderTextures, ShaderTexturesInstance, Comments, Utils, UsersInstance } from './db';
 import { Transaction as FileTransaction } from './file-storage';
 import { TextureKind } from '../common/texture-kind';
+import { UserRole } from '../common/user-role';
 
-async function editingAllowed(thisUser: number, owner: number): Promise<boolean> {
-    if (thisUser === owner) {
+async function editingAllowed(thisUser: number | UsersInstance, owner: number | UsersInstance): Promise<boolean> {
+    const thisId = typeof thisUser === "number" ? thisUser : thisUser.id;
+    const ownerId = typeof owner === "number" ? owner : owner.id
+
+    if (thisId === ownerId) {
         return true;
     }
+
     const [t, o] = await Promise.all([
-        Users.findByPrimary(thisUser),
-        Users.findByPrimary(owner)
+        typeof thisUser === "number" ? Users.findByPrimary(thisUser) : thisUser,
+        typeof owner === "number" ? Users.findByPrimary(owner) : owner
     ]);
 
     return (t && o && t.role < o.role) || false;
 }
 
+function userToResponse(user: UsersInstance): object {
+    return {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        email: user.email || null,
+        registrationDate: user.registrationDate.toISOString(),
+    };
+}
+
 const priv = Express.Router();
-priv.use((req, res, next) => {
+
+function authMiddleware(req: Express.Request, res: Express.Response, next: Express.NextFunction) {
     if (req.user) {
         return next();
     } else {
@@ -34,11 +50,14 @@ priv.use((req, res, next) => {
                     }
                 });
             } else {
-                return next("Not logged in");
+                res.status(401).json({ error: true, message: "Not logged in" });
+                return;
             }
         })(req, res, next);
     }
-});
+}
+
+priv.use(authMiddleware);
 
 /*
   req.body: {
@@ -378,8 +397,46 @@ priv.patch("/comments", async (req, res) => {
     }
 });
 
-priv.get("/users/me", (req, res) => {
-    res.redirect(`/api/v1/users/${req.user.id}`);
+priv.patch("/users/:id", async (req, res) => {
+    try {
+        const user = await Users.findByPrimary(req.params.id);
+        if (!user) {
+            res.status(404).json({ error: true, message: "User not found" });
+            return;
+        }
+
+        if (!await editingAllowed(req.user, user)) {
+            res.status(403).json({ error: true, message: "You cannot edit this user" });
+            return;
+        }
+
+        const update: any = {};
+        if (req.body.password) {
+            update.password = req.body.password;
+        }
+        if (req.body.email !== undefined) {
+            update.email = req.body.email;
+        }
+
+        if (typeof req.body.role === "number" && req.body.role >= 0 && req.body.role <= 1) {
+            if (req.user.role === UserRole.Admin && user.role !== UserRole.Admin) {
+                update.role = req.body.role;
+            } else {
+                res.status(403).json({ error: true, message: "You cannot set this role for this user" });
+                return;
+            }
+        } else if (req.body.role) {
+            res.status(400).json({ error: true, message: "Role must be a number either 0 or 1" });
+            return;
+        }
+
+        await user.update(update);
+
+        res.json(userToResponse(user));
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: true, message: "Internal server error" });
+    }
 });
 
 
@@ -437,12 +494,7 @@ pub.get("/users/:id", async (req, res) => {
             return;
         }
 
-        res.json({
-            id: user.id,
-            username: user.username,
-            role: user.role,
-            email: user.email || null,
-        });
+        res.json(userToResponse(user));
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: true, message: "Internal server error" });
@@ -485,6 +537,9 @@ pub.get("/users/:id/comments", async (req, res) => {
 });
 
 const router = Express.Router();
-router.use([ priv, pub ]);
+router.get("/users/me", authMiddleware, (req, res) => {
+    res.redirect(`/api/v1/users/${req.user.id}`);
+});
+router.use([ pub, priv ]);
 
 export default router;

@@ -1,14 +1,22 @@
 <template>
 <div class="profile">
-  <p class="text-box username">
-    {{ user.username }}
-  </p>
+  <div class="text-box immutable">
+    <p>{{ user.username }}</p>
+    <p><em>Registered {{ user.registrationDate.toLocaleString() }}</em></p>
+  </div>
+
+  <div class="field text-box">
+    <input v-if="canEditRole" type="checkbox" id="mod" v-model.boolean="isModerator">
+    <label v-if="canEditRole" for="mod">Is Moderator</label>
+
+    <p v-else>{{ role }}</p>
+  </div>
   
   <div class="field">
     
     <p class="field-name">email</p>
     <p class="text-box email field-value" v-if="editingEmail == null">
-      {{ user.email }}
+      {{ email }}
     </p>
     <input type="email" v-if="editingEmail != null" v-model="editingEmail" placeholder="email">
     <div v-if="canEditFields" class="edit-buttons">
@@ -84,8 +92,8 @@
       </button>
     </div>
   </div>
-  
-</div>
+
+  <button class="save-button" v-if="changed" @click="save">Save</button>
 </div>
 </template>
 
@@ -95,6 +103,8 @@ import { Vue, Component } from 'vue-property-decorator';
 import { RecvUser } from '../backend.ts';
 
 import { store, Mutations, Actions } from './store.ts';
+
+import { UserRole } from '../../common/user-role.ts';
 
 import Icon from 'vue-awesome/components/Icon.vue';
 import 'vue-awesome/icons/edit.js';
@@ -112,21 +122,55 @@ export default class Profile extends Vue {
         return store.getters.user as RecvUser;
     }
 
-    private get me(): RecvUser | null {
-        return store.getters.me;
+    private get email(): string | null {
+        return store.getters.email;
     }
 
     private get canEditFields(): boolean {
         return store.getters.canEditFields;
     }
 
+    private get canEditRole(): boolean {
+        return store.getters.canEditRole;
+    }
+
+    private get changed(): boolean {
+        return store.getters.changed;
+    }
+
+    private get role(): string {
+        switch (store.getters.user.role) {
+        case UserRole.User:
+            return "Regular User";
+
+        case UserRole.Moderator:
+            return "Moderator";
+
+        case UserRole.Admin:
+            return "Admin";
+
+        default:
+            return "Unknown Role";
+        }
+    }
+
+    private get isModerator(): boolean {
+        return store.getters.role === UserRole.Moderator;
+    }
+    private set isModerator(val: boolean) {
+        store.commit(Mutations.changeRole, val ? UserRole.Moderator : UserRole.User);
+    }
+
     private editingEmail?: string = null;
+    private editEmail() {
+        this.editingEmail = store.getters.email;
+    }
     private saveEmail() {
-        store.commit(Mutations.setEmail, this.editingEmail);
+        store.commit(Mutations.changeEmail, this.editingEmail);
         this.editingEmail = null;
     }
     private clearEmail() {
-        store.commit(Mutations.setEmail, null);
+        store.commit(Mutations.changeEmail, null);
         this.$forceUpdate();
     }
 
@@ -137,7 +181,14 @@ export default class Profile extends Vue {
         this.repeatPassword = "";
     }
     private savePassword() {
+        store.commit(Mutations.changePassword, this.editingPassword);
         this.editingPassword = null;
+    }
+
+    private save() {
+        store.dispatch(Actions.save)
+            .then(() => alert("saved successfully"))
+            .catch(() => alert("error"));
     }
 }
 </script>
@@ -149,10 +200,10 @@ export default class Profile extends Vue {
     flex-direction: column;
 }
 
-.username {
+.immutable {
     display: flex;
-    flex-direction: row;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
     
     margin-bottom: 30px;
 }

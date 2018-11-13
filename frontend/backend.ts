@@ -241,18 +241,20 @@ export class RecvUser {
         public id: number,
         public username: string,
         public role: UserRole,
+        public registrationDate: Date,
     ) {}
 
     public email?: string = null;
     public static fromJson(obj: any): RecvUser {
-        if (!(obj.id != null && obj.username && obj.role != null)) {
-            throw new Error("Not enought fields");
+        if (!(obj.id != null && obj.username && obj.role != null && obj.registrationDate)) {
+            throw new Error("Invalid user format");
         }
 
         const user = new RecvUser(
             obj.id,
             obj.username,
-            obj.role
+            obj.role,
+            new Date(obj.registrationDate),
         );
 
         if (obj.email) {
@@ -261,6 +263,14 @@ export class RecvUser {
 
         return user;
     }
+}
+
+export class PatchUser {
+    constructor(
+        public email?: string,
+        public password?: string,
+        public role?: UserRole,
+    ) {}
 }
 
 export module UserStorage {
@@ -272,6 +282,18 @@ export module UserStorage {
 
     export function requestMe(): Promise<RecvUser> {
         return fetch("/api/v1/users/me")
+            .then(response => response.json())
+            .then(json => RecvUser.fromJson(json));
+    }
+
+    export function patchUser(id: number, data: PatchUser): Promise<RecvUser> {
+        return fetch(`/api/v1/users/${id}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data),
+        })
             .then(response => response.json())
             .then(json => RecvUser.fromJson(json));
     }

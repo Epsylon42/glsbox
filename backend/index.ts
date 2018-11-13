@@ -60,7 +60,6 @@ app.engine("mst", Mustache(path.join("frontend-dist", "views", "partial")));
 app.set("views", path.join("frontend-dist", "views"));
 app.set("view engine", "mst");
 
-
 app.use("/api/v1", ApiRouter);
 
 app.get("/", (req, res) => {
