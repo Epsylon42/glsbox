@@ -6,31 +6,35 @@ import path from 'path';
 import Sequelize from 'sequelize';
 import Passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
+import { BasicStrategy } from 'passport-http';
 import Session from 'express-session';
 
 import { Converter as MDConverter } from 'showdown';
 
 import { db, Users, Shaders, ShaderTextures, ShaderTexturesInstance, Comments, Utils, UsersInstance } from './db';
-import { Transaction as FileTransaction } from './file-storage';
-import { TextureKind } from '../common/texture-kind';
 
-Passport.use(new LocalStrategy((username, password, done) => {
+import ApiRouter from './api';
+
+function authFunc(username: string, password: string, done: any) {
     Users.find({ where: { username } })
         .then(user => {
             if (!user) {
-                return done(null, false);
+                return done("No such user", false);
             }
             return Utils.checkUserPassword(user.id, password)
                 .then(check => {
                     if (check) {
                         return done(null, user);
                     } else {
-                        return done(null, false);
+                        return done("Invalid password", false);
                     }
                 });
         })
         .catch(err => done(err));
-}));
+}
+
+Passport.use(new LocalStrategy(authFunc));
+Passport.use(new BasicStrategy(authFunc));
 
 Passport.serializeUser((user: UsersInstance, done) => {
     done(null, user.id);
@@ -55,6 +59,9 @@ app.use(Passport.session());
 app.engine("mst", Mustache(path.join("frontend-dist", "views", "partial")));
 app.set("views", path.join("frontend-dist", "views"));
 app.set("view engine", "mst");
+
+
+app.use("/api/v1", ApiRouter);
 
 app.get("/", (req, res) => {
     res.render("index", { user: req.user });
@@ -177,467 +184,6 @@ app.get('/logout', (req, res) => {
     req.logout();
     res.redirect('/');
 });
-
-/*
-  req.body: {
-      name,
-      description,
-      code,
-      textureOptions?: {
-          name,
-          kind,
-          file,
-      }
-  }
-
-  req.files: {
-      preview?,
-      textures?...
-  }
- */
-app.post("/shaders", (req, res) => {
-    if (!req.user) {
-        res.status(401).send("Unauthorized");
-        return;
-    }
-
-    if (!req.body.name) {
-        res.status(400).send("Shader must have a name");
-        return;
-    }
-
-    let textureOptions: {
-        name: string,
-        file: number,
-        kind: TextureKind,
-    }[] | null = null;
-    if (req.body.textureOptions) {
-        try {
-            textureOptions = JSON.parse(req.body.textureOptions);
-        } catch (e) {
-            res.status(400).send("textureOptions must be valid json");
-            return;
-        }
-    }
-
-    const files = (req as any).files;
-
-    db.transaction(async transaction => {
-        const ftrans = new FileTransaction();
-
-        try {
-            const shader = await Shaders.create({
-                owner: req.user.id,
-                name: req.body.name,
-                description: req.body.description || "",
-                code: req.body.code || "",
-            }, { transaction });
-
-            if (files.preview) {
-                const fdata = await ftrans.writeFile(files.preview[0].data, "glsbox-previews");
-
-                await shader.update({
-                    previewUrl: fdata.url,
-                    previewKey: fdata.id,
-                }, { transaction });
-            }
-
-            let textures: ShaderTexturesInstance[] = [];
-            if (files.textures && textureOptions) {
-                textures = await Promise.all(
-                    textureOptions.map(async opt => {
-                        const file = files.textures[opt.file];
-
-                        const fdata = await ftrans.writeFile(file.data, "glsbox-textures");
-
-                        //TODO verify data
-                        return ShaderTextures.create({
-                            shaderId: shader.id,
-                            name: opt.name,
-                            textureKind: opt.kind,
-                            url: fdata.url,
-                            key: fdata.id,
-                        }, { transaction });
-                    })
-                );
-            }
-
-            await ftrans.commit();
-
-            res.json({
-                ...(shader as any).dataValues,
-                textures,
-            });
-        } catch (e) {
-            console.error(e);
-            res.status(500).send("Internal server error");
-            await ftrans.rollback();
-            throw e;
-        }
-    });
-});
-
-/*
-  req.body: {
-      name?,
-      description?,
-      code?,
-      textureOptions?: {
-          id?,
-          file?
-          name?,
-          kind?,
-          delete?
-          !id => name, kind, file
-      },
-      deletePreview?,
-  }
-
-  req.files: {
-      preview?,
-      textures?...
-  }
- */
-app.patch("/shaders/:id", (req, res) => {
-    if (!req.user) {
-        res.status(401).send("Unauthorized");
-        return;
-    }
-
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) {
-        res.status(400).send("Invalid id");
-        return;
-    }
-
-    let textureOptions: {
-        id?: number,
-        file?: number,
-        name?: string,
-        kind?: TextureKind,
-        delete: any,
-    }[] | null = null;
-    if (req.body.textureOptions) {
-        try {
-            textureOptions = JSON.parse(req.body.textureOptions);
-        } catch (e) {
-            res.status(400).send("textureOptions must be valid json");
-            return;
-        }
-    }
-
-    const files = (req as any).files;
-
-    db.transaction(async transaction => {
-        const ftrans = new FileTransaction();
-
-        try {
-            const shader = await Shaders.findByPrimary(id, { transaction });
-            if (!shader) {
-                res.status(404).send("No shader with such id");
-                return;
-            }
-
-            let update: {
-                name?: string,
-                description?: string,
-                code?: string,
-                previewUrl?: string | null,
-                previewKey?: string | null,
-            } = {};
-
-            if (req.body.name) {
-                update.name = req.body.name;
-            }
-            if (req.body.description) {
-                update.description = req.body.description;
-            }
-            if (req.body.code) {
-                update.code = req.body.code;
-            }
-            if ((req.body.deletePreview || files.preview) && shader.previewKey) {
-                await ftrans.removeFile(shader.previewKey);
-                update.previewUrl = null;
-                update.previewKey = null;
-            }
-            if (files.preview) {
-                const fdata = await ftrans.writeFile(files.preview[0].data, "glsbox-previews");
-                update.previewUrl = fdata.url;
-                update.previewKey = fdata.id;
-            }
-            await shader.update(update, { transaction });
-
-            if (textureOptions) {
-                await Promise.all(
-                    textureOptions.map(async opt => {
-                        if (opt.id != null) {
-                            const tex = await ShaderTextures.findByPrimary(opt.id, { transaction });
-                            if (!tex) {
-                                return;
-                                //TODO: report errors or something
-                            }
-
-                            if (opt.delete) {
-                                await Promise.all([
-                                    ftrans.removeFile(tex.key),
-                                    tex.destroy({ transaction })
-                                ]);
-                            } else {
-                                const update: {
-                                    name?: string,
-                                    kind?: TextureKind,
-                                    url?: string,
-                                    key?: string,
-                                } = {
-                                    name: opt.name,
-                                    kind: opt.kind,
-                                };
-
-                                if (opt.file && files.textures && files.textures[opt.file]) {
-                                    //TODO: report errors if there's no files
-                                    await ftrans.removeFile(tex.key);
-                                    const fdata = await ftrans.writeFile(files.textures[opt.file], "glsbox-textures");
-                                    update.url = fdata.url;
-                                    update.key = fdata.id;
-                                }
-
-                                await tex.update(update, { transaction });
-                            }
-                        } else if (opt.file != null && opt.name && opt.kind != null) {
-                            const file = files.textures[opt.file];
-
-                            const fdata = await ftrans.writeFile(file.data, "glsbox-textures");
-
-                            const tex = await ShaderTextures.create({
-                                shaderId: shader.id,
-                                name: opt.name,
-                                textureKind: opt.kind,
-                                url: fdata.url,
-                                key: fdata.id,
-                            }, { transaction });
-                        }
-                    })
-                );
-            }
-
-            await ftrans.commit();
-
-            res.json({
-                ...(shader as any).dataValues,
-                textures: await ShaderTextures.findAll({ where: { shaderId: shader.id }, transaction }),
-            });
-        } catch (e) {
-            console.error(e);
-            res.status(500).send("Internal server error");
-            await ftrans.rollback();
-            throw e;
-        }
-    });
-});
-
-app.get("/api/shaders/:id", async (req, res) => {
-    try {
-        const id = Number(req.params.id);
-        if (!Number.isFinite(id)) {
-            res.status(400).send("Invalid id");
-            return;
-        }
-
-        const shader: any = await Shaders.findByPrimary(id);
-        if (!shader) {
-            res.status(404).send(`Shader ${req.params.id} not found`);
-            return;
-        }
-
-        const textures = await ShaderTextures.findAll({ where: { shaderId: id } });
-
-        res.json({
-            ...shader.dataValues,
-            textures: textures,
-        });
-    } catch (e) {
-        console.error(e);
-        res.status(500).send("Internal server error");
-    }
-});
-
-app.get("/api/comments/:shaderId", async (req, res) => {
-    const depth = req.query.depth;
-    const comment = req.query.comment;
-
-    try {
-        res.json(await Utils.getComment(req.params.shaderId, comment, depth));
-    } catch (e) {
-        console.error(e);
-        res.status(500).send("Internal server error");
-    }
-});
-
-app.post("/api/comments", async (req, res) => {
-    try {
-        if (!req.user) {
-            res.status(401).send("Unauthenticated");
-            return;
-        }
-
-        if (!req.body) {
-            res.status(400).send("No request body");
-            return;
-        }
-
-        if (!(req.body.parentShader != null && req.body.text)) {
-            res.status(400).send("Invalid request");
-            return;
-        }
-
-        const id = req.body.parentShader;
-
-        if (!await Shaders.findByPrimary(id)) {
-            res.status(404).send("Parent shader not found");
-            return;
-        }
-
-        let parentComment: number | undefined;
-        if (req.body.parentComment != null) {
-            parentComment = req.body.parentComment;
-            if (!await Comments.findByPrimary(req.body.parentComment)) {
-                res.status(404).send("Parent comment not found");
-            }
-        }
-
-        const comment = await Comments.create({
-            author: req.user.id,
-            text: req.body.text,
-            parentShader: req.body.parentShader,
-            parentComment,
-        });
-
-        const author = await Users.findByPrimary(comment.author);
-        if (author) {
-            res.json({
-                ...(comment as any).dataValues,
-                author: {
-                    id: author.id,
-                    username: author.username,
-                },
-            })
-        } else {
-            res.json(comment);
-        }
-
-    } catch (e) {
-        console.error(e);
-        res.status(500).send("Internal server error");
-    }
-});
-
-app.patch("/api/comments", async (req, res) => {
-    try {
-        if (!req.user) {
-            res.status(401).send("Unauthenticated");
-            return;
-        }
-
-        if (!req.body) {
-            res.status(400).send("No request body");
-            return;
-        }
-
-        if (!(req.body.id != null && req.body.text)) {
-            res.status(400).send("Invalid request");
-            return;
-        }
-
-        const comment = await Comments.findByPrimary(req.body.id);
-        if (!comment) {
-            res.status(404).send("Comment not found");
-            return;
-        }
-
-        if (comment.author !== req.user.id) {
-            res.status(403).send("You are not allowed to edit this comment");
-            return;
-        }
-
-        res.json(await comment.update({
-            text: req.body.text,
-            lastEdited: new Date(),
-        }));
-    } catch (e) {
-        console.error(e);
-        res.status(500).send("Internal server error");
-    }
-});
-
-app.get("/api/users/me", (req, res) => {
-    if (!req.user) {
-        res.status(401).send("Unaunenticated");
-        return;
-    }
-
-    res.redirect(`/api/users/${req.user.id}`);
-});
-
-app.get("/api/users/:id", async (req, res) => {
-    try {
-        const id = Number(req.params.id);
-        if (!Number.isFinite(id)) {
-            res.status(400).send("Invalid id");
-            return;
-        }
-
-        const user = await Users.findByPrimary(id);
-        if (!user) {
-            res.status(404).send("User not found");
-            return;
-        }
-
-        res.json({
-            id: user.id,
-            username: user.username,
-            role: user.role,
-            email: user.email || null,
-        });
-    } catch (e) {
-        console.error(e);
-        res.status(500).send("Internal server error");
-    }
-});
-
-app.get("/api/users/:id/shaders", async (req, res) => {
-    try {
-        const id = Number(req.params.id);
-        if (!Number.isFinite(id)) {
-            res.status(400).send("Invalid id");
-        }
-
-        const shaders = await Shaders.findAll({ where: { owner: id } });
-
-        res.json(shaders);
-    } catch (e) {
-        console.error(e);
-        res.status(500).send("Internal server error");
-    }
-});
-
-app.get("/api/users/:id/comments", async (req, res) => {
-    try {
-        const id = Number(req.params.id);
-        if (!Number.isFinite(id)) {
-            res.status(400).send("Invalid id");
-        }
-
-        const comments = await Comments.findAll({ where: { author: id }, group: "parentShader" });
-
-        console.log(comments);
-        throw new Error("a");
-
-        res.json(comments);
-    } catch (e) {
-        console.error(e);
-        res.status(500).send("Internal server error");
-    }
-})
 
 db.sync({ force: false }).then(() => {
     console.log("Database initialized");

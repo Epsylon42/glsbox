@@ -69,7 +69,7 @@ gl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
     }
 
     export function requestShader(id: number): Promise<RecvShaderData> {
-        return fetch(`/api/shaders/${id}`)
+        return fetch(`/api/v1/shaders/${id}`)
             .then(response => response.json())
             .then(json => RecvShaderData.fromJson(json));
     }
@@ -104,7 +104,7 @@ gl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
             form.append("textureOptions", JSON.stringify(textureOptions));
         }
 
-        return fetch(`/shaders`, {
+        return fetch(`/api/v1/shaders`, {
             method: "POST",
             body: form,
         })
@@ -161,7 +161,7 @@ gl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
             form.append("textureOptions", JSON.stringify(textureOptions));
         }
 
-        return fetch(`/shaders/${data.id}`, {
+        return fetch(`/api/v1/shaders/${data.id}`, {
             method: "PATCH",
             body: form,
         })
@@ -189,9 +189,9 @@ export module CommentStorage {
     export function requestComment(shader: number, comment?: number): Promise<GenericComment> {
         let promise: Promise<Response>;
         if (comment != null) {
-            promise = fetch(`/api/comments/${shader}?comment=${comment}`);
+            promise = fetch(`/api/v1/comments/${shader}?comment=${comment}`);
         } else {
-            promise = fetch(`/api/comments/${shader}`);
+            promise = fetch(`/api/v1/comments/${shader}`);
         }
 
         return promise
@@ -200,7 +200,7 @@ export module CommentStorage {
     }
 
     export function postComment(data: SendCommentData): Promise<CommentData> {
-        return fetch("/api/comments", {
+        return fetch("/api/v1/comments", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -212,7 +212,7 @@ export module CommentStorage {
     }
 
     export function patchComment(data: PatchCommentData): Promise<CommentData> {
-        return fetch("/api/comments", {
+        return fetch("/api/v1/comments", {
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json"
@@ -224,7 +224,7 @@ export module CommentStorage {
     }
 
     function deleteComment(id: number): Promise<void> {
-        return fetch("/api/comments", {
+        return fetch("/api/v1/comments", {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json"
@@ -265,13 +265,13 @@ export class RecvUser {
 
 export module UserStorage {
     export function requestUser(id: number): Promise<RecvUser> {
-        return fetch(`/api/users/${id}`)
+        return fetch(`/api/v1/users/${id}`)
             .then(response => response.json())
             .then(json => RecvUser.fromJson(json));
     }
 
     export function requestMe(): Promise<RecvUser> {
-        return fetch("/api/users/me")
+        return fetch("/api/v1/users/me")
             .then(response => response.json())
             .then(json => RecvUser.fromJson(json));
     }
