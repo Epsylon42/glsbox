@@ -123,12 +123,12 @@ app.get("/users/:id", async (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-    res.render("auth", {
+    res.render("index", {
         user: req.user,
         scripts: "auth.js",
         mountPoints: {
             lib: "auth",
-            mount: "#auth-app",
+            mount: "#content-app",
             args: "\"login\"",
         }
     });
@@ -137,12 +137,12 @@ app.get("/login", (req, res) => {
 app.post("/login", Passport.authenticate('local', { failureRedirect: '/login', successRedirect: '/' }));
 
 app.get("/register", (req, res) => {
-    res.render("auth", {
+    res.render("index", {
         user: req.user,
         scripts: "auth.js",
         mountPoints: {
             lib: "auth",
-            mount: "#auth-app",
+            mount: "#content-app",
             args: "\"register\"",
         }
     });

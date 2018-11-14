@@ -1,20 +1,27 @@
 <template>
+<div class="box">
+  <h1 class="title">Login</h1>
+
   <form action="/login" method="POST" enctype="multipart/form-data">
-    <h1>Login</h1>
+    <div class="field">
+      <div class="control">
+        <input class="input" type="text" name="username" placeholder="Username">
+      </div>
+    </div>
 
-    <table>
-      <tr>
-        <td> Username </td>
-        <td> <input type="text" name="username" required> </td>
-      </tr>
+    <div class="field">
+      <div class="control">
+        <input class="input" type="password" name="password" placeholder="Password">
+      </div>
+    </div>
 
-      <tr>
-        <td> Password </td>
-        <td> <input type="password" name="password" required> </td>
-      </tr>
-    </table>
-    <input type="submit">
+    <div class="field">
+      <div class="control">
+        <input class="button is-primary" type="submit" value="Login">
+      </div>
+    </div>
   </form>
+</div>
 </template>
 
 <script lang="ts">

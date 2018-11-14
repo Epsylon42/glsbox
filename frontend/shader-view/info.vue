@@ -1,36 +1,50 @@
 <template>
-  <div class="info">
-
-    <div class="preview" v-if="canSave">
+<div>
+  <div class="media">
+    
+    <div class="preview media-left" v-if="canSave">
       <div class="preview-header">
         <p>Preview</p>
-
+        
         <button class="svg-button" @click="removePreview" v-if="preview">
           <Icon name="trash" />
         </button>
-
+        
         <button class="svg-button" @click="takePreview" v-else>
           <Icon name="camera" />
         </button>
-
+        
       </div>
-
+      
       <img :src="preview.url" v-if="preview">
       <div class="preview-placeholder" v-else />
     </div>
-
-    <div class="name-box">
-      <input type="text" placeholder="name" v-model="name" v-if="canSave">
-      <p class="immutable text-box" v-else>{{ name }}</p>
+    
+    <div class="media-center">
+      <div class="field">
+        <label class="label">Name</label>
+        <div class="control">
+          <input v-if="canSave" class="input" type="text" v-model="name">
+          <p v-else class="text-box">{{ name }}</p>
+        </div>
+      </div>
+      
+      <div class="field">
+        <label class="label">Description</label>
+        <div class="control">
+          <textarea v-if="canSave" class="input description" v-model="description" />
+          <div class="text-box content" v-else v-html="descriptionHTML" />
+        </div>
+      </div>
     </div>
-
-    <div class="description-box">
-      <textarea placeholder="description" v-model="description" v-if="canSave" />
-
-      <p v-if="canSave">Description preview:</p>
-      <div class="immutable text-box" :class="{ 'description-preview': canSave }" v-html="descriptionHTML" />
-    </div>
+    
   </div>
+
+  <div v-if="description.length !== 0 && canSave" class="field">
+    <label class="label">Description preview</label>
+    <div class="box content" v-html="descriptionHTML" />
+  </div>
+</div>
 </template>
 
 <script lang="ts">
@@ -98,13 +112,6 @@ export default class Info extends Vue {
 
 <style scoped>
 
-.info {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
-}
-
 .preview {
     display: flex;
     flex-direction: column;
@@ -124,7 +131,7 @@ export default class Info extends Vue {
     background-color: white;
     border-radius: 15px 15px 0 0;
     padding: 5px;
-    height: 30px;
+    height: 40px;
 }
 
 .preview > img, .preview-placeholder {
@@ -132,34 +139,13 @@ export default class Info extends Vue {
     border-radius: 0 0 15px 15px;
 }
 
-
-.name-box {
-    width: 100%;
-    margin-bottom: 20px;
-}
-
-.description-box {
+.media-center {
     width: 100%;
 }
 
-.name-box .immutable {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-}
-
-.description-box textarea {
+.description {
     resize: vertical;
+    height: 100px;
     width: 100%;
-}
-
-.immutable {
-    margin: 0;
-    width: 100%;
-    min-height: 20px;
-}
-
-p {
-    margin: 0;
 }
 </style>

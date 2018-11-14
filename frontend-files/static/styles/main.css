@@ -3,56 +3,22 @@ html {
 }
 
 body {
-    margin: 0;
-
-    display: grid;
-    grid-template-columns: 100%;
-    grid-template-rows: auto minmax(100vh, auto) auto;
-    grid-template-areas:
-        "header"
-        "content"
-        "footer";
-
-    background-color: #f0f0fa;
-}
-
-nav {
-    grid-area: header;
-
-    display: flex;
-    flex-direction: row;
-
-    height: 50px;
-    background-color: #222;
-    color: #ddd;
-}
-
-nav a {
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-
-    padding-left: 10px;
-    padding-right: 10px;
-
-    font-size: 14pt;
 }
 
-#profile {
-    margin-left: auto;
+.section {
+    margin-top: auto;
+    margin-bottom: auto;
 }
 
-#content {
-    grid-area: content;
+.text-box {
+    background-color: #f9f9f9;
+    border: 2px solid #ddd;
+    border-radius: 2px;
+    padding: 5px;
 }
-
-#footer {
-    grid-area: footer;
-    background-color: #222;
-    color: #ddd;
-}
-
 
 a {
     color: #06f;
@@ -63,20 +29,10 @@ a:visited {
     color: #c3f;
 }
 
-
-
-.text-box {
-    background-color: #f9f9f9;
-    border: 2px solid #ddd;
-    border-radius: 2px;
-    padding: 5px;
-}
-
-.card {
-    padding: 25px;
-    border: 1px solid grey;
-    background-color: #e9e9f9;
-    box-shadow: 2px 2px 2px;
+#footer {
+    color: #ddd;
+    margin-top: auto;
+    padding: 10px;
 }
 
 .svg-button {

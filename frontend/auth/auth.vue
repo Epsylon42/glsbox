@@ -1,6 +1,6 @@
 <template>
-  <div class="auth">
-    <component class="form card" :is="form" />
+  <div class="column is-4 is-offset-4">
+    <component :is="form" />
   </div>
 </template>
 
@@ -30,34 +30,3 @@ export default class Auth extends Vue {
     }
 }
 </script>
-
-<style>
-
-.auth {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-}
-
-.auth .form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-around;
-
-    margin-top: 100px;
-    min-height: 200px;
-}
-
-.auth h1 {
-    font-size: 15pt;
-}
-
-.auth error {
-    border: 1px solid red;
-    border-radius: 5px;
-    margin: 0;
-    margin-bottom: 10px;
-    padding: 5px;
-}
-</style>

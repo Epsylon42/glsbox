@@ -1,25 +1,26 @@
 <template>
-  <div class="user">
-    <p class="text-box error" v-if="error">
-      {{ error }}
-    </p>
-
-    <div class="user-data card" v-else>
-
-      <div class="user-header">
-        <button @click="selectProfile">Profile</button>
-        <button @click="selectShaders">Shaders</button>
-        <button @click="selectComments">Comments</button>
-      </div>
-
-      <component :is="component" />
-
+<div class="container">
+  <p v-if="error" class="text-box error">
+    {{ error }}
+  </p>
+  
+  <div class="box" v-else>
+    <div class="tabs is-centered">
+      <ul>
+        <li class="is-active"> <a @click="selectProfile">Profile</a> </li>
+        <li> <a @click="selectShaders">Shaders</a> </li>
+        <li> <a @click="selectComments">Comments</a> </li>
+      </ul>
     </div>
+    
+    <component :is="component" />
   </div>
+
+</div>
 </template>
 
 <script lang="ts">
-
+    
 import { Vue, Component, Prop } from 'vue-property-decorator';
 import { RecvUser, UserStorage } from '../backend.ts';
 import { UserRole } from '../../common/user-role.ts';
@@ -58,13 +59,6 @@ export default class User extends Vue {
 
 <style scoped>
 
-.user {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    margin-top: 200px;
-}
-
 .error {
     width: 50%;
 }
@@ -73,10 +67,6 @@ export default class User extends Vue {
     display: flex;
     flex-direction: column;
     width: 75%;
-}
-
-.user-header {
-    height: 30px;
 }
 
 </style>

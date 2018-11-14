@@ -34,6 +34,6 @@ module.exports = {
         ]
     },
     plugins: [
-        new VuePlugin()
+        new VuePlugin(),
     ]
 };

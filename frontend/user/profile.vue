@@ -1,99 +1,121 @@
 <template>
 <div class="profile">
-  <div class="text-box immutable">
-    <p>{{ user.username }}</p>
-    <p><em>Registered {{ user.registrationDate.toLocaleString() }}</em></p>
+  <div class="field">
+    <label class="label">Username</label>
+    <p>{{ data.user.username }}</p>
   </div>
 
-  <div class="field text-box">
-    <input v-if="canEditRole" type="checkbox" id="mod" v-model.boolean="isModerator">
-    <label v-if="canEditRole" for="mod">Is Moderator</label>
+  <div class="field">
+    <label class="label">Registered</label>
 
-    <p v-else>{{ role }}</p>
+    <p> {{ data.user.registrationDate.toLocaleString() }} </p>
   </div>
   
   <div class="field">
-    
-    <p class="field-name">email</p>
-    <p class="text-box email field-value" v-if="editingEmail == null">
-      {{ email }}
-    </p>
-    <input type="email" v-if="editingEmail != null" v-model="editingEmail" placeholder="email">
-    <div v-if="canEditFields" class="edit-buttons">
-      <button
-        v-if="editingEmail == null"
-        class="svg-button"
-        @click="editingEmail = user.email || ''"
-        title="edit"
-        >
-        <Icon name="edit" />
-      </button>
-      <button
-        v-if="editingEmail == null"
-        class="svg-button"
-        @click="clearEmail"
-        title="clear"
-        >
-        <Icon name="backspace" />
-      </button>
-      
-      <button
-        v-if="editingEmail != null"
-        class="svg-button"
-        @click="saveEmail"
-        title="save"
-        >
-        <Icon name="save" />
-      </button>
-      <button
-        v-if="editingEmail != null"
-        class="svg-button"
-        @click="editingEmail = null"
-        title="cancel"
-        >
-        <Icon name="undo" />
-      </button>
-      
+    <label class="label">Role</label>
+
+    <div class="control">
+      <label v-if="perm.canEditRole" class="checkbox">
+        <input type="checkbox" v-model.boolean="data.isModerator">
+        Is Moderator
+      </label>
+      <label v-else>
+        {{ data.role }}
+      </label>
     </div>
   </div>
   
-  <div class="field" v-if="canEditFields">
-    <p class="field-name">password</p>
-    <div class="password" v-if="editingPassword != null">
-      <input type="password" v-model="editingPassword" placeholder="password">
-      <input type="password" v-model="repeatPassword" placeholder="repeat password">
-    </div>
+  <div class="field">
+    <label class="label">Email</label>
     
-    <div class="edit-buttons">
-      <button
-        v-if="editingPassword == null"
-        class="svg-button"
-        @click="editPassword"
-        title="edit"
-        >
-        <Icon name="edit" />
-      </button>
+    <div class="control">
+      <template v-if="edit.email == null">
+        <p>
+          {{ data.email }}
+        </p>
+        
+        <template v-if="perm.canEditFields">
+          <button
+            class="button is-primary is-small"
+            @click="edit.editEmail()"
+            title="edit"
+            >
+            Edit
+          </button>
+          <button
+            class="button is-warning is-small"
+            @click="edit.clearEmail()"
+            title="clear"
+            >
+            Clear
+          </button>
+        </template>
+      </template>
       
-      <button
-        v-if="editingPassword != null"
-        class="svg-button"
-        @click="savePassword"
-        title="save"
-        >
-        <Icon name="save" />
-      </button>
-      <button
-        v-if="editingPassword != null"
-        class="svg-button"
-        @click="editingPassword = null"
-        title="cancel"
-        >
-        <Icon name="undo" />
-      </button>
+      <template v-else>
+        <input class="input" type="email" v-model="edit.email" placeholder="email">
+        
+        <button
+          class="button is-success is-small"
+          @click="edit.saveEmail()"
+          title="save"
+          >
+          Save
+        </button>
+        <button
+          class="button is-small"
+          @click="edit.email = null"
+          title="cancel"
+          >
+          Cancel
+        </button>
+        
+      </template>
+    </div>
+  </div>
+  
+  <div v-if="perm.canEditFields" class="field">
+    <label class="label">Password</label>
+    
+    <div class="control">
+      <template v-if="edit.password == null">
+        <button
+          class="button is-primary is-small"
+          @click="edit.editPassword()"
+          title="edit"
+          >
+          Edit
+        </button>
+      </template>
+
+      <template v-else>
+        <input class="input" type="password" v-model="edit.password" placeholder="Password">
+        <input class="input" type="password" v-model="edit.repeatPassword" placeholder="Repeat password">
+        
+        <button
+          class="button is-success is-small"
+          @click="edit.savePassword()"
+          title="save"
+          >
+          Save
+        </button>
+        <button
+          class="button is-small"
+          @click="edit.password = null"
+          title="cancel"
+          >
+          Cancel
+        </button>
+      </template>
     </div>
   </div>
 
-  <button class="save-button" v-if="changed" @click="save">Save</button>
+  <div v-if="perm.canEditFields" class="field">
+    <div class="control">
+      <button class="button is-success" :disabled="!changed" @click="save">Save</button>
+    </div>
+  </div>
+
 </div>
 </template>
 
@@ -112,33 +134,26 @@ import 'vue-awesome/icons/backspace.js';
 import 'vue-awesome/icons/save.js';
 import 'vue-awesome/icons/undo.js';
 
-@Component({
-    components: {
-        Icon,
-    }
-})
-export default class Profile extends Vue {
-    private get user(): RecvUser {
-        return store.getters.user as RecvUser;
-    }
-
-    private get email(): string | null {
-        return store.getters.email;
-    }
-
-    private get canEditFields(): boolean {
+class Permissions {
+    public get canEditFields(): boolean {
         return store.getters.canEditFields;
     }
 
-    private get canEditRole(): boolean {
+    public get canEditRole(): boolean {
         return store.getters.canEditRole;
     }
+}
 
-    private get changed(): boolean {
-        return store.getters.changed;
+class Data {
+    public get user(): RecvUser {
+        return store.getters.user as RecvUser;
     }
 
-    private get role(): string {
+    public get email(): string {
+        return store.getters.email;
+    }
+
+    public get role(): string {
         switch (store.getters.user.role) {
         case UserRole.User:
             return "Regular User";
@@ -154,35 +169,61 @@ export default class Profile extends Vue {
         }
     }
 
-    private get isModerator(): boolean {
+    public get isModerator(): boolean {
         return store.getters.role === UserRole.Moderator;
     }
-    private set isModerator(val: boolean) {
+    public set isModerator(val: boolean) {
         store.commit(Mutations.changeRole, val ? UserRole.Moderator : UserRole.User);
     }
+}
 
-    private editingEmail?: string = null;
-    private editEmail() {
-        this.editingEmail = store.getters.email;
+class Edit {
+    constructor(private data: Data) {}
+
+    public email?: string = null;
+
+    public editEmail() {
+        this.email = this.data.email;
     }
-    private saveEmail() {
-        store.commit(Mutations.changeEmail, this.editingEmail);
-        this.editingEmail = null;
+    public saveEmail() {
+        store.commit(Mutations.changeEmail, this.email);
+        this.email = null;
     }
-    private clearEmail() {
+    public clearEmail() {
         store.commit(Mutations.changeEmail, null);
-        this.$forceUpdate();
     }
 
-    private editingPassword?: string = null;
-    private repeatPassword: string = "";
-    private editPassword() {
-        this.editingPassword = "";
+    //
+    public password?: string = null;
+    public repeatPassword: string = "";
+
+    public editPassword() {
+        this.password = "";
         this.repeatPassword = "";
     }
-    private savePassword() {
-        store.commit(Mutations.changePassword, this.editingPassword);
-        this.editingPassword = null;
+    public savePassword() {
+        store.commit(Mutations.changePassword, this.password);
+        this.password = null;
+    }
+}
+
+@Component({
+    components: {
+        Icon,
+    }
+})
+export default class Profile extends Vue {
+    private get changed(): boolean {
+        return store.getters.changed;
+    }
+
+    private perm = new Permissions();
+    private data = new Data();
+    private edit: Edit;
+
+    constructor() {
+        super();
+        this.edit = new Edit(this.data);
     }
 
     private save() {
@@ -197,46 +238,6 @@ export default class Profile extends Vue {
 
 .profile {
     display: flex;
-    flex-direction: column;
-}
-
-.immutable {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    
-    margin-bottom: 30px;
-}
-
-.edit-buttons {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-
-    margin-left: 10px;
-}
-
-.edit-buttons .svg-button {
-    padding: 0;
-    margin-left: 2px;
-}
-
-.field {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
-
-.field-name {
-    min-width: 50px;
-}
-
-.field-value {
-    min-width: 50px;
-}
-
-.password {
-    display :flex;
     flex-direction: column;
 }
 

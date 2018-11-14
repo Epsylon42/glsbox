@@ -22,7 +22,7 @@
       <p>{{ shaderTime }}</p>
     </div>
   </div>
-
+  
   <div class="info">
     <Info v-if="showInfo" />
   </div>
@@ -35,17 +35,19 @@
         <td class="declaration-name">{{ decl.name }}</td>
       </tr>
     </table>
-
-    <VueCodemirror v-model="shaderSource" :options="cmOptions" />
     
-    <div class="controls">
-      <button class="svg-button" @click="updateSource" title="run this code">
-        <Icon name="arrow-left" />
+    <div class="code-editor">
+      <VueCodemirror v-model="shaderSource" :options="cmOptions" />
+      
+      <div class="controls">
+        <button class="svg-button" @click="updateSource" title="run this code">
+          <Icon name="arrow-left" />
+        </button>
+        <button class="svg-button" @click="upload" :title="isSaving ? 'saving' : 'save'" v-if="canSave">
+          <Icon v-if="isSaving" name="spinner" pulse />
+          <Icon v-else name="save" />
       </button>
-      <button class="svg-button" @click="upload" :title="isSaving ? 'saving' : 'save'" v-if="canSave">
-        <Icon v-if="isSaving" name="spinner" pulse />
-        <Icon v-else name="save" />
-      </button>
+      </div>
     </div>
 
     <p class="text-box error" v-if="error != null">
@@ -185,6 +187,14 @@ export default class ShaderView extends Vue {
 }
 </script>
 
+<style>
+.CodeMirror {
+    font-family: monospace;
+    font-size: 10pt;
+    line-height: 1;
+}
+</style>
+
 <style scoped>
 
 .container {
@@ -228,6 +238,7 @@ export default class ShaderView extends Vue {
     align-items: center;
     
     border-radius: 0 0 5px 5px;
+    border-top: 1px solid #ddd;
     
     height: 30px;
     background-color: white;
@@ -254,11 +265,9 @@ export default class ShaderView extends Vue {
     align-items: stretch;
 }
 
-.editor > textarea {
-    height: 100%;
-    width: 100%;
-    min-height: 250px;
-    resize: none;
+.code-editor {
+    border: 1px solid #aaa;
+    border-radius: 0 0 5px 5px;
 }
 
 .comments {
@@ -276,6 +285,8 @@ export default class ShaderView extends Vue {
 .declarations tr, .declarations td {
     border: 1px solid grey;
     font-size: 10pt;
+    padding-left: 2px;
+    padding-right: 2px;
 }
 
 .declarations .declaration-kind {

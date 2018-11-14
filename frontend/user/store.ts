@@ -9,6 +9,8 @@ export class StoreState {
     public me?: RecvUser = null;
 
     public newEmail?: string = null;
+    public emailChanged: boolean = false;
+
     public newPassword?: string = null;
     public newRole?: UserRole = null;
 }
@@ -19,6 +21,8 @@ export const Mutations = {
     changeEmail: "changeEmail",
     changePassword: "changePassword",
     changeRole: "changeRole",
+
+    resetChanges: "resetChanges",
 };
 
 export const Actions = {
@@ -43,7 +47,7 @@ export const store = new Vuex.Store({
         },
 
         email(state: StoreState): string | null {
-            return state.newEmail || state.user.email;
+            return state.emailChanged ? state.newEmail : state.user.email;
         },
 
         role(state: StoreState): UserRole | null {
@@ -59,7 +63,7 @@ export const store = new Vuex.Store({
         },
 
         changed(state: StoreState): boolean {
-            return store.state.newEmail != null
+            return store.state.emailChanged
                 || store.state.newPassword != null
                 || store.state.newRole != null;
         },
@@ -76,6 +80,7 @@ export const store = new Vuex.Store({
 
         [Mutations.changeEmail] (state: StoreState, email?: string) {
             state.newEmail = email;
+            state.emailChanged = true;
         },
 
         [Mutations.changePassword] (state: StoreState, pass?: string) {
@@ -84,6 +89,13 @@ export const store = new Vuex.Store({
 
         [Mutations.changeRole] (state: StoreState, role?: UserRole) {
             state.newRole = role;
+        },
+
+        [Mutations.resetChanges] (state: StoreState) {
+            state.newEmail = null;
+            state.newPassword = null;
+            state.newRole = null;
+            state.emailChanged = false;
         },
     },
 
@@ -101,15 +113,13 @@ export const store = new Vuex.Store({
 
         [Actions.save] ({ state, commit }): Promise<void> {
             return UserStorage.patchUser(state.user.id, new PatchUser(
-                state.newEmail || undefined,
+                state.emailChanged && state.newEmail || undefined,
                 state.newPassword || undefined,
                 state.newRole || undefined,
             ))
                 .then(user => {
                     commit(Mutations.setUser, user);
-                    commit(Mutations.changeEmail, null);
-                    commit(Mutations.changePassword, null);
-                    commit(Mutations.changeRole, null);
+                    commit(Mutations.resetChanges);
                 });
         },
     },

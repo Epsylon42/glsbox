@@ -8,30 +8,33 @@
     <body>
         {{> nav}}
 
-        <div id="content">
-            <ul class="shaders">
-                {{#shaders}}
-                <li class="card">
-                    <div class="preview">
-                        <a href="/view/{{id}}">
-                            {{#previewUrl}}
-                            <img src="{{.}}">
-                            {{/previewUrl}}
-                            {{^previewUrl}}
-                            <div class="placeholder"></div>
-                            {{/previewUrl}}
-                        </a>
-                    </div>
+        <div class="section tile is-ancestor">
+            {{#shaders}}
+            <div class="tile is-parent is-6">
+                <div class="tile is-child box">
+                    <div class="media">
+                        <div class="media-left preview">
+                            <a href="/view/{{id}}">
+                                {{#previewUrl}}
+                                <img src="{{.}}">
+                                {{/previewUrl}}
+                                {{^previewUrl}}
+                                <div class="placeholder"></div>
+                                {{/previewUrl}}
+                            </a>
+                        </div>
 
-                    <div class="data">
-                        <p class="text-box"><a href="/view/{{id}}">{{name}}</a></p>
-                        <div class="description text-box">{{{ descriptionHTML }}}</div>
+                        <div class="media-content">
+                            <p><strong><a href="/view/{{id}}">{{name}}</a></strong></p>
+                            <hr>
+                            <div class="content">
+                                {{{ descriptionHTML }}}
+                            </div>
+                        </div>
                     </div>
-                </li>
-                {{/shaders}}
-
-                <li class="phantom card" />
-            </ul>
+                </div>
+            </div>
+            {{/shaders}}
         </div>
 
         {{> footer}}

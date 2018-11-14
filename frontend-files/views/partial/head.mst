@@ -1,6 +1,9 @@
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <link rel="stylesheet" type="text/css" href="/styles/main.css">
 <link rel="stylesheet" type="text/css" href="/styles/profile.css">
+<link rel="stylesheet" type="text/css" href="/styles/bulma.css">
 {{#styles}}
 <link rel="stylesheet" type="text/css" href="/styles/{{.}}">
 {{/styles}}
