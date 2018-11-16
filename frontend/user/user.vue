@@ -1,19 +1,30 @@
 <template>
 <div class="container">
-  <p v-if="error" class="text-box error">
-    {{ error }}
-  </p>
   
-  <div class="box" v-else>
-    <div class="tabs is-centered">
-      <ul>
-        <li :class="{ 'is-active': profileSelected }"> <a @click="selectProfile">Profile</a> </li>
-        <li :class="{ 'is-active': shadersSelected }"> <a @click="selectShaders">Shaders</a> </li>
-        <li :class="{ 'is-active': commentsSelected }"> <a @click="selectComments">Comments</a> </li>
-      </ul>
+  <div v-if="error" class="message is-danger">
+    <div class="message-header">
+      <p>Error</p>
     </div>
     
-    <component :is="component" />
+    <div class="message-body">
+      <p>{{ error }}</p>
+    </div>
+  </div>
+  
+  <div v-else class="box">
+    <div v-if="userLoading" class="loading-panel" />
+
+    <template v-else>
+      <div class="tabs is-centered">
+        <ul>
+          <li :class="{ 'is-active': profileSelected }"> <a @click="selectProfile">Profile</a> </li>
+          <li :class="{ 'is-active': shadersSelected }"> <a @click="selectShaders">Shaders</a> </li>
+          <li :class="{ 'is-active': commentsSelected }"> <a @click="selectComments">Comments</a> </li>
+        </ul>
+      </div>
+      
+      <component :is="component" />
+    </template>
   </div>
 
 </div>
@@ -38,6 +49,10 @@ export default class User extends Vue {
     
     private error?: string = null;
     private component?: typeof Vue = null;
+
+    private get userLoading(): boolean {
+        return store.state.userLoading;
+    }
     
     mounted() {
         this.originalPanel = this.panel;

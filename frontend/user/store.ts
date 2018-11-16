@@ -13,9 +13,12 @@ export class UserShaders {
     public limit: number = 10;
 
     public loadingLock: boolean = false;
+    public firstLoading: boolean = false;
 }
 
 export class StoreState {
+    public userLoading: boolean = false;
+
     public user?: RecvUser = null;
     public me?: RecvUser = null;
 
@@ -29,6 +32,7 @@ export class StoreState {
 }
 
 export const Mutations = {
+    setUserLoading: "setUserLoading",
     setUser: "setUser",
     setMe: "setMe",
     changeEmail: "changeEmail",
@@ -36,6 +40,7 @@ export const Mutations = {
     changeRole: "changeRole",
     pushShaderBatch: "pushShaderBatch",
     setShadersLoadingLock: "setShadersLoadingLock",
+    setShadersFirstLoading: "setShadersFirstLoading",
     setCanLoadMoreShaders: "setCanLoadMoreShaders",
 
     resetChanges: "resetChanges",
@@ -91,6 +96,10 @@ export const store = new Vuex.Store({
     },
 
     mutations: {
+        [Mutations.setUserLoading] (state: StoreState, loading: boolean) {
+            state.userLoading = loading;
+        },
+
         [Mutations.setUser] (state: StoreState, user: RecvUser) {
             state.user = user;
         },
@@ -138,6 +147,10 @@ export const store = new Vuex.Store({
             state.shaders.loadingLock = lock;
         },
 
+        [Mutations.setShadersFirstLoading] (state: StoreState, loading: boolean) {
+            state.shaders.firstLoading = loading;
+        },
+
         [Mutations.setCanLoadMoreShaders] (state: StoreState, canLoad: boolean) {
             state.shaders.canLoadMore = canLoad;
         },
@@ -145,6 +158,8 @@ export const store = new Vuex.Store({
 
     actions: {
         [Actions.init] ({ state, commit }, id: number): Promise<void> {
+            commit(Mutations.setUserLoading, true);
+
             return Promise.all([
                 UserStorage.requestUser(id),
                 UserStorage.requestMe().catch(() => {}),
@@ -152,6 +167,7 @@ export const store = new Vuex.Store({
                 .then(([user, me]) => {
                     commit(Mutations.setUser, user);
                     commit(Mutations.setMe, me);
+                    commit(Mutations.setUserLoading, false);
                 });
         },
 
@@ -175,6 +191,9 @@ export const store = new Vuex.Store({
             commit(Mutations.setShadersLoadingLock, true);
 
             const firstTime = state.shaders.shown.length === 0;
+            if (firstTime) {
+                commit(Mutations.setShadersFirstLoading, true);
+            }
 
             const promise = ShaderStorage
                 .requestUserShaders(state.user.id, state.shaders.limit, state.shaders.page)
@@ -195,8 +214,14 @@ export const store = new Vuex.Store({
                 });
 
             promise
-                .then(() => commit(Mutations.setShadersLoadingLock, false))
-                .catch(() => commit(Mutations.setShadersLoadingLock, false));
+                .then(() => {
+                    commit(Mutations.setShadersLoadingLock, false);
+                    commit(Mutations.setShadersFirstLoading, false);
+                })
+                .catch(() => {
+                    commit(Mutations.setShadersLoadingLock, false)
+                    commit(Mutations.setShadersFirstLoading, false);
+                });
 
             return promise;
         },
