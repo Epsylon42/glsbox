@@ -82,7 +82,7 @@
       
       <div class="message-body">
         <div class="content">
-          <p>modal.message</p>
+          <p>{{ modal.message }}</p>
         </div>
         <button class="button is-danger is-outlined" @click="modal = null">Close</button>
       </div>
@@ -246,7 +246,7 @@ export default class ShaderView extends Vue {
 
 .app {
     display: grid;
-    grid-template-columns: 500px auto;
+    grid-template-columns: minmax(500px, 50%) 50%;
     grid-template-rows: auto auto auto;
     grid-template-areas:
     "window-and-info     editor"
@@ -260,7 +260,7 @@ export default class ShaderView extends Vue {
 
 @media screen and (max-width: 1000px) {
     .app {
-        grid-template-columns: auto;
+        grid-template-columns: 100%;
         grid-template-rows: auto auto auto auto;
         grid-template-areas:
         "window-and-info"

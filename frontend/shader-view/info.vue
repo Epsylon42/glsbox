@@ -1,5 +1,5 @@
 <template>
-<div>
+<div class="info">
   <div class="media">
     
     <div class="preview media-left" v-if="canSave">
@@ -111,6 +111,10 @@ export default class Info extends Vue {
 </script>
 
 <style scoped>
+
+.info {
+    margin-top: 20px;
+}
 
 .preview {
     display: flex;
