@@ -9,7 +9,9 @@
         {{> nav}}
 
         <div id="content">
-            <div id="content-app"></div>
+          <div id="content-app">
+            <div class="loading-panel"></div>
+          </div>
         </div>
 
         {{> footer}}
