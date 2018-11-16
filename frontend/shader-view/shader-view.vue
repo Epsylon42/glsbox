@@ -109,6 +109,8 @@ export default class ShaderView extends Vue {
     private cmOptions = {
         lineNumbers: true,
         mode: "glsl",
+        indentUnit: 4,
+        indentWithTabs: true,
     };
 
     mounted() {

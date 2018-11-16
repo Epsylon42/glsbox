@@ -64,7 +64,7 @@ export module ShaderStorage {
         return Promise.resolve(new RecvShaderData(
                 -1,
             new FragShader(`void main() {
-gl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
+\tgl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
 }`)));
     }
 
