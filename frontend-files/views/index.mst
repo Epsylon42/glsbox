@@ -8,7 +8,7 @@
     <body>
         {{> nav}}
 
-        <div class="section" id="content">
+        <div id="content">
             <div id="content-app"></div>
         </div>
 

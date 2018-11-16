@@ -201,17 +201,17 @@ export default class ShaderView extends Vue {
 <style scoped>
 
 .app {
-    margin: 20px;
-    
     display: grid;
     grid-template-columns: 500px auto;
     grid-template-rows: auto auto auto;
     grid-template-areas:
-        "window-and-info     editor"
+    "window-and-info     editor"
         "window-and-info     textures"
         "comments            comments";
     grid-row-gap: 20px;
     grid-column-gap: 50px;
+    
+    padding: 40px;
 }
 
 @media screen and (max-width: 1000px) {
@@ -219,10 +219,17 @@ export default class ShaderView extends Vue {
         grid-template-columns: auto;
         grid-template-rows: auto auto auto auto;
         grid-template-areas:
-            "window-and-info"
+        "window-and-info"
             "editor"
             "textures"
             "comments";
+    }
+}
+
+@media screen and (max-width: 390px) {
+    .app {
+        padding-left: 0;
+        padding-right: 0;
     }
 }
 
