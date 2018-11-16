@@ -27,7 +27,7 @@
       <Info v-if="showInfo" />
     </div>
   </div>
-
+  
   <div class="editor">
     <table class="declarations">
       <tr v-for="decl in declarations">
@@ -47,19 +47,47 @@
         <button class="svg-button" @click="upload" :title="isSaving ? 'saving' : 'save'" v-if="canSave">
           <Icon v-if="isSaving" name="spinner" pulse />
           <Icon v-else name="save" />
-      </button>
+        </button>
       </div>
     </div>
-
-    <p class="text-box error" v-if="error != null">
-      {{ error }}
-    </p>
+    
+    <div v-if="compileErrors" class="message is-danger is-small">
+      <div class="message-header">
+        <p>Compilation errors</p>
+      </div>
+      <div class="message-body">
+        <template v-for="err in compileErrors">
+          <p v-if="err.line != null">
+            On line <b>{{ err.line }}</b>: {{ err.message }}
+          </p>
+          <p v-else>
+            {{ err.message }}
+          </p>
+        </template>
+      </div>
+    </div>
     
   </div>
-
+  
   <Textures class="textures" />
   
   <Comment :comment="rootComment" :isRoot="true" class="comments" />
+  
+  <div v-if="modal" class="modal is-active">
+    <div class="modal-background" @click="modal = null" />
+    <div class="modal-content message is-danger">
+      <div class="message-header">
+        <p>{{ modal.title }}</p>
+      </div>
+      
+      <div class="message-body">
+        <div class="content">
+          <p>modal.message</p>
+        </div>
+        <button class="button is-danger is-outlined" @click="modal = null">Close</button>
+      </div>
+    </div>
+  </div>
   
 </div>
 </template>
@@ -95,6 +123,13 @@ import 'vue-awesome/icons/redo.js';
 import 'vue-awesome/icons/arrow-left.js';
 import 'vue-awesome/icons/save.js';
 import 'vue-awesome/icons/spinner.js';
+
+class ErrorModal {
+    constructor(
+        public title: string,
+        public message: string,
+    ) {}
+}
 
 @Component({
     components: {
@@ -165,9 +200,9 @@ export default class ShaderView extends Vue {
     private timePause: boolean = false;
     private updatePause: boolean = false;
 
-    private error?: string = null;
+    private compileErrors?: { line?: number, message: string }[] = null;
     updateSource() {
-        this.error = null;
+        this.compileErrors = null;
         store.dispatch(Actions.setSource, this.shaderSource);
     }
 
@@ -175,16 +210,25 @@ export default class ShaderView extends Vue {
         (this.$refs.window as ShaderWindow).resetTime();
     }
 
+    private modal?: ErrorModal = null;
+
     upload() {
         this.updateSource();
         store
             .dispatch(Actions.saveShader)
             .then(id => console.log(`Shader successfully saved with id ${id}`))
-            .catch(e => console.log("Saving error", e));
+            .catch(e => {
+                console.log("Saving error", e);
+                this.modal = new ErrorModal("Saving error", e.message);
+            });
     }
 
     processError(e: WglError) {
-        this.error = e.message;
+        if (e.errors) {
+            this.compileErrors = e.errors;
+        } else {
+            this.compileErrors = [{ message: e.message }];
+        }
         console.error(e);
     }
 }

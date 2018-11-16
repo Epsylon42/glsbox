@@ -14,17 +14,35 @@ export interface IWglError {
 
 export interface ShaderCompileError extends IWglError {
     kind: 'shader compile error';
-    message: string;
+    errors: { line: number, message: string }[];
 }
 
 export interface ProgramLinkError extends IWglError {
     kind: 'program link error';
-    message: string;
 }
 
 export class WglError implements IWglError {
+    private static errRegex = /ERROR: (?:\d+):(\d+): (.+)/;
+
     public static shaderCompileError(message: string): WglError {
-        return new WglError('shader compile error', message);
+        return new WglError(
+            'shader compile error',
+            message,
+            message
+                .split('\n')
+                .map(line => {
+                    const match = line.match(WglError.errRegex);
+                    if (match) {
+                        return {
+                            line: Number(match[1]),
+                            message: match[2],
+                        };
+                    } else {
+                        return null;
+                    }
+                })
+                .filter(el => el != null)
+        );
     }
 
     public isShadecCompileError(): this is ShaderCompileError {
@@ -39,7 +57,11 @@ export class WglError implements IWglError {
         return this.kind === 'program link error';
     }
 
-    constructor(public kind: string, public message: string) {}
+    constructor(
+        public kind: string,
+        public message: string,
+        public errors: { line: number, message: string }[] | null = null
+    ) {}
 }
 
 export class WglProgram {

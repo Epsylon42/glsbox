@@ -26,6 +26,12 @@ export default class ShaderWindow extends Vue {
             this.updateShader(newShader);
         } catch (e) {
             if (e instanceof WglError) {
+                if (e.errors) {
+                    for (const err of e.errors) {
+                        err.line -= newShader.additionalLines();
+                    }
+                }
+
                 this.error(e);
             } else {
                 throw e;

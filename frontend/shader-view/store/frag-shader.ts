@@ -53,4 +53,8 @@ precision mediump float;
 
         return compiled;
     }
+
+    public additionalLines(): number {
+        return 3 + declarations.length + this.textures.length;
+    }
 }

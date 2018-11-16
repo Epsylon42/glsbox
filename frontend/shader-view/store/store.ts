@@ -363,6 +363,8 @@ export const store = new Vuex.Store({
 
                 commit(Mutations.setSendLock, true);
 
+                const createNew = state.id == null;
+
                 let promise: Promise<RecvShaderData> | null = null;
                 if (state.id == null) {
 
@@ -398,6 +400,9 @@ export const store = new Vuex.Store({
                 return promise
                     .then(shader => {
                         commit(Mutations.setSendLock, false);
+                        if (createNew) {
+                            window.history.pushState("", "", `/view/${shader.id}`);
+                        }
                         return shader.id;
                     });
             }
