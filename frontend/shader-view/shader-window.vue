@@ -1,5 +1,5 @@
 <template>
-<canvas ref="shader_canvas" width="400" height="300">
+<canvas class="display" ref="shaderCanvas" width="400" height="300">
   No WebGl support
 </canvas>
 </template>
@@ -46,7 +46,7 @@ export default class ShaderWindow extends Vue {
     }
     
     public get canvas(): HTMLCanvasElement {
-        return this.$refs.shader_canvas as HTMLCanvasElement;
+        return this.$refs.shaderCanvas as HTMLCanvasElement;
     }
 
     public resetTime() {
@@ -80,9 +80,16 @@ export default class ShaderWindow extends Vue {
     
     mounted() {
         this.gl = new Wgl(
-            (this.$refs.shader_canvas as HTMLCanvasElement)
+            (this.$refs.shaderCanvas as HTMLCanvasElement)
                 .getContext("webgl", { preserveDrawingBuffer: true })
         );
+
+        window.addEventListener("resize", () => {
+            if (this.$refs) {
+                const canvas = this.canvas;
+                canvas.height = canvas.width * 3/4;
+            }
+        });
     }
 
     destroyed() {
@@ -94,3 +101,13 @@ export default class ShaderWindow extends Vue {
     @Emit() private error(err: WglError) {}
 }
 </script>
+
+<style scoped>
+
+.display {
+    width: 100%;
+    max-width: 400px;
+
+    border-radius: 5px 5px 0 0;
+}
+</style>

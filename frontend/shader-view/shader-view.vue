@@ -1,32 +1,33 @@
 <template>
-<div class="container">
+<div class="app">
   
-  <div class="window">
-    <ShaderWindow
-      ref="window"
-      class="display"
-      :timePause="timePause"
-      :updatePause="updatePause"
-      @error="processError"
-      >
-    </ShaderWindow>
+  <div class="window-and-info">
+    <div class="window">
+      <ShaderWindow
+        ref="window"
+        :timePause="timePause"
+        :updatePause="updatePause"
+        @error="processError"
+        >
+      </ShaderWindow>
+      
+      <div class="controls">
+        <button class="svg-button" @click="resetTime" title="reset time">
+          <Icon name="redo" />
+        </button>
+        <button class="svg-button" @click="timePause = !timePause" title="toggle time">
+          <Icon name="play" v-if="timePause" />
+          <Icon name="pause" v-else />
+        </button>
+        <p>{{ shaderTime }}</p>
+      </div>
+    </div>
     
-    <div class="controls">
-      <button class="svg-button" @click="resetTime" title="reset time">
-        <Icon name="redo" />
-      </button>
-      <button class="svg-button" @click="timePause = !timePause" title="toggle time">
-        <Icon name="play" v-if="timePause" />
-        <Icon name="pause" v-else />
-      </button>
-      <p>{{ shaderTime }}</p>
+    <div class="info">
+      <Info v-if="showInfo" />
     </div>
   </div>
-  
-  <div class="info">
-    <Info v-if="showInfo" />
-  </div>
-  
+
   <div class="editor">
     <table class="declarations">
       <tr v-for="decl in declarations">
@@ -199,39 +200,47 @@ export default class ShaderView extends Vue {
 
 <style scoped>
 
-.container {
+.app {
     margin: 20px;
     
     display: grid;
-    grid-template-columns: minmax(400px, auto) 50%;
+    grid-template-columns: 500px auto;
     grid-template-rows: auto auto auto;
     grid-template-areas:
-        "window   editor"
-        "info     textures"
-        "comments comments";
+        "window-and-info     editor"
+        "window-and-info     textures"
+        "comments            comments";
     grid-row-gap: 20px;
     grid-column-gap: 50px;
 }
 
+@media screen and (max-width: 1000px) {
+    .app {
+        grid-template-columns: auto;
+        grid-template-rows: auto auto auto auto;
+        grid-template-areas:
+            "window-and-info"
+            "editor"
+            "textures"
+            "comments";
+    }
+}
+
+.window-and-info {
+    grid-area: window-and-info;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
 .window {
-    grid-area: window;
-    justify-self: center;
-    align-self: center;
-    
+    margin-left: auto;
+    margin-right: auto;
+
     display: flex;
     flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
-    
-    width: 400px;
-    height: 100%;
-}
-
-.window .display {
-    width: 400px;
-    height: 300px;
-    
-    border-radius: 5px 5px 0 0;
 }
 
 .controls {
@@ -249,10 +258,6 @@ export default class ShaderView extends Vue {
     padding-right: 5px;
 
     font-family: monospace;
-}
-
-.info {
-    grid-area: info;
 }
 
 .editor {

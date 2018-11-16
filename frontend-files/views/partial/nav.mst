@@ -16,9 +16,7 @@
             {{/user}}
 
             {{#user}}
-            <div class="navbar-item">
-                <a href="/users/{{id}}">{{username}}</a>
-            </div>
+            <a class="navbar-item" href="/users/{{id}}">{{username}}</a>
 
             <div class="navbar-item">
                 <a class="button is-light" href="/logout">Logout</a>

@@ -21,3 +21,13 @@
     border-radius: 15px;
     background-color: black;
 }
+
+@media screen and (max-width: 500px) {
+    .media {
+        flex-direction: column;
+    }
+
+    .media-content {
+        width: 100%;
+    }
+}
