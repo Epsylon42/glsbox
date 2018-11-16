@@ -5,6 +5,16 @@ import { TextureKind } from '../common/texture-kind.ts';
 import { UserRole } from '../common/user-role.ts';
 import CommentData, { GenericComment } from './shader-view/store/comment.ts';
 
+
+function checkError(obj: any): any {
+    if (obj.error) {
+        throw new Error(obj.message);
+    } else {
+        return obj;
+    }
+}
+
+
 export class RecvShaderData {
     constructor(
         public id: number,
@@ -71,6 +81,7 @@ export module ShaderStorage {
     export function requestShader(id: number): Promise<RecvShaderData> {
         return fetch(`/api/v1/shaders/${id}`)
             .then(response => response.json())
+            .then(checkError)
             .then(json => RecvShaderData.fromJson(json));
     }
 
@@ -109,6 +120,7 @@ export module ShaderStorage {
             body: form,
         })
             .then(response => response.json())
+            .then(checkError)
             .then(json => RecvShaderData.fromJson(json));
     }
 
@@ -166,12 +178,14 @@ export module ShaderStorage {
             body: form,
         })
             .then(response => response.json())
+            .then(checkError)
             .then(json => RecvShaderData.fromJson(json));
     }
 
     export function requestUserShaders(user: number, limit: number, page: number): Promise<RecvShaderData[]> {
         return fetch(`/api/v1/shaders?owner=${user}&limit=${limit}&page=${page}`)
             .then(response => response.json())
+            .then(checkError)
             .then(items => items.map(RecvShaderData.fromJson));
     }
 }
@@ -202,6 +216,7 @@ export module CommentStorage {
 
         return promise
             .then(response => response.json())
+            .then(checkError)
             .then(json => CommentData.fromObjectMaybeRoot(json));
     }
 
@@ -214,6 +229,7 @@ export module CommentStorage {
             body: JSON.stringify(data),
         })
             .then(response => response.json())
+            .then(checkError)
             .then(json => CommentData.fromObject(json));
     }
 
@@ -226,6 +242,7 @@ export module CommentStorage {
             body: JSON.stringify(data),
         })
             .then(response => response.json())
+            .then(checkError)
             .then(json => CommentData.fromObject(json));
     }
 
@@ -283,12 +300,14 @@ export module UserStorage {
     export function requestUser(id: number): Promise<RecvUser> {
         return fetch(`/api/v1/users/${id}`)
             .then(response => response.json())
+            .then(checkError)
             .then(json => RecvUser.fromJson(json));
     }
 
     export function requestMe(): Promise<RecvUser> {
         return fetch("/api/v1/users/me")
             .then(response => response.json())
+            .then(checkError)
             .then(json => RecvUser.fromJson(json));
     }
 
@@ -301,6 +320,7 @@ export module UserStorage {
             body: JSON.stringify(data),
         })
             .then(response => response.json())
+            .then(checkError)
             .then(json => RecvUser.fromJson(json));
     }
 }
