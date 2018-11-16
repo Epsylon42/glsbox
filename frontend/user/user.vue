@@ -45,7 +45,6 @@ import { store, Actions } from './store.ts';
 export default class User extends Vue {
     @Prop({ type: Number, required: true }) id: number;
     @Prop({ type: String, required: true }) panel: string;
-    private originalPanel: string = "";
     
     private error?: string = null;
     private component?: typeof Vue = null;
@@ -55,8 +54,6 @@ export default class User extends Vue {
     }
     
     mounted() {
-        this.originalPanel = this.panel;
-        
         window.onpopstate = event => {
             console.log(event.state);
             if (event.state === "profile") {
@@ -66,18 +63,17 @@ export default class User extends Vue {
             } else if (event.state === "comments") {
                 this.selectComments(false);
             } else if (event.state == null) {
-                this.panel = this.originalPanel;
-                this.selectPage(false);
+                this.selectOriginalPage(false);
             }
         };
         
         store
             .dispatch(Actions.init, this.id)
-            .then(() => this.selectPage())
+            .then(() => this.selectOriginalPage())
             .catch(err => this.error = err.message);
     }
     
-    private selectPage(hist: boolean = true) {
+    private selectOriginalPage(hist: boolean = true) {
         switch (this.panel) {
         case "profile":
             this.selectProfile(hist);
@@ -94,9 +90,8 @@ export default class User extends Vue {
     }
     
     private selectProfile(hist: boolean = true) {
-        this.panel = "profile";
         if (hist) {
-            window.history.pushState(this.panel, "", `/users/${this.id}/${this.panel}`);
+            window.history.pushState(this.panel, "", `/users/${this.id}/profile`);
         }
         this.component = Profile;
     }
@@ -106,9 +101,8 @@ export default class User extends Vue {
     }
     
     private selectShaders(hist: boolean = true) {
-        this.panel = "shaders";
         if (hist) {
-            window.history.pushState(this.panel, "", `/users/${this.id}/${this.panel}`);
+            window.history.pushState(this.panel, "", `/users/${this.id}/shaders`);
         }
         this.component = Shaders;
     }
@@ -118,9 +112,8 @@ export default class User extends Vue {
     }
     
     private selectComments(hist: boolean = true) {
-        this.panel = "comments";
         if (hist) {
-            window.history.pushState(this.panel, "", `/users/${this.id}/${this.panel}`);
+            window.history.pushState(this.panel, "", `/users/${this.id}/comments`);
         }
         this.component = null;
     }
