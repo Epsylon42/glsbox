@@ -150,7 +150,7 @@ class Data {
     }
 
     public get email(): string {
-        return store.getters.email;
+        return store.getters.email || "";
     }
 
     public get role(): string {
