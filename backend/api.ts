@@ -1,5 +1,6 @@
 import Express from 'express';
 import Passport from 'passport';
+import Sequelize from 'sequelize';
 
 import { db, Users, Shaders, ShaderTextures, ShaderTexturesInstance, Comments, Utils, UsersInstance } from './db';
 import { Transaction as FileTransaction } from './file-storage';
@@ -40,13 +41,13 @@ function authMiddleware(req: Express.Request, res: Express.Response, next: Expre
     } else {
         Passport.authenticate('basic', { session: false }, (err, user) => {
             if (err) {
-                return next(err);
+                res.status(err.status != null ? err.status : 500).json({ error: true, message: err.message });
             } else if (user) {
                 req.login(user, err => {
                     if (err) {
-                        return next(err);
+                        res.status(err.status != null ? err.status : 500).json({ error: true, message: err.message });
                     } else {
-                        return next();
+                        next();
                     }
                 });
             } else {
@@ -442,6 +443,31 @@ priv.patch("/users/:id", async (req, res) => {
 
 const pub = Express.Router();
 
+pub.get("/shaders", async (req, res) => {
+    try {
+        const limit = req.query.limit || 20;
+        const page = req.query.page || 1;
+
+        const shaders = req.query.owner != null ?
+            await Shaders.findAll({ where: { owner: req.query.owner },  limit, offset: (page-1) * limit }) :
+            await Shaders.findAll({ limit, offset: (page-1) * limit });
+
+        const responseShaders = await Promise.all(shaders.map(async shader => {
+            const textures = await ShaderTextures.findAll({ where: { shaderId: shader.id } });
+
+            return {
+                ...(shader as any).dataValues,
+                textures
+            };
+        }));
+
+        res.json(responseShaders);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: true, message: "Internal server error" });
+    }
+});
+
 pub.get("/shaders/:id", async (req, res) => {
     try {
         const id = Number(req.params.id);
@@ -517,6 +543,38 @@ pub.get("/users/:id/shaders", async (req, res) => {
     }
 });
 
+pub.get("/users/:id/commented-shaders", async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id)) {
+            res.status(400).json({ error: true, message: "Invalid id" });
+        }
+
+        const limit = req.query.limit || 20;
+        const page = req.query.page || 1;
+
+        const shaderIds: Set<number> = new Set();
+
+        for (const comment of await Comments.findAll({ where: { author: id } })) {
+            shaderIds.add(comment.parentShader);
+        }
+        const parentShaders = await Shaders.findAll({ where: {
+            id: {
+                [Sequelize.Op.in]: Array.from(shaderIds)
+            }
+        } });
+
+        res.json(parentShaders.slice((page-1) * limit, page * limit).map(shader => ({
+            id: shader.id,
+            name: shader.name,
+            previewUrl: shader.previewUrl,
+        })));
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: true, message: "Internal server error" })
+    }
+});
+
 pub.get("/users/:id/comments", async (req, res) => {
     try {
         const id = Number(req.params.id);
@@ -524,10 +582,19 @@ pub.get("/users/:id/comments", async (req, res) => {
             res.status(400).json({ error: true, message: "Invalid id" });
         }
 
-        const comments = await Comments.findAll({ where: { author: id }, group: "parentShader" });
+        const limit = req.query.limit || 20;
+        const page = req.query.page || 1;
 
-        console.log(comments);
-        throw new Error("a");
+        const pagination = {
+            limit,
+            offset: (page-1) * limit
+        };
+
+        //TODO: catch pagination errors
+        const comments =
+            req.query.shader != null ?
+            await Comments.findAll({ where: { author: id, parentShader: req.query.shader }, ...pagination }) :
+            await Comments.findAll({ where: { author: id }, ...pagination });
 
         res.json(comments);
     } catch (e) {
@@ -537,6 +604,7 @@ pub.get("/users/:id/comments", async (req, res) => {
 });
 
 const router = Express.Router();
+
 router.get("/users/me", authMiddleware, (req, res) => {
     res.redirect(`/api/v1/users/${req.user.id}`);
 });

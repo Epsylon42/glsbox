@@ -19,14 +19,18 @@ function authFunc(username: string, password: string, done: any) {
     Users.find({ where: { username } })
         .then(user => {
             if (!user) {
-                return done("No such user", false);
+                const e: any = new Error("No such user");
+                e.status = 404;
+                return done(e, false);
             }
             return Utils.checkUserPassword(user.id, password)
                 .then(check => {
                     if (check) {
                         return done(null, user);
                     } else {
-                        return done("Invalid password", false);
+                        const e: any = new Error("Invalid password");
+                        e.status = 400;
+                        return done(e, false);
                     }
                 });
         })
@@ -110,14 +114,25 @@ app.get("/browse", async (req, res) => {
     }
 });
 
-app.get("/users/:id", async (req, res) => {
+app.get("/users/:id", (req, res) => {
+    res.redirect(`/users/${req.params.id}/profile`)
+})
+
+app.get("/users/:id/:panel", async (req, res) => {
+    const panel = req.params.panel;
+    if (!(panel === "profile" || panel === "shaders" || panel === "comments")) {
+        res.redirect(`/users/${req.params.id}/profile`);
+        return;
+    }
+
+
     res.render("index", {
         user: req.user,
         scripts: "user.js",
         mountPoints: {
             lib: "user",
             mount: "#content-app",
-            args: req.params.id,
+            args: [req.params.id, `"${escape(panel)}"`],
         }
     });
 });
@@ -182,6 +197,11 @@ app.post("/register", async (req, res) => {
 app.get('/logout', (req, res) => {
     req.logout();
     res.redirect('/');
+});
+
+app.use((err: any, req: any, res: any, next: any) => {
+    res.status(err.status != null ? err.status : 500);
+    res.json({ error: true, message: err.message });
 });
 
 db.sync({ force: false }).then(() => {

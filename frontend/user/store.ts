@@ -1,8 +1,19 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 
-import { RecvUser, PatchUser, UserStorage } from '../backend.ts';
+import { RecvUser, PatchUser, UserStorage, RecvShaderData, ShaderStorage } from '../backend.ts';
 import { UserRole } from '../../common/user-role.ts';
+
+export class UserShaders {
+    public shown: RecvShaderData[] = [];
+    public nextBatch: RecvShaderData[] = [];
+    public canLoadMore: boolean = true;
+
+    public page: number = 1;
+    public limit: number = 10;
+
+    public loadingLock: boolean = false;
+}
 
 export class StoreState {
     public user?: RecvUser = null;
@@ -13,6 +24,8 @@ export class StoreState {
 
     public newPassword?: string = null;
     public newRole?: UserRole = null;
+
+    public shaders = new UserShaders();
 }
 
 export const Mutations = {
@@ -21,6 +34,9 @@ export const Mutations = {
     changeEmail: "changeEmail",
     changePassword: "changePassword",
     changeRole: "changeRole",
+    pushShaderBatch: "pushShaderBatch",
+    setShadersLoadingLock: "setShadersLoadingLock",
+    setCanLoadMoreShaders: "setCanLoadMoreShaders",
 
     resetChanges: "resetChanges",
 };
@@ -28,6 +44,7 @@ export const Mutations = {
 export const Actions = {
     init: "init",
     save: "save",
+    loadShaders: "loadShaders",
 };
 
 Vue.use(Vuex);
@@ -67,6 +84,10 @@ export const store = new Vuex.Store({
                 || store.state.newPassword != null
                 || store.state.newRole != null;
         },
+
+        shadersLoading(state: StoreState): boolean {
+            return state.shaders.loadingLock;
+        },
     },
 
     mutations: {
@@ -97,6 +118,29 @@ export const store = new Vuex.Store({
             state.newRole = null;
             state.emailChanged = false;
         },
+
+        [Mutations.pushShaderBatch] (state: StoreState, shaders: RecvShaderData[]) {
+            if (shaders.length === 0) {
+                state.shaders.canLoadMore = false;
+            }
+
+            if (state.shaders.shown.length == 0) {
+                state.shaders.shown = shaders;
+            } else {
+                state.shaders.shown.splice(state.shaders.shown.length, 0, ...state.shaders.nextBatch);
+                state.shaders.nextBatch = shaders;
+            }
+
+            state.shaders.page += 1;
+        },
+
+        [Mutations.setShadersLoadingLock] (state: StoreState, lock: boolean) {
+            state.shaders.loadingLock = lock;
+        },
+
+        [Mutations.setCanLoadMoreShaders] (state: StoreState, canLoad: boolean) {
+            state.shaders.canLoadMore = canLoad;
+        },
     },
 
     actions: {
@@ -121,6 +165,40 @@ export const store = new Vuex.Store({
                     commit(Mutations.setUser, user);
                     commit(Mutations.resetChanges);
                 });
+        },
+
+        [Actions.loadShaders] ({ state, commit }): Promise<void> {
+            if (state.shaders.loadingLock) {
+                return Promise.reject(new Error("Some data is already loading"));
+            }
+
+            commit(Mutations.setShadersLoadingLock, true);
+
+            const firstTime = state.shaders.shown.length === 0;
+
+            const promise = ShaderStorage
+                .requestUserShaders(state.user.id, state.shaders.limit, state.shaders.page)
+                .then(shaders => {
+                    commit(Mutations.pushShaderBatch, shaders);
+
+                    if (firstTime && shaders.length === state.shaders.limit) {
+                        return ShaderStorage
+                            .requestUserShaders(state.user.id, state.shaders.limit, state.shaders.page);
+                    } else if (firstTime) {
+                        commit(Mutations.setCanLoadMoreShaders, false);
+                    }
+                })
+                .then(maybeShaders => {
+                    if (maybeShaders) {
+                        commit(Mutations.pushShaderBatch, maybeShaders);
+                    }
+                });
+
+            promise
+                .then(() => commit(Mutations.setShadersLoadingLock, false))
+                .catch(() => commit(Mutations.setShadersLoadingLock, false));
+
+            return promise;
         },
     },
 });

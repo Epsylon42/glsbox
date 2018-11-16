@@ -55,7 +55,7 @@ import { store, Mutations, Actions } from './store/store.ts';
 import Preview from './store/preview.ts';
 import ShaderWindow from './shader-window.vue';
 
-import { MDConverter } from './converter.ts';
+import { MDConverter } from '../converter.ts';
 
 import Icon from 'vue-awesome/components/Icon.vue';
 import 'vue-awesome/icons/camera.js';

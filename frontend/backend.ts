@@ -168,6 +168,12 @@ export module ShaderStorage {
             .then(response => response.json())
             .then(json => RecvShaderData.fromJson(json));
     }
+
+    export function requestUserShaders(user: number, limit: number, page: number): Promise<RecvShaderData[]> {
+        return fetch(`/api/v1/shaders?owner=${user}&limit=${limit}&page=${page}`)
+            .then(response => response.json())
+            .then(items => items.map(RecvShaderData.fromJson));
+    }
 }
 
 export class SendCommentData {

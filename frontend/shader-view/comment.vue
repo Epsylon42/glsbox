@@ -68,7 +68,7 @@ import { store, Mutations } from './store/store.ts';
 import CommentData, { GenericComment } from './store/comment.ts';
 import { SendCommentData, PatchCommentData, CommentStorage } from '../backend.ts';
 
-import { MDConverter } from './converter.ts';
+import { MDConverter } from '../converter.ts';
 
 import Icon from 'vue-awesome/components/Icon.vue';
 import 'vue-awesome/icons/arrow-up.js';
