@@ -67,7 +67,7 @@ app.set("view engine", "mst");
 app.use("/api/v1", ApiRouter);
 
 app.get("/", (req, res) => {
-    res.render("index", { user: req.user });
+    res.render("frontpage", { user: req.user });
 });
 
 app.get("/create", (req, res) => {

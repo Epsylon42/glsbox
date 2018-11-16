@@ -8,6 +8,10 @@ body {
     flex-direction: column;
 }
 
+.navbar-item.logo img {
+    max-height: 2.5rem;
+}
+
 #content {
     margin-top: auto;
     margin-bottom: auto;
