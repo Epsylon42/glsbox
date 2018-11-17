@@ -66,6 +66,11 @@ app.set("view engine", "mst");
 
 app.use("/api/v1", ApiRouter);
 
+app.use((req, res, next) => {
+    res.setHeader("X-Clacks-Overhead", "GNU Terry Pratchett");
+    next();
+});
+
 app.get("/", (req, res) => {
     res.render("frontpage", { user: req.user });
 });
