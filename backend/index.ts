@@ -119,22 +119,38 @@ app.get("/users/:id", (req, res) => {
 })
 
 app.get("/users/:id/:panel", async (req, res) => {
-    const panel = req.params.panel;
-    if (!(panel === "profile" || panel === "shaders" || panel === "comments")) {
-        res.redirect(`/users/${req.params.id}/profile`);
-        return;
-    }
-
-
-    res.render("index", {
-        user: req.user,
-        scripts: "user.js",
-        mountPoints: {
-            lib: "user",
-            mount: "#content-app",
-            args: [req.params.id, `"${escape(panel)}"`],
+    try {
+        const panel = req.params.panel;
+        if (!(panel === "profile" || panel === "shaders" || panel === "comments")) {
+            res.redirect(`/users/${req.params.id}/profile`);
+            return;
         }
-    });
+
+        let id;
+        if (Number.isFinite(Number(req.params.id))) {
+            id = req.params.id;
+        } else {
+            const user = await Users.findOne({ where: { username: req.params.id } });
+            if (user) {
+                id = user.id;
+            } else {
+                id = `"${escape(req.params.id)}"`;
+            }
+        }
+
+        res.render("index", {
+            user: req.user,
+            scripts: "user.js",
+            mountPoints: {
+                lib: "user",
+                mount: "#content-app",
+                args: [id, `"${escape(panel)}"`],
+            }
+        });
+    } catch (e) {
+        console.error(e);
+        res.status(500).send("Internal server error");
+    }
 });
 
 app.get("/login", (req, res) => {

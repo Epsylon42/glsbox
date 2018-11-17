@@ -509,12 +509,11 @@ pub.get("/comments/:shaderId", async (req, res) => {
 pub.get("/users/:id", async (req, res) => {
     try {
         const id = Number(req.params.id);
-        if (!Number.isFinite(id)) {
-            res.status(400).json({ error: true, message: "Invalid id" });
-            return;
-        }
 
-        const user = await Users.findByPrimary(id);
+        const user = Number.isFinite(id) ?
+            await Users.findByPrimary(id) :
+            await Users.findOne({ where: { username: req.params.id } });
+
         if (!user) {
             res.status(404).json({ error: true, message: "User not found" });
             return;
