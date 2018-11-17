@@ -165,7 +165,23 @@ app.get("/login", (req, res) => {
     });
 });
 
-app.post("/login", Passport.authenticate('local', { failureRedirect: '/login', successRedirect: '/' }));
+app.post("/login", (req, res, next) => {
+    Passport.authenticate('local', (err, user) => {
+        if (err) {
+            res.redirect(`/login?error=${encodeURIComponent(err.message)}`);
+        } else if (user) {
+            req.login(user, err => {
+                if (err) {
+                    res.redirect(`/login?error=${encodeURIComponent(err.message)}`);
+                } else {
+                    res.redirect("/");
+                }
+            });
+        } else {
+            res.redirect(`/login?error=${encodeURIComponent("Unknown error")}`);
+        }
+    })(req, res, next);
+})
 
 app.get("/register", (req, res) => {
     res.render("index", {

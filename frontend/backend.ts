@@ -311,7 +311,12 @@ export class PatchUser {
 }
 
 export module UserStorage {
-    export function requestUser(id: number): Promise<RecvUser> {
+    export function userExists(id: number | string): Promise<boolean> {
+        return fetch(`/api/v1/users/${id}`)
+            .then(response => response.status === 200);
+    }
+
+    export function requestUser(id: number | string): Promise<RecvUser> {
         return fetch(`/api/v1/users/${id}`)
             .then(response => response.json())
             .then(checkError)
