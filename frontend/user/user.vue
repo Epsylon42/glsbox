@@ -11,7 +11,7 @@
     </div>
   </div>
   
-  <div v-else class="box">
+  <div v-else class="user-data box">
     <div v-if="userLoading" class="loading-panel" />
 
     <template v-else>
@@ -38,6 +38,7 @@ import { UserRole } from '../../common/user-role.ts';
 
 import Profile from './profile.vue';
 import Shaders from './shaders.vue';
+import Comments from './comments.vue';
 
 import { store, Actions } from './store.ts';
 
@@ -115,11 +116,11 @@ export default class User extends Vue {
         if (hist) {
             window.history.pushState(this.panel, "", `/users/${this.id}/comments`);
         }
-        this.component = null;
+        this.component = Comments;
     }
 
     private get commentsSelected() {
-        return false;
+        return this.component === Comments;
     }
 }
 </script>
@@ -131,9 +132,8 @@ export default class User extends Vue {
 }
 
 .user-data {
-    display: flex;
-    flex-direction: column;
-    width: 75%;
+    margin-top: 20px;
+    margin-bottom: 20px;
 }
 
 </style>

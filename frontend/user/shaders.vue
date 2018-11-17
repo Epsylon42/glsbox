@@ -82,7 +82,7 @@ export default class Shaders extends Vue {
         return store.state.shaders.canLoadMore;
     }
     private get isLoading(): boolean {
-        return store.getters.shadersLoading;
+        return store.state.shaders.loadingLock;
     }
     private get firstLoading(): boolean {
         return store.state.shaders.firstLoading;

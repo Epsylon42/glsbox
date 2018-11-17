@@ -564,11 +564,7 @@ pub.get("/users/:id/commented-shaders", async (req, res) => {
             }
         } });
 
-        res.json(parentShaders.slice((page-1) * limit, page * limit).map(shader => ({
-            id: shader.id,
-            name: shader.name,
-            previewUrl: shader.previewUrl,
-        })));
+        res.json(parentShaders.slice((page-1) * limit, page * limit).map(shader => shader.id));
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: true, message: "Internal server error" })

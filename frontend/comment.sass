@@ -1,0 +1,31 @@
+.comment-body
+  display: flex;
+  flex-direction: column;
+  &.focus
+    border-color: #88f;
+
+.comment-body > .comment-info
+  display: flex;
+  flex-direction: row;
+
+.comment-body > .comment-info > *
+  margin: 0;
+  margin-right: 20px;
+  font-size: 10pt;
+  color: grey;
+
+.comment-body > .comment-info > .comment-nav:first-child
+  margin-right: 5px;
+
+.comment-body > .comment-info > .comment-nav
+  display: flex;
+  flex-direction: row;
+
+.comment-body button, .comment-button
+  border: 0;
+  padding: 0;
+  margin-left: 2px;
+  margin-right: 2px;
+  background-color: rgba(0,0,0,0);
+  color: grey;
+  font-size: 10pt;

@@ -8,7 +8,7 @@
     View full comment tree
   </a>
 
-  <div class="text-box comment-body" :class="{ focus: isFocused() }" @click="focus" v-if="isComment">
+  <div class="comment-body text-box" :class="{ focus: isFocused() }" @click="focus" v-if="isComment">
 
     <div class="comment-info">
       <div class="comment-nav">
@@ -224,46 +224,13 @@ export default class Comment extends Vue {
 
 <style scoped>
 
+@import "../comment.sass";
+
 .full-tree {
     width: fit-content;
     width: -moz-fit-content;
     width: -webkit-fit-content;
 }
-
-.comment-body {
-    display: flex;
-    flex-direction: column;
-}
-
-.comment-body.focus {
-    border-color: #88f
-}
-
-.comment-info {
-    display: flex;
-    flex-direction: row;
-}
-
-.comment-info > * {
-    margin: 0;
-    margin-right: 20px;
-    font-size: 10pt;
-    color: grey;
-}
-
-.comment-info > *:first-child {
-    margin-right: 5px;
-}
-
-.comment-nav {
-    display: flex;
-    flex-direction: row;
-}
-
-.comment-nav .svg-button {
-    padding: 0;
-}
-
 
 .editor {
     padding-left: 20px;
@@ -273,15 +240,5 @@ export default class Comment extends Vue {
     list-style: none;
     margin-top: 20px;
     padding-left: 20px;
-}
-
-.comment-button {
-    border: none;
-    padding: 0;
-    margin-left: 2px;
-    margin-right: 2px;
-    background-color: rgba(0,0,0,0);
-    color: grey;
-    font-size: 10pt;
 }
 </style>

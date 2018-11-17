@@ -188,6 +188,13 @@ export module ShaderStorage {
             .then(checkError)
             .then(items => items.map(RecvShaderData.fromJson));
     }
+
+    export function requestCommentedShaders(user: number, limit: number, page: number): Promise<RecvShaderData[]> {
+        return fetch(`/api/v1/users/${user}/commented-shaders?limit=${limit}&page=${page}`)
+            .then(response => response.json())
+            .then(checkError)
+            .then((ids: number[]) => Promise.all(ids.map(id => ShaderStorage.requestShader(id))));
+    }
 }
 
 export class SendCommentData {
@@ -255,6 +262,13 @@ export module CommentStorage {
             body: JSON.stringify({ id })
         })
             .then(() => {});
+    }
+
+    export function requestCommentsUnderShader(user: number, shader: number, limit: number, page: number): Promise<CommentData[]> {
+        return fetch(`/api/v1/users/${user}/comments?shader=${shader}&limit=${limit}&page=${page}`)
+            .then(response => response.json())
+            .then(checkError)
+            .then(json => json.map(CommentData.fromObject));
     }
 }
 
