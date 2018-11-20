@@ -22,8 +22,10 @@ export class RecvShaderData {
         public name: string = "",
         public description: string = "",
         public textures: TextureData[] = [],
-        public owner?: number,
-        public preview?: Preview,
+        public owner: number | null = null,
+        public preview: Preview | null = null,
+        public creationDate: Date | null = null,
+        public publishingDate: Date | null = null,
     ) {}
 
     public static fromJson(data: any): RecvShaderData {
@@ -43,7 +45,9 @@ export class RecvShaderData {
             data.description || "",
             textures,
             data.owner,
-            preview
+            preview,
+            data.creationDate && new Date(data.creationDate),
+            data.publishingDate && new Date(data.publishingDate)
         );
     }
 }
@@ -182,20 +186,19 @@ export module ShaderStorage {
             .then(json => RecvShaderData.fromJson(json));
     }
 
-    export function requestShaders(limit: number, page: number, search?: string): Promise<RecvShaderData[]> {
+    export function requestShaders(limit: number, page: number, options: { search?: string, time?: string, owner?: number } = {}): Promise<RecvShaderData[]> {
         let addr = `/api/v1/shaders?limit=${limit}&page=${page}`;
-        if (search) {
-            addr += `&search=${encodeURIComponent(search)}`;
+        if (options.search) {
+            addr += `&search=${encodeURIComponent(options.search)}`;
+        }
+        if (options.time) {
+            addr += `&time=${encodeURIComponent(options.time)}`;
+        }
+        if (options.owner != null) {
+            addr += `&owner=${encodeURIComponent(options.owner.toString())}`;
         }
 
         return fetch(addr)
-            .then(response => response.json())
-            .then(checkError)
-            .then(items => items.map(RecvShaderData.fromJson));
-    }
-
-    export function requestUserShaders(user: number, limit: number, page: number): Promise<RecvShaderData[]> {
-        return fetch(`/api/v1/shaders?owner=${user}&limit=${limit}&page=${page}`)
             .then(response => response.json())
             .then(checkError)
             .then(items => items.map(RecvShaderData.fromJson));

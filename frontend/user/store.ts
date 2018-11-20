@@ -167,7 +167,7 @@ export const store = new Vuex.Store({
         [Actions.loadShaders] ({ state, commit }): Promise<void> {
             return state.shaders.load((limit, page) => {
                 return ShaderStorage
-                    .requestUserShaders(state.user.id, limit, page);
+                    .requestShaders(limit, page, { owner: state.user.id });
             }, commitModifyDL(commit));
         },
 

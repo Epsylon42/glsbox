@@ -12,6 +12,14 @@
         @keydown="searchIfEnter"
         >
     </div>
+
+    <div class="select">
+      <select v-model="time">
+        <option value="" disabled>Time Interval</option>
+        <option v-for="t in timeVariants" :value="t">{{ t }}</option>
+      </select>
+    </div>
+
     <button class="button is-info" @click="search" :disabled="storage.loadingLock">
       Search
     </button>
@@ -29,7 +37,10 @@
           </div>
           
           <div class="media-content">
-            <p><strong><a :href="shader.href">{{ shader.name }}</a></strong></p>
+            <p>
+              <strong><a :href="shader.href">{{ shader.name }}</a></strong>
+              <span class="has-text-grey">{{ shader.published }}</span>
+            </p>
             <hr>
             <div class="content" v-html="shader.descriptionHTML"></div>
           </div>
@@ -80,7 +91,7 @@ import { Vue, Component } from 'vue-property-decorator';
 import { RecvShaderData, ShaderStorage } from '../backend.ts';
 import { MDConverter } from '../converter.ts';
 import DynamicLoading from '../dynamic-loading.ts';
-  
+
 @Component
 export default class Browse extends Vue {
     private storage: DynamicLoading<RecvShaderData> = new DynamicLoading(10);
@@ -88,6 +99,15 @@ export default class Browse extends Vue {
 
     private loadingError?: string = null;
     private errorOccured: boolean = false;
+
+    private timeVariants = [
+        "day",
+        "week",
+        "month",
+        "year",
+        "all"
+    ];
+    private time = "all";
 
     private get shaders(): any[] {
         return this.storage.shown.map(shader => {
@@ -101,6 +121,9 @@ export default class Browse extends Vue {
             Object.defineProperty(obj, "descriptionHTML", {
                 get: () => MDConverter.makeHtml(shader.description)
             });
+            Object.defineProperty(obj, "published", {
+                get: () => shader.publishingDate ? shader.publishingDate.toLocaleString() : ""
+            });
 
             return obj;
         });
@@ -111,7 +134,7 @@ export default class Browse extends Vue {
         const search = this.searchString.length !== 0 ? this.searchString : null;
 
         this.storage
-            .load((limit, page) => ShaderStorage.requestShaders(limit, page, search))
+            .load((limit, page) => ShaderStorage.requestShaders(limit, page, { time: this.time, search }))
             .catch(err => {
                 this.errorOccured = true;
                 this.loadingError = err.message;
