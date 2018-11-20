@@ -9,8 +9,6 @@ import { Strategy as LocalStrategy } from 'passport-local';
 import { BasicStrategy } from 'passport-http';
 import Session from 'express-session';
 
-import { Converter as MDConverter } from 'showdown';
-
 import { db, Users, Shaders, ShaderTextures, ShaderTexturesInstance, Comments, Utils, UsersInstance } from './db';
 
 import ApiRouter from './api';
@@ -100,23 +98,14 @@ app.get("/view/:id", (req, res) => {
 });
 
 app.get("/browse", async (req, res) => {
-    const conv = new MDConverter();
-
-    try {
-        const shaders = await Shaders.findAll();
-
-        res.render("browse", {
-            user: req.user,
-            styles: "browse.css",
-            shaders: shaders.map(shader => {
-                (shader as any).descriptionHTML = conv.makeHtml(shader.description);
-                return shader;
-            }),
-        });
-    } catch (e) {
-        console.error(e);
-        res.status(500).send("Internal server error");
-    }
+    res.render("index", {
+        user: req.user,
+        scripts: "browse.js",
+        mountPoints: {
+            lib: "browse",
+            mount: "#content-app"
+        },
+    });
 });
 
 app.get("/users/:id", (req, res) => {

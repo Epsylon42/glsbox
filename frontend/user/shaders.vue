@@ -103,32 +103,5 @@ export default class Shaders extends Vue {
 
 <style scoped>
 
-.preview {
-    width: 120px;
-    height: 90px;
-    border-radius: 15px;
-    margin-right: 25px;
-}
-
-.preview > a {
-    width: 100%;
-    height: 100%;
-}
-
-.preview > a > img, .preview > a > .placeholder {
-    width: 120px;
-    height: 90px;
-    border-radius: 15px;
-    background-color: black;
-}
-
-@media screen and (max-width: 500px) {
-    .media {
-        flex-direction: column;
-    }
-    
-    .media-content {
-        width: 100%;
-    }
-}
+@import "../shader.sass";
 </style>

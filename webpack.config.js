@@ -5,9 +5,9 @@ module.exports = {
     mode: 'development',
     entry: {
         view: './frontend/view.ts',
-        profile: './frontend/profile.ts',
         auth: './frontend/auth.ts',
         user: './frontend/user.ts',
+        browse: './frontend/browse.ts',
     },
     output: {
         filename: '[name].js',

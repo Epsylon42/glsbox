@@ -1,8 +1,8 @@
 import Vue from 'vue';
-import Profile from './profile/profile.vue';
+import Browse from './browse/browse.vue';
 
 export function mount(mtpoint: string) {
     new Vue({
-        render: h => h(Profile),
+        render: h => h(Browse),
     }).$mount(mtpoint);
 }
