@@ -122,7 +122,7 @@ export default class Browse extends Vue {
                 get: () => MDConverter.makeHtml(shader.description)
             });
             Object.defineProperty(obj, "published", {
-                get: () => shader.publishingDate ? shader.publishingDate.toLocaleString() : ""
+                get: () => shader.publishingDate ? `published ${shader.publishingDate.toLocaleString()}` : ""
             });
 
             return obj;

@@ -26,6 +26,7 @@ export class RecvShaderData {
         public preview: Preview | null = null,
         public creationDate: Date | null = null,
         public publishingDate: Date | null = null,
+        public published: boolean = true,
     ) {}
 
     public static fromJson(data: any): RecvShaderData {
@@ -47,7 +48,8 @@ export class RecvShaderData {
             data.owner,
             preview,
             data.creationDate && new Date(data.creationDate),
-            data.publishingDate && new Date(data.publishingDate)
+            data.publishingDate && new Date(data.publishingDate),
+            data.published
         );
     }
 }
@@ -184,6 +186,17 @@ export module ShaderStorage {
             .then(response => response.json())
             .then(checkError)
             .then(json => RecvShaderData.fromJson(json));
+    }
+
+    export function setPublishedState(id: number, published: boolean): Promise<void> {
+        return fetch(`/api/v1/shaders/${id}/publish`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ published })
+        })
+            .then(response => response.json())
+            .then(checkError)
+            .then(() => {});
     }
 
     export function requestShaders(limit: number, page: number, options: { search?: string, time?: string, owner?: number } = {}): Promise<RecvShaderData[]> {

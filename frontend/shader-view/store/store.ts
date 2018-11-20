@@ -25,6 +25,7 @@ export class StoreState {
 
     public name: string = "";
     public description: string = "";
+    public published: boolean = false;
 
     public textures: TextureData[] = [];
     public sendLock: boolean = false;
@@ -47,6 +48,7 @@ export const Mutations = {
     setPreview: "setPreview",
     setUser: "setUser",
     setOwner: "setOwner",
+    setPublished: "setPublished",
     setRootComment: "setRootComment",
     modifyComment: "modifyComment",
     setFocusedComment: "setFocusedComment",
@@ -64,6 +66,7 @@ export const Actions = {
     setPreviewFromCanvas: "setPreviewFromCanvas",
     removePreview: "removePreview",
     requestComment: "requestComment",
+    setPublished: "setPublishedAction",
 
     saveShader: "saveShader",
 };
@@ -90,6 +93,10 @@ export const store = new Vuex.Store({
 
         canSave(state: StoreState): boolean {
             return state.user && (state.user.id === state.owner || state.id == null);
+        },
+
+        canEdit(state: StoreState): boolean {
+            return state.user && state.user.id === state.owner;
         },
 
         shader(state: StoreState): FragShader | null {
@@ -191,6 +198,10 @@ export const store = new Vuex.Store({
 
         [Mutations.setName] (state: StoreState, name: string) {
             state.name = name;
+        },
+
+        [Mutations.setPublished] (state: StoreState, published: boolean) {
+            state.published = published;
         },
 
         [Mutations.setDescription] (state: StoreState, description: string) {
@@ -300,6 +311,7 @@ export const store = new Vuex.Store({
             commit(Mutations.setDescription, shader.description);
             commit(Mutations.setTextures, shader.textures);
             commit(Mutations.updateShaderTextures);
+            commit(Mutations.setPublished, shader.published);
             if (shader.preview) {
                 commit(Mutations.setPreview, shader.preview);
             }
@@ -406,6 +418,18 @@ export const store = new Vuex.Store({
                         return shader.id;
                     });
             }
-        }
+        },
+
+        [Actions.setPublished] ({ state, commit }, published: boolean): Promise<void> {
+            if (state.id == null) {
+                throw new Error("Can't publish an unsaved shader");
+            }
+
+            return ShaderStorage
+                .setPublishedState(state.id, published)
+                .then(() => {
+                    commit(Mutations.setPublished, published);
+                });
+        },
     },
 });

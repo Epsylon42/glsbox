@@ -311,6 +311,45 @@ priv.patch("/shaders/:id", (req, res) => {
     });
 });
 
+priv.patch("/shaders/:id/publish", async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) {
+        res.status(400).json({ error: true, message: "Invalid id" });
+        return;
+    }
+
+    if (req.body.published == null || (typeof req.body.published) !== "boolean") {
+        res.status(400).json({ error: true, message: "Published state missing or is not boolean" });
+        return;
+    }
+
+    try {
+        const shader = await Shaders.findByPrimary(id);
+        if (!shader) {
+            res.status(404).json({ error: true, message: "Shader not found" });
+            return;
+        }
+
+        if (req.user.id !== shader.owner) {
+            res.status(403).json({ error: true, message: "You are not the owner of this shader" });
+            return;
+        }
+
+        const update: any = {};
+        update.published = req.body.published;
+        if (update.published && !shader.published) {
+            update.publishingDate = new Date();
+        }
+
+        await shader.update(update);
+
+        res.json({});
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: true, message: "Internal server error" });
+    }
+});
+
 priv.post("/comments", async (req, res) => {
     try {
         if (!req.body) {
