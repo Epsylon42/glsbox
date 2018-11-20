@@ -182,8 +182,13 @@ export module ShaderStorage {
             .then(json => RecvShaderData.fromJson(json));
     }
 
-    export function requestShaders(limit: number, page: number): Promise<RecvShaderData[]> {
-        return fetch(`/api/v1/shaders?limit=${limit}&page=${page}`)
+    export function requestShaders(limit: number, page: number, search?: string): Promise<RecvShaderData[]> {
+        let addr = `/api/v1/shaders?limit=${limit}&page=${page}`;
+        if (search) {
+            addr += `&search=${encodeURIComponent(search)}`;
+        }
+
+        return fetch(addr)
             .then(response => response.json())
             .then(checkError)
             .then(items => items.map(RecvShaderData.fromJson));

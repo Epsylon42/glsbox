@@ -448,9 +448,30 @@ pub.get("/shaders", async (req, res) => {
         const limit = req.query.limit || 20;
         const page = req.query.page || 1;
 
-        const shaders = req.query.owner != null ?
-            await Shaders.findAll({ where: { owner: req.query.owner },  limit, offset: (page-1) * limit }) :
-            await Shaders.findAll({ limit, offset: (page-1) * limit });
+        const where: any = {};
+        if (req.query.owner != null) {
+            where.owner = req.query.owner;
+        }
+        if (req.query.search) {
+            let regexp: RegExp;
+            try {
+                regexp = new RegExp(req.query.search);
+            } catch (e) {
+                res.status(400).json({ error: true, message: e.message });
+                return;
+            }
+
+            where[Sequelize.Op.or as any] = {
+                name: {
+                    [Sequelize.Op.iRegexp]: req.query.search
+                },
+                description: {
+                    [Sequelize.Op.iRegexp]: req.query.search
+                },
+            };
+        }
+
+        const shaders = await Shaders.findAll({ where, limit, offset: (page-1) * limit });
 
         const responseShaders = await Promise.all(shaders.map(async shader => {
             const textures = await ShaderTextures.findAll({ where: { shaderId: shader.id } });

@@ -16,6 +16,13 @@ export default class DynamicLoading<T> {
         public limit: number
     ) {}
 
+    public reset() {
+        this.shown = [];
+        this.nextBatch = [];
+        this.canLoadMore = true;
+        this.page = 1;
+    }
+
     public pushBatch(batch: T[]) {
         if (batch.length === 0) {
             this.canLoadMore = false;

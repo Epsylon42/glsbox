@@ -29,7 +29,7 @@
     </button>
   </template>
   
-  <div v-if="loadingError" class="modal">
+  <div v-if="loadingError" class="modal is-active">
     <div class="modal-background" @click="loadingError = null" />
     <div class="modal-content message is-danger">
       <div class="message-header">

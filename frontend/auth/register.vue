@@ -78,7 +78,7 @@
     </div>
   </form>
 
-  <div v-if="error" class="modal">
+  <div v-if="error" class="modal is-active">
     <div class="modal-background" @click="error = null" />
     <div class="modal-content message is-danger">
       <div class="message-header">
