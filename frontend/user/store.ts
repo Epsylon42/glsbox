@@ -5,20 +5,7 @@ import { RecvUser, PatchUser, UserStorage, RecvShaderData, ShaderStorage, Commen
 import CommentData from '../shader-view/store/comment.ts';
 import { UserRole } from '../../common/user-role.ts';
 
-export class DynamicLoading<T> {
-    public shown: T[] = [];
-    public nextBatch: T[] = [];
-    public canLoadMore: boolean = true;
-
-    public page: number = 1;
-
-    public loadingLock: boolean = false;
-    public firstLoading: boolean = false;
-
-    constructor(
-        public limit: number
-    ) {}
-}
+import DynamicLoading from '../dynamic-loading.ts';
 
 export class ShaderComments extends DynamicLoading<CommentData> {
     constructor(
@@ -29,48 +16,9 @@ export class ShaderComments extends DynamicLoading<CommentData> {
     }
 }
 
-function loadDL<T>(dl: DynamicLoading<T>, commit: Commit, load: (limit: number, page: number) => Promise<T[]>): Promise<void> {
-    if (dl.loadingLock) {
-        return Promise.reject(new Error("Some data is already loading"));
-    }
-
-    commit(Mutations.modifyDL, { dl, func: dl => dl.loadingLock = true });
-
-    const firstTime = dl.shown.length === 0;
-    if (firstTime) {
-        commit(Mutations.modifyDL, { dl, func: dl => dl.firstLoading = true });
-    }
-
-    const promise = load(dl.limit, dl.page)
-        .then(items => {
-            commit(Mutations.pushDLBatch, { dl, batch: items });
-
-            if (firstTime && items.length === dl.limit) {
-                return load(dl.limit, dl.page);
-            } else if (firstTime || items.length === 0) {
-                commit(Mutations.modifyDL, { dl, func: dl => dl.canLoadMore = false });
-            }
-        })
-        .then(maybeItems => {
-            if (maybeItems) {
-                commit(Mutations.pushDLBatch, { dl, batch: maybeItems });
-            }
-        });
-
-    const unlock = dl => {
-        dl.loadingLock = false;
-        dl.firstLoading = false;
-    };
-
-    promise
-        .then(() => {
-            commit(Mutations.modifyDL, { dl, func: unlock });
-        })
-        .catch(() => {
-            commit(Mutations.modifyDL, { dl, func: unlock });
-        });
-
-    return promise;
+function commitModifyDL<T>(commit: Commit) {
+    return (dl: DynamicLoading<T>, func: (dl: DynamicLoading<T>) => void) =>
+        commit(Mutations.modifyDL, { dl, func });
 }
 
 export class StoreState {
@@ -184,21 +132,6 @@ export const store = new Vuex.Store({
         },
 
 
-        [Mutations.pushDLBatch] (state: StoreState, { dl, batch }: { dl: DynamicLoading<any>, batch: any[] }) {
-            if (batch.length === 0) {
-                dl.canLoadMore = false;
-            }
-
-            if (dl.shown.length === 0) {
-                dl.shown = batch;
-            } else {
-                dl.shown.splice(dl.shown.length, 0, ...dl.nextBatch);
-                dl.nextBatch = batch;
-            }
-
-            dl.page += 1;
-        },
-
         [Mutations.modifyDL] (state: StoreState, { dl, func }: { dl: DynamicLoading<any>, func: (dl: DynamicLoading<any>) => any }) {
             func(dl);
         },
@@ -232,14 +165,14 @@ export const store = new Vuex.Store({
         },
 
         [Actions.loadShaders] ({ state, commit }): Promise<void> {
-            return loadDL(state.shaders, commit, (limit, page) => {
+            return state.shaders.load((limit, page) => {
                 return ShaderStorage
                     .requestUserShaders(state.user.id, limit, page);
-            });
+            }, commitModifyDL(commit));
         },
 
         [Actions.loadCommented] ({ state, commit, dispatch }): Promise<void> {
-            return loadDL(state.commented, commit, (limit, page) => {
+            return state.commented.load((limit, page) => {
                 return ShaderStorage
                     .requestCommentedShaders(state.user.id, limit, page)
                     .then(shaders => Promise.all(shaders.map(shader => {
@@ -247,7 +180,7 @@ export const store = new Vuex.Store({
                         return dispatch(Actions.loadComments, dl)
                             .then(() => dl);
                     })));
-            });
+            }, commitModifyDL(commit));
         },
 
         [Actions.loadComments] ({ state, commit }, arg: ShaderComments | number): Promise<void> {
@@ -258,10 +191,10 @@ export const store = new Vuex.Store({
                 dl = arg;
             }
 
-            return loadDL(dl, commit, (limit, page) => {
+            return dl.load((limit, page) => {
                 return CommentStorage
                     .requestCommentsUnderShader(state.user.id, dl.shader.id, limit, page);
-            });
+            }, commitModifyDL(commit));
         }
     },
 });
