@@ -1,86 +1,70 @@
 <template>
-<div v-if="storage.firstLoading" class="loading-panel"></div>
-
-<div class="browse" v-else>
-  <div class="field has-addons">
-    <div class="control">
-      <input
-        v-model="searchString"
-        class="input"
-        type="text"
-        placeholder="Search"
-        @keydown="searchIfEnter"
-        >
-    </div>
-
-    <div class="select">
-      <select v-model="time">
-        <option value="" disabled>Time Interval</option>
-        <option v-for="t in timeVariants" :value="t">{{ t }}</option>
-      </select>
-    </div>
-
-    <button class="button is-info" @click="search" :disabled="storage.loadingLock">
-      Search
-    </button>
+<div>
+  <div class="search-bar">
+    <SearchBar :buttonActive="!storage.loadingLock" @search="search"></SearchBar>
   </div>
-  
-  <div class="tile is-ancestor">
-    <div v-for="shader in shaders" class="tile is-parent is-6">
-      <div class="tile is-child box">
-        <div class="media">
-          <div class="media-left preview">
-            <a :href="shader.href">
-              <img v-if="shader.preview" :src="shader.preview.url">
-              <div v-else class="placeholder"></div>
-            </a>
-          </div>
-          
-          <div class="media-content">
-            <p>
-              <strong><a :href="shader.href">{{ shader.name }}</a></strong>
-              <span class="has-text-grey">{{ shader.published }}</span>
-            </p>
-            <hr>
-            <div class="content" v-html="shader.descriptionHTML"></div>
+
+  <div v-if="storage.firstLoading" class="loading-panel"></div>
+
+  <div v-else class="browse">
+
+    <div class="tile is-ancestor">
+      <div v-for="shader in shaders" class="tile is-parent is-6">
+        <div class="tile is-child box">
+          <div class="media">
+            <div class="media-left preview">
+              <a :href="shader.href">
+                <img v-if="shader.preview" :src="shader.preview.url">
+                <div v-else class="placeholder"></div>
+              </a>
+            </div>
+            
+            <div class="media-content">
+              <p>
+                <strong><a :href="shader.href">{{ shader.name }}</a></strong>
+                <span class="has-text-grey">{{ shader.published }}</span>
+              </p>
+              <hr>
+              <div class="content" v-html="shader.descriptionHTML"></div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-
-  <div v-if="shaders.length === 0" class="message is-danger">
-    <div class="message-body">
-      No shaders found
-    </div>
-  </div>
-  
-  <button
-    v-if="storage.canLoadMore && !errorOccured"
-    class="button is-primary"
-    :class="{ 'is-loading': storage.loadingLock }"
-    :disabled="storage.loadingLock"
-    @click="loadMore"
-    >
-    Load More
-  </button>
-  
-  <div v-if="loadingError" class="modal is-active">
-    <div class="modal-background" @click="loadingError = null"></div>
-    <div class="modal-content message is-danger">
-      <div class="message-header">
-        <p>Error</p>
-      </div>
-      
+    
+    <div v-if="shaders.length === 0" class="message is-danger">
       <div class="message-body">
-        <div class="content">
-          <p>{{ loadingError }}</p>
-        </div>
-        <button class="button is-danger is-outlined" @click="loadingError = null">Close</button>
+        No shaders found
       </div>
     </div>
-  </div>
+    
+    <button
+      v-if="storage.canLoadMore && !errorOccured"
+      class="button is-primary"
+      :class="{ 'is-loading': storage.loadingLock }"
+      :disabled="storage.loadingLock"
+      @click="loadMore"
+      >
+      Load More
+    </button>
+    
+    <div v-if="loadingError" class="modal is-active">
+      <div class="modal-background" @click="loadingError = null"></div>
+      <div class="modal-content message is-danger">
+        <div class="message-header">
+          <p>Error</p>
+        </div>
+        
+        <div class="message-body">
+          <div class="content">
+            <p>{{ loadingError }}</p>
+          </div>
+          <button class="button is-danger is-outlined" @click="loadingError = null">Close</button>
+        </div>
+      </div>
+    </div>
   
+  </div>
 </div>
 </template>
 
@@ -92,22 +76,20 @@ import { RecvShaderData, ShaderStorage } from '../backend.ts';
 import { MDConverter } from '../converter.ts';
 import DynamicLoading from '../dynamic-loading.ts';
 
-@Component
+import SearchBar, { SearchParams } from '../search-bar.vue';
+
+@Component({
+    components: {
+        SearchBar,
+    }
+})
 export default class Browse extends Vue {
     private storage: DynamicLoading<RecvShaderData> = new DynamicLoading(10);
-    private searchString: string = "";
 
     private loadingError?: string = null;
     private errorOccured: boolean = false;
 
-    private timeVariants = [
-        "day",
-        "week",
-        "month",
-        "year",
-        "all"
-    ];
-    private time = "all";
+    private searchParams: SearchParams | {} = {};
 
     private get shaders(): any[] {
         return this.storage.shown.map(shader => {
@@ -131,25 +113,19 @@ export default class Browse extends Vue {
 
     private loadMore() {
         this.errorOccured = false;
-        const search = this.searchString.length !== 0 ? this.searchString : null;
 
         this.storage
-            .load((limit, page) => ShaderStorage.requestShaders(limit, page, { time: this.time, search }))
+            .load((limit, page) => ShaderStorage.requestShaders(limit, page, this.searchParams))
             .catch(err => {
                 this.errorOccured = true;
                 this.loadingError = err.message;
             });
     }
 
-    private search() {
+    private search(params: SearchParams) {
+        this.searchParams = params;
         this.storage.reset();
         this.loadMore();
-    }
-
-    private searchIfEnter(event) {
-        if (event.key === "Enter") {
-            this.search();
-        }
     }
 
     mounted() {
@@ -161,6 +137,12 @@ export default class Browse extends Vue {
 <style scoped>
 
 @import "../shader.sass";
+
+.search-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
 
 .browse {
     padding-top: 20px;

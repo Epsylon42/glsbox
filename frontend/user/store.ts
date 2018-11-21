@@ -49,6 +49,7 @@ export const Mutations = {
 
     pushDLBatch: "pushDLBatch",
     modifyDL: "modifyDL",
+    resetShaders: "resetShaders",
 };
 
 export const Actions = {
@@ -135,6 +136,10 @@ export const store = new Vuex.Store({
         [Mutations.modifyDL] (state: StoreState, { dl, func }: { dl: DynamicLoading<any>, func: (dl: DynamicLoading<any>) => any }) {
             func(dl);
         },
+
+        [Mutations.resetShaders] (state: StoreState) {
+            state.shaders.reset();
+        },
     },
 
     actions: {
@@ -164,10 +169,10 @@ export const store = new Vuex.Store({
                 });
         },
 
-        [Actions.loadShaders] ({ state, commit }): Promise<void> {
+        [Actions.loadShaders] ({ state, commit }, obj: { time?: string, search?: string }): Promise<void> {
             return state.shaders.load((limit, page) => {
                 return ShaderStorage
-                    .requestShaders(limit, page, { owner: state.user.id });
+                    .requestShaders(limit, page, { owner: state.user.id, ...obj });
             }, commitModifyDL(commit));
         },
 

@@ -1,5 +1,9 @@
 <template>
 <div class="shaders">
+  <div class="search-bar">
+    <SearchBar :buttonActive="!isLoading" @search="search"></SearchBar>
+  </div>
+
   <div v-if="firstLoading" class="loading-panel" />
   
   <template v-else>
@@ -60,9 +64,17 @@ import { RecvShaderData } from '../backend.ts';
 
 import { MDConverter } from '../converter.ts';
 
-@Component
+import SearchBar, { SearchParams } from '../search-bar.vue';
+
+@Component({
+    components: {
+        SearchBar
+    }
+})
 export default class Shaders extends Vue {
     private loadingError?: string = null;
+
+    private searchParams: SearchParams | {} = {};
 
     private get shaders(): any[] {
         return store.state.shaders.shown.map(shader => {
@@ -94,8 +106,14 @@ export default class Shaders extends Vue {
     }
 
     private loadMore() {
-        store.dispatch(Actions.loadShaders)
+        store.dispatch(Actions.loadShaders, this.searchParams)
             .catch(e => this.loadingError = e.message);
+    }
+
+    private search(params: SearchParams) {
+        this.searchParams = params;
+        store.commit(Mutations.resetShaders);
+        this.loadMore()
     }
 
     mounted() {
@@ -109,4 +127,12 @@ export default class Shaders extends Vue {
 <style scoped>
 
 @import "../shader.sass";
+
+.search-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+
+    margin-bottom: 1.5rem;
+}
 </style>
