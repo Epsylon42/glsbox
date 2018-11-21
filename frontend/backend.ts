@@ -98,7 +98,7 @@ export module ShaderStorage {
         form.append("description", data.description);
         form.append("code", data.code);
 
-        if (data.preview) {
+        if (data.preview && !data.preview.deleted) {
             form.append("preview", data.preview.blob, "preview.png");
         }
 
@@ -222,6 +222,15 @@ export module ShaderStorage {
             .then(response => response.json())
             .then(checkError)
             .then((ids: number[]) => Promise.all(ids.map(id => ShaderStorage.requestShader(id))));
+    }
+
+    export function deleteShader(id: number): Promise<void> {
+        return fetch(`/api/v1/shaders/${id}`, {
+            method: "DELETE"
+        })
+            .then(response => response.json())
+            .then(checkError)
+            .then(() => {});
     }
 }
 

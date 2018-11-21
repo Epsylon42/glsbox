@@ -137,12 +137,13 @@
 </template>
 
 <script lang="ts">
-    
-import { Vue, Component } from 'vue-property-decorator';
+
+import { Vue, Component, Emit } from 'vue-property-decorator';
 
 import { store, Mutations, Actions } from './store/store.ts';
 import Preview from './store/preview.ts';
 import ShaderWindow from './shader-window.vue';
+import { ShaderStorage } from '../backend.ts';
 
 import { MDConverter } from '../converter.ts';
 
@@ -211,23 +212,34 @@ export default class Info extends Vue {
     }
     
     private deleteShader() {
-        console.log("deleteShader TODO");
+        ShaderStorage
+            .deleteShader(store.getters.id)
+            .then(() => {
+                window.location.href = `/users/${store.getters.user.id}/shaders`;
+            })
+            .catch(err => this.error({ title: "Deletion error", message: err.message }));
     }
     
     private publish() {
         this.confirmation = null;
-        store.dispatch(Actions.setPublished, true);
+        store
+            .dispatch(Actions.setPublished, true)
+            .catch(err => this.error({ title: "Publishing error", message: err.message }));
     }
     
     private unpublish() {
         this.confirmation = null;
-        store.dispatch(Actions.setPublished, false);
+        store
+            .dispatch(Actions.setPublished, false)
+            .catch(err => this.error({ title: "Publishing error", message: err.message }));
     }
     
     
     private removePreview() {
         store.dispatch(Actions.removePreview);
     }
+
+    @Emit() private error(err: { title: string, message: string }) {}
 }
 </script>
 

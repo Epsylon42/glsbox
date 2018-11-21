@@ -350,6 +350,55 @@ priv.patch("/shaders/:id/publish", async (req, res) => {
     }
 });
 
+priv.delete("/shaders/:id", async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) {
+        res.status(400).json({ error: true, message: "Invalid id" });
+        return;
+    }
+
+    try {
+        const shader = await Shaders.findByPrimary(id);
+        if (!shader) {
+            res.status(404).json({ error: true, message: "Shader not found" });
+            return;
+        }
+
+        const owner = await Users.findByPrimary(shader.owner);
+
+        if (!(req.user.id === shader.owner || (owner && req.user.role < owner.role))) {
+            res.status(403).json({ error: true, message: "You are not allowed to delete this shader" });
+            return;
+        }
+
+        const ftrans = new FileTransaction();
+        await db.transaction(async transaction => {
+            try {
+                const textures = await ShaderTextures.findAll({ where: { shaderId: shader.id } });
+                const destroyPromises = textures.map(tex => ftrans.removeFile(tex.key));
+                if (shader.previewKey) {
+                    destroyPromises.push(ftrans.removeFile(shader.previewKey));
+                }
+
+                destroyPromises.push(...textures.map(async tex => tex.destroy({ transaction })));
+                await Promise.all(destroyPromises);
+
+                await shader.destroy({ transaction });
+            } catch (e) {
+                await ftrans.rollback();
+                throw e;
+            }
+        });
+
+        await ftrans.commit();
+
+        res.json({});
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: true, message: "Internal server error" });
+    }
+});
+
 priv.post("/comments", async (req, res) => {
     try {
         if (!req.body) {
@@ -628,7 +677,11 @@ pub.get("/users/:id/commented-shaders", async (req, res) => {
         const parentShaders = await Shaders.findAll({ where: {
             id: {
                 [Sequelize.Op.in]: Array.from(shaderIds)
-            }
+            },
+            [Sequelize.Op.or]: [
+                { published: true },
+                req.user && { owner: req.user.id }
+            ]
         } });
 
         res.json(parentShaders.slice((page-1) * limit, page * limit).map(shader => shader.id));

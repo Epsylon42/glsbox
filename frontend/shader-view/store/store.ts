@@ -314,6 +314,8 @@ export const store = new Vuex.Store({
             commit(Mutations.setPublished, shader.published);
             if (shader.preview) {
                 commit(Mutations.setPreview, shader.preview);
+            } else {
+                commit(Mutations.setPreview, null);
             }
         },
 
@@ -385,7 +387,7 @@ export const store = new Vuex.Store({
                         state.description,
                         state.mainShader.source,
                         state.textures,
-                        state.preview,
+                        state.preview && !state.preview.deleted ? state.preview : null,
                     );
 
                     promise = ShaderStorage.postShader(data);

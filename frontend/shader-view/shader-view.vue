@@ -24,7 +24,7 @@
     </div>
     
     <div class="info">
-      <Info v-if="showInfo" />
+      <Info v-if="showInfo" @error="openErrorModal" />
     </div>
   </div>
   
@@ -219,8 +219,12 @@ export default class ShaderView extends Vue {
             .then(id => console.log(`Shader successfully saved with id ${id}`))
             .catch(e => {
                 console.log("Saving error", e);
-                this.modal = new ErrorModal("Saving error", e.message);
+                this.openErrorModal({ title: "Saving error", message: e.message });
             });
+    }
+
+    private openErrorModal(err: { title: string, message: string }) {
+        this.modal = new ErrorModal(err.title, err.message);
     }
 
     processError(e: WglError) {
