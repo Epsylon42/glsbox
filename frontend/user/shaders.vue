@@ -12,7 +12,10 @@
       </div>
       
       <div class="media-content">
-        <p><strong><a :href="shader.url">{{ shader.name }}</a></strong></p>
+        <p>
+          <strong><a :href="shader.url">{{ shader.name }}</a></strong>
+          <span class="has-text-grey">{{ shader.published }}</span>
+        </p>
         <hr>
         <div class="content" v-html="shader.descriptionHTML" />
       </div>
@@ -70,9 +73,11 @@ export default class Shaders extends Vue {
             Object.defineProperty(obj, "url", {
                 get: () => `/view/${shader.id}`
             });
-
             Object.defineProperty(obj, "descriptionHTML", {
                 get: () => MDConverter.makeHtml(shader.description)
+            });
+            Object.defineProperty(obj, "published", {
+                get: () => shader.publishingDate ? `published ${shader.publishingDate.toLocaleString()}` : "",
             });
 
             return obj;
