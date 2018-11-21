@@ -487,7 +487,7 @@ pub.get("/shaders", async (req, res) => {
         const limit = req.query.limit || 20;
         const page = req.query.page || 1;
 
-        const where: any = {};
+        const where: any = { [Sequelize.Op.and]: [] };
         if (req.query.owner != null) {
             where.owner = req.query.owner;
         }
@@ -500,14 +500,22 @@ pub.get("/shaders", async (req, res) => {
                 return;
             }
 
-            where[Sequelize.Op.or as any] = {
-                name: {
-                    [Sequelize.Op.iRegexp]: req.query.search
-                },
-                description: {
-                    [Sequelize.Op.iRegexp]: req.query.search
-                },
-            };
+            where[Sequelize.Op.and as any].push({
+                [Sequelize.Op.or]: [
+                    { name: { [Sequelize.Op.iRegexp]: req.query.search } },
+                    { description: { [Sequelize.Op.iRegexp]: req.query.search } }
+                ]
+            });
+        }
+        if (req.user) {
+            where[Sequelize.Op.and as any].push({
+                [Sequelize.Op.or]: [
+                    { published: true },
+                    { owner: req.user.id }
+                ]
+            });
+        } else {
+            where.published = true;
         }
 
         const shaders = await Shaders.findAll({ where, limit, offset: (page-1) * limit });
