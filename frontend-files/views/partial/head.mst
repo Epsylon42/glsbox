@@ -6,3 +6,5 @@
 {{#styles}}
 <link rel="stylesheet" type="text/css" href="/styles/{{.}}">
 {{/styles}}
+
+<link rel="icon" href="/favicon.png">
