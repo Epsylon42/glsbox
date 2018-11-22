@@ -107,7 +107,6 @@ import 'codemirror/theme/ambiance.css';
 import * as glsl from 'glsl-editor/glsl';
 glsl(CM);
 
-import { ShaderStorage } from '../backend.ts';
 import { store, Mutations, Actions } from './store/store.ts';
 import TextureData from './store/texture-data.ts';
 import FragShader, { Declaration } from './store/frag-shader.ts';
@@ -164,6 +163,8 @@ export default class ShaderView extends Vue {
                 }
             }
         );
+
+        this.shaderSource = this.storedSource;
     }
 
     private shaderSource = "";

@@ -1,7 +1,9 @@
 import Vue from 'vue';
 import Vuex, { Commit } from 'vuex';
 
-import { RecvUser, PatchUser, UserStorage, RecvShaderData, ShaderStorage, CommentStorage } from '../backend.ts';
+import { RecvUser, PatchUser, UserStorage } from '../api/user-storage.ts';
+import { CommentStorage }  from '../api/comment-storage.ts';
+import { RecvShaderData, ShaderStorage } from '../api/shader-storage.ts';
 import CommentData from '../shader-view/store/comment.ts';
 import { UserRole } from '../../common/user-role.ts';
 

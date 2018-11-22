@@ -65,7 +65,6 @@ import { Vue, Component } from 'vue-property-decorator';
 
 import { store, Mutations, Actions } from './store.ts';
 
-import { RecvShaderData } from '../backend.ts';
 import CommentData from '../shader-view/store/comment.ts';
 
 import { MDConverter } from '../converter.ts';

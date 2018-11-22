@@ -66,7 +66,7 @@ import { Vue, Component, Prop } from 'vue-property-decorator';
 
 import { store, Mutations } from './store/store.ts';
 import CommentData, { GenericComment } from './store/comment.ts';
-import { SendCommentData, PatchCommentData, CommentStorage } from '../backend.ts';
+import { SendCommentData, PatchCommentData, CommentStorage } from '../api/comment-storage.ts';
 
 import { MDConverter } from '../converter.ts';
 

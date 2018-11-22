@@ -21,7 +21,7 @@
     </div>
     
     <div class="media-center">
-      <div class="field">
+      <div v-if="showName" class="field">
         <label class="label">Name</label>
         <div class="control">
           <input v-if="canSave" class="input" type="text" v-model="name">
@@ -29,11 +29,11 @@
         </div>
       </div>
       
-      <div class="field">
+      <div v-if="showDescription" class="field">
         <label class="label">Description</label>
         <div class="control">
           <textarea v-if="canSave" class="input description" v-model="description" />
-          <div class="text-box content" v-else v-html="descriptionHTML" />
+          <div v-else class="text-box content" v-html="descriptionHTML" />
         </div>
       </div>
       
@@ -143,7 +143,7 @@ import { Vue, Component, Emit } from 'vue-property-decorator';
 import { store, Mutations, Actions } from './store/store.ts';
 import Preview from './store/preview.ts';
 import ShaderWindow from './shader-window.vue';
-import { ShaderStorage } from '../backend.ts';
+import { ShaderStorage } from '../api/shader-storage.ts';
 
 import { MDConverter } from '../converter.ts';
 
@@ -159,13 +159,19 @@ import 'vue-awesome/icons/trash.js';
 export default class Info extends Vue {
     private confirmation?: string = null;
 
+    private get showName(): boolean {
+        return this.canSave || this.name.length !== 0;
+    }
     private get name(): string {
         return store.getters.name;
     }
     private set name(name: string) {
         store.commit(Mutations.setName, name);
     }
-    
+
+    private get showDescription(): boolean {
+        return this.canSave || this.description.length !== 0;
+    }
     private get description(): string {
         return store.getters.description;
     }
@@ -178,7 +184,7 @@ export default class Info extends Vue {
     }
     
     private get isPublished(): boolean {
-        return store.state.published;
+        return store.getters.published;
     }
     
     private get preview(): Preview | null {

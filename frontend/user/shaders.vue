@@ -10,7 +10,7 @@
     <div v-for="shader in shaders" class="media shader box">
       <div class="media-left preview">
         <a :href="shader.url">
-          <img v-if="shader.preview" :src="shader.preview.url">
+          <img v-if="shader.previewUrl" :src="shader.previewUrl">
           <div v-else class="placeholder" />
         </a>
       </div>
@@ -59,8 +59,6 @@
 import { Vue, Component } from 'vue-property-decorator';
 
 import { store, Mutations, Actions } from './store.ts';
-
-import { RecvShaderData } from '../backend.ts';
 
 import { MDConverter } from '../converter.ts';
 

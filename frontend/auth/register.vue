@@ -101,7 +101,7 @@
     
 import { Vue, Component } from 'vue-property-decorator';
 
-import { UserStorage } from '../backend.ts';
+import { UserStorage } from '../api/user-storage.ts';
 
 import Icon from 'vue-awesome/components/Icon.vue';
 import 'vue-awesome/icons/user.js';

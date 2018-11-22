@@ -18,10 +18,10 @@ import Wgl, { Uniform, FloatUniform, FloatVecUniform, Texture2DUniform, TextureC
 
 @Component
 export default class ShaderWindow extends Vue {
-    private get shader(): FragShader | null {
-        return store.getters.shader;
+    private get shader(): FragShader {
+        return store.getters.frag;
     }
-    @Watch('shader') shaderChanged(newShader: FragShader | null) {
+    @Watch('shader') shaderChanged(newShader: FragShader) {
         try {
             this.updateShader(newShader);
         } catch (e) {
@@ -59,7 +59,7 @@ export default class ShaderWindow extends Vue {
         this.time = 0;
     }
     
-    private updateShader(shader: FragShader | null) {
+    private updateShader(shader: FragShader) {
         if (!this.shaderCompute) {
             this.shaderCompute = new ShaderCompute(this.shader, this.gl);
         } else {
@@ -96,6 +96,8 @@ export default class ShaderWindow extends Vue {
                 canvas.height = canvas.width * 3/4;
             }
         });
+
+        this.shaderChanged(this.shader);
     }
 
     destroyed() {

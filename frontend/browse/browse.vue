@@ -14,7 +14,7 @@
           <div class="media">
             <div class="media-left preview">
               <a :href="shader.href">
-                <img v-if="shader.preview" :src="shader.preview.url">
+                <img v-if="shader.previewUrl" :src="shader.previewUrl">
                 <div v-else class="placeholder"></div>
               </a>
             </div>
@@ -72,7 +72,7 @@
     
 import { Vue, Component } from 'vue-property-decorator';
 
-import { RecvShaderData, ShaderStorage } from '../backend.ts';
+import { RecvShaderData, ShaderStorage } from '../api/shader-storage.ts'
 import { MDConverter } from '../converter.ts';
 import DynamicLoading from '../dynamic-loading.ts';
 

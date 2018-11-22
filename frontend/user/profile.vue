@@ -122,7 +122,7 @@
 <script lang="ts">
     
 import { Vue, Component } from 'vue-property-decorator';
-import { RecvUser } from '../backend.ts';
+import { RecvUser } from '../api/user-storage.ts';
 
 import { store, Mutations, Actions } from './store.ts';
 

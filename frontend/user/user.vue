@@ -33,7 +33,7 @@
 <script lang="ts">
     
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
-import { RecvUser, UserStorage } from '../backend.ts';
+import { RecvUser, UserStorage } from '../api/user-storage.ts';
 import { UserRole } from '../../common/user-role.ts';
 
 import Profile from './profile.vue';

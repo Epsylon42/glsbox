@@ -57,4 +57,10 @@ precision mediump float;
     public additionalLines(): number {
         return 3 + declarations.length + this.textures.length;
     }
+
+    public static defaultShader(): FragShader {
+        return new FragShader(`void main() {
+\tgl_FragColor = vec4(abs(v_pos), 0.0, 1.0);
+}`);
+    }
 }
