@@ -10,8 +10,20 @@ export class RecvUser {
     ) {}
 
     public email?: string = null;
+    public telegram?: string = null;
+
+    public publicEmail: boolean = false;
+    public publicTelegram: boolean = false;
+
     public static fromJson(obj: any): RecvUser {
-        if (!(obj.id != null && obj.username && obj.role != null && obj.registrationDate)) {
+        if (!(
+            obj.id != null
+                && obj.username
+                && obj.role != null
+                && obj.registrationDate
+                && obj.publicEmail != null
+                && obj.publicTelegram != null
+        )) {
             throw new Error("Invalid user format");
         }
 
@@ -25,6 +37,16 @@ export class RecvUser {
         if (obj.email) {
             user.email = obj.email;
         }
+        if (obj.telegram) {
+            user.telegram = obj.telegram;
+        }
+
+        if (obj.publicEmail != null) {
+            user.publicEmail = obj.publicEmail;
+        }
+        if (obj.publicTelegram != null) {
+            user.publicTelegram = obj.publicTelegram;
+        }
 
         return user;
     }
@@ -32,9 +54,12 @@ export class RecvUser {
 
 export class PatchUser {
     constructor(
-        public email?: string,
         public password?: string,
         public role?: UserRole,
+        public email?: string,
+        public telegram?: string,
+        public publicEmail?: boolean,
+        public publicTelegram?: boolean,
     ) {}
 }
 

@@ -22,7 +22,11 @@ export interface UsersAttributes {
     passwordHash?: string,
     passwordSalt?: string,
     password?: string,
+
     email?: string,
+    publicEmail?: boolean,
+    telegram?: string,
+    publicTelegram?: boolean,
 }
 
 export interface UsersInstance extends Sequelize.Instance<UsersAttributes>, UsersAttributes {
@@ -31,6 +35,9 @@ export interface UsersInstance extends Sequelize.Instance<UsersAttributes>, User
     registrationDate: Date,
     passwordHash: string,
     passwordSalt: string,
+
+    publicEmail: boolean,
+    publicTelegram: boolean,
 }
 
 export const Users = db.define<UsersInstance, UsersAttributes>("users", {
@@ -64,12 +71,27 @@ export const Users = db.define<UsersInstance, UsersAttributes>("users", {
         type: Sequelize.TEXT,
         allowNull: false,
     },
+
     email: {
         type: Sequelize.TEXT,
         allowNull: true,
         validate: {
             isEmail: true,
         }
+    },
+    publicEmail: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+    },
+    telegram: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+    },
+    publicTelegram: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
     },
 
     password: {
@@ -81,7 +103,7 @@ export const Users = db.define<UsersInstance, UsersAttributes>("users", {
             (this as any).setDataValue("passwordHash", hash);
             (this as any).setDataValue("passwordSalt", salt);
         }
-    }
+    },
 });
 
 

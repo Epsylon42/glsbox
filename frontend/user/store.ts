@@ -31,6 +31,11 @@ export class StoreState {
 
     public newEmail?: string = null;
     public emailChanged: boolean = false;
+    public newPublicEmail?: boolean = null;
+
+    public newTelegram?: string = null;
+    public telegramChanged: boolean = false;
+    public newPublicTelegram?: boolean = null;
 
     public newPassword?: string = null;
     public newRole?: UserRole = null;
@@ -44,8 +49,12 @@ export const Mutations = {
     setUser: "setUser",
     setMe: "setMe",
     changeEmail: "changeEmail",
+    changeTelegram: "changeTelegram",
     changePassword: "changePassword",
     changeRole: "changeRole",
+
+    changePublicEmail: "changePublicEmail",
+    changePublicTelegram: "changePublicTelegram",
 
     resetChanges: "resetChanges",
 
@@ -82,8 +91,24 @@ export const store = new Vuex.Store({
             return state.emailChanged ? state.newEmail : state.user.email;
         },
 
+        telegram(state: StoreState) : string | null {
+            return state.telegramChanged ? state.newTelegram : state.user.telegram;
+        },
+
         role(state: StoreState): UserRole | null {
             return state.newRole || state.user.role;
+        },
+
+        publicEmail(state: StoreState): boolean {
+            return state.newPublicEmail != null ? state.newPublicEmail : state.user.publicEmail;
+        },
+
+        publicTelegram(state: StoreState): boolean {
+            return state.newPublicTelegram != null ? state.newPublicTelegram : state.user.publicTelegram;
+        },
+
+        canEditPublic(state: StoreState): boolean {
+            return state.me && state.me.id === state.user.id;
         },
 
         canEditFields(state: StoreState): boolean {
@@ -94,10 +119,17 @@ export const store = new Vuex.Store({
             return state.me && state.me.role === UserRole.Admin && state.user.role !== UserRole.Admin;
         },
 
+        isPriviledged(state: StoreState): boolean {
+            return state.me && (state.me.role < state.user.role);
+        },
+
         changed(state: StoreState): boolean {
-            return store.state.emailChanged
-                || store.state.newPassword != null
-                || store.state.newRole != null;
+            return state.emailChanged
+                || state.telegramChanged
+                || state.newPassword != null
+                || state.newRole != null
+                || state.newPublicEmail != null
+                || state.newPublicTelegram != null;
         },
     },
 
@@ -115,8 +147,25 @@ export const store = new Vuex.Store({
         },
 
         [Mutations.changeEmail] (state: StoreState, email?: string) {
-            state.newEmail = email;
+            if (!email || email.length === 0) {
+                state.newEmail = null;
+            } else {
+                state.newEmail = email;
+            }
             state.emailChanged = true;
+        },
+
+        [Mutations.changeTelegram] (state: StoreState, telegram?: string) {
+            if (!telegram || telegram.length === 0) {
+                if (telegram && telegram[0] === "@") {
+                    state.newTelegram = telegram.slice(1);
+                } else {
+                    state.newTelegram = telegram;
+                }
+            } else {
+                state.newTelegram = null;
+            }
+            state.telegramChanged = true;
         },
 
         [Mutations.changePassword] (state: StoreState, pass?: string) {
@@ -127,11 +176,25 @@ export const store = new Vuex.Store({
             state.newRole = role;
         },
 
+        [Mutations.changePublicEmail] (state: StoreState, pub: boolean) {
+            state.newPublicEmail = pub;
+        },
+
+        [Mutations.changePublicTelegram] (state: StoreState, pub: boolean) {
+            state.newPublicTelegram = pub;
+        },
+
         [Mutations.resetChanges] (state: StoreState) {
             state.newEmail = null;
+            state.emailChanged = false;
+            state.newPublicEmail = null;
+
+            state.newTelegram = null;
+            state.telegramChanged = false;
+            state.newPublicTelegram = null;
+
             state.newPassword = null;
             state.newRole = null;
-            state.emailChanged = false;
         },
 
 
@@ -161,9 +224,12 @@ export const store = new Vuex.Store({
 
         [Actions.save] ({ state, commit }): Promise<void> {
             return UserStorage.patchUser(state.user.id, new PatchUser(
-                state.emailChanged && state.newEmail || undefined,
                 state.newPassword || undefined,
                 state.newRole || undefined,
+                state.emailChanged ? state.newEmail : undefined,
+                state.telegramChanged ? state.newTelegram : undefined,
+                state.newPublicEmail != null ? state.newPublicEmail : undefined,
+                state.newPublicTelegram != null ? state.newPublicTelegram : undefined,
             ))
                 .then(user => {
                     commit(Mutations.setUser, user);

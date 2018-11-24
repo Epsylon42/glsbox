@@ -23,12 +23,15 @@ async function editingAllowed(thisUser: number | UsersInstance, owner: number | 
     return (t && o && t.role < o.role) || false;
 }
 
-function userToResponse(user: UsersInstance): object {
+function userToResponse(user: UsersInstance, thisUser?: UsersInstance): object {
     return {
         id: user.id,
         username: user.username,
         role: user.role,
-        email: user.email || null,
+        publicEmail: user.publicEmail,
+        publicTelegram: user.publicTelegram,
+        email: user.publicEmail || (thisUser && thisUser.id === user.id) ? user.email : null,
+        telegram: user.publicTelegram || (thisUser && thisUser.id === user.id) ? user.telegram : null,
         registrationDate: user.registrationDate.toISOString(),
     };
 }
@@ -506,8 +509,25 @@ priv.patch("/users/:id", async (req, res) => {
         if (req.body.email !== undefined) {
             update.email = req.body.email;
         }
+        if (req.body.telegram !== undefined) {
+            update.telegram = req.body.telegram;
+        }
 
-        if (typeof req.body.role === "number" && req.body.role >= 0 && req.body.role <= 1) {
+        if (req.body.publicEmail != null || req.body.publicTelegram != null) {
+            if (req.user.id !== user.id) {
+                res.status(403).json({ error: true, message: "You cannot edit field visibility for this user" });
+                return;
+            }
+
+            if (req.body.publicEmail != null) {
+                update.publicEmail = req.body.publicEmail;
+            }
+            if (req.body.publicTelegram != null) {
+                update.publicTelegram = req.body.publicTelegram;
+            }
+        }
+
+        if (typeof req.body.role === "number" && req.body.role > 0 && req.body.role <= 2) {
             if (req.user.role === UserRole.Admin && user.role !== UserRole.Admin) {
                 update.role = req.body.role;
             } else {
@@ -515,13 +535,13 @@ priv.patch("/users/:id", async (req, res) => {
                 return;
             }
         } else if (req.body.role) {
-            res.status(400).json({ error: true, message: "Role must be a number either 0 or 1" });
+            res.status(400).json({ error: true, message: "Role must be a number either 1 or 2" });
             return;
         }
 
-        await user.update(update);
+    await user.update(update);
 
-        res.json(userToResponse(user));
+        res.json(userToResponse(user, req.user));
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: true, message: "Internal server error" });
@@ -636,7 +656,7 @@ pub.get("/users/:id", async (req, res) => {
             return;
         }
 
-        res.json(userToResponse(user));
+        res.json(userToResponse(user, req.user));
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: true, message: "Internal server error" });

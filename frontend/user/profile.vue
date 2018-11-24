@@ -2,50 +2,62 @@
 <div class="profile">
   <div class="field">
     <label class="label">Username</label>
-    <p>{{ data.user.username }}</p>
+    <div class="message">
+      <p class="message-body field-value">{{ data.user.username }}</p>
+    </div>
   </div>
-
+  
   <div class="field">
     <label class="label">Registered</label>
-
-    <p> {{ data.user.registrationDate.toLocaleString() }} </p>
+    
+    <div class="message">
+      <p class="message-body field-value"> {{ data.user.registrationDate.toLocaleString() }} </p>
+    </div>
   </div>
   
   <div class="field">
     <label class="label">Role</label>
-
+    
     <div class="control">
       <label v-if="perm.canEditRole" class="checkbox">
         <input type="checkbox" v-model.boolean="data.isModerator">
         Is Moderator
       </label>
-      <label v-else>
-        {{ data.role }}
+      <label v-else class="message">
+        <div class="message">
+          <div class="message-body field-value">
+            {{ data.role }}
+          </div>
+        </div>
       </label>
     </div>
   </div>
   
-  <div class="field">
+  <div v-if="perm.canEditFields || data.publicEmail" class="field">
     <label class="label">Email</label>
     
     <div class="control">
       <template v-if="edit.email == null">
-        <p>
-          {{ data.email }}
-        </p>
+        <div v-if="data.email.length !== 0" class="message">
+          <p class="message-body field-value"> {{ data.email }} </p>
+        </div>
+        <div v-else-if="data.publicEmail || !perm.isPriviledged" class="message is-warning">
+          <p class="message-body field-value">Empty</p>
+        </div>
+        <div v-else class="message is-danger">
+          <p class="message-body field-value">Private</p>
+        </div>
         
         <template v-if="perm.canEditFields">
           <button
             class="button is-primary is-small"
             @click="edit.editEmail()"
-            title="edit"
             >
             Edit
           </button>
           <button
             class="button is-warning is-small"
             @click="edit.clearEmail()"
-            title="clear"
             >
             Clear
           </button>
@@ -58,22 +70,80 @@
         <button
           class="button is-success is-small"
           @click="edit.saveEmail()"
-          title="save"
           >
           Save
         </button>
         <button
           class="button is-small"
           @click="edit.email = null"
-          title="cancel"
           >
           Cancel
         </button>
         
       </template>
+      
+      <label v-if="perm.canEditPublic" class="checkbox">
+        <input type="checkbox" v-model.boolean="data.publicEmail">
+        Email is public
+      </label>
     </div>
   </div>
   
+  <div v-if="perm.canEditFields || data.publicTelegram" class="field">
+    <label class="label">Telegram</label>
+    
+    <div class="control">
+      <template v-if="edit.telegram == null">
+        <div v-if="data.telegram.length !== 0" class="message">
+          <p class="message-body field-value"> {{ data.telegram }} </p>
+        </div>
+        <div v-else-if="data.publicTelegram || !perm.isPriviledged" class="message is-warning">
+          <p class="message-body field-value">Empty</p>
+        </div>
+        <div v-else class="message is-danger">
+          <p class="message-body field-value">Private</p>
+        </div>
+
+        <template v-if="perm.canEditFields">
+          <button
+            class="button is-primary is-small"
+            @click="edit.editTelegram()"
+            >
+            Edit
+          </button>
+          <button
+            class="button is-warning is-small"
+            @click="edit.clearTelegram()"
+            >
+            Clear
+          </button>
+        </template>
+      </template>
+
+      <template v-else>
+        <input class="input" type="text" v-model="edit.telegram" placeholder="telegram">
+
+        <button
+          class="button is-success is-small"
+          @click="edit.saveTelegram()"
+          >
+          Save
+        </button>
+        <button
+          class="button is-small"
+          @click="edit.telegram = null"
+          >
+          Cancel
+        </button>
+      </template>
+
+      <label v-if="perm.canEditPublic" class="checkbox">
+        <input type="checkbox" v-model.boolean="data.publicTelegram">
+        Telegram is public
+      </label>
+    </div>
+  </div>
+
   <div v-if="perm.canEditFields" class="field">
     <label class="label">Password</label>
     
@@ -82,7 +152,6 @@
         <button
           class="button is-primary is-small"
           @click="edit.editPassword()"
-          title="edit"
           >
           Edit
         </button>
@@ -95,14 +164,12 @@
         <button
           class="button is-success is-small"
           @click="edit.savePassword()"
-          title="save"
           >
           Save
         </button>
         <button
           class="button is-small"
           @click="edit.password = null"
-          title="cancel"
           >
           Cancel
         </button>
@@ -142,6 +209,14 @@ class Permissions {
     public get canEditRole(): boolean {
         return store.getters.canEditRole;
     }
+
+    public get canEditPublic(): boolean {
+        return store.getters.canEditPublic;
+    }
+
+    public get isPriviledged(): boolean {
+        return store.getters.isPriviledged;
+    }
 }
 
 class Data {
@@ -151,6 +226,10 @@ class Data {
 
     public get email(): string {
         return store.getters.email || "";
+    }
+
+    public get telegram(): string {
+        return store.getters.telegram || "";
     }
 
     public get role(): string {
@@ -175,6 +254,32 @@ class Data {
     public set isModerator(val: boolean) {
         store.commit(Mutations.changeRole, val ? UserRole.Moderator : UserRole.User);
     }
+
+    constructor() {
+        Object.defineProperty(this, "publicEmail", {
+            get: () => store.getters.publicEmail,
+            set: val => store.commit(Mutations.changePublicEmail, val),
+        });
+        Object.defineProperty(this, "publicTelegram", {
+            get: () => store.getters.publicTelegram,
+            set: val => store.commit(Mutations.changePublicTelegram, val),
+        });
+        // for some reason if we define getters like below, they don't work properly
+    }
+
+    // public get publicEmail(): boolean {
+    //     return store.getters.publicEmail;
+    // }
+    // public set publicEmail(val: boolean) {
+    //     store.commit(Mutations.changePublicEmail, val);
+    // }
+
+    // public get publicTelegram(): boolean {
+    //     return store.getters.publicTelegram;
+    // }
+    // public set publicTelegram(val: boolean) {
+    //     store.commit(Mutations.changePublicTelegram, val);
+    // }
 }
 
 class Edit {
@@ -191,6 +296,20 @@ class Edit {
     }
     public clearEmail() {
         store.commit(Mutations.changeEmail, null);
+    }
+
+    //
+    public telegram?: string = null;
+
+    public editTelegram() {
+        this.telegram = this.data.telegram;
+    }
+    public saveTelegram() {
+        store.commit(Mutations.changeTelegram, this.telegram);
+        this.telegram = null;
+    }
+    public clearTelegram() {
+        store.commit(Mutations.changeTelegram, null);
     }
 
     //
@@ -239,6 +358,10 @@ export default class Profile extends Vue {
 .profile {
     display: flex;
     flex-direction: column;
+}
+
+.message-body.field-value {
+    padding: 5px;
 }
 
 </style>
