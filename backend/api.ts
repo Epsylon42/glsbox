@@ -576,6 +576,43 @@ pub.get("/shaders", async (req, res) => {
                 ]
             });
         }
+        if (req.query.time) {
+            let lowerRange: Date | null = null;
+            switch (req.query.time) {
+            case "day":
+                lowerRange = new Date();
+                lowerRange.setDate(lowerRange.getDate() - 1);
+                break;
+
+            case "week":
+                lowerRange = new Date();
+                lowerRange.setDate(lowerRange.getDate() - 7);
+                break;
+
+            case "month":
+                lowerRange = new Date();
+                lowerRange.setDate(lowerRange.getDate() - 30);
+                break;
+
+            case "year":
+                lowerRange = new Date();
+                lowerRange.setDate(lowerRange.getDate() - 365);
+                break;
+            }
+
+            if (lowerRange) {
+                where[Sequelize.Op.and as any].push({
+                    [Sequelize.Op.or]: [
+                        { publishingDate: null },
+                        {
+                            publishingDate: {
+                                [Sequelize.Op.gte]: lowerRange
+                            }
+                        },
+                    ]
+                });
+            }
+        }
         if (req.user) {
             where[Sequelize.Op.and as any].push({
                 [Sequelize.Op.or]: [
