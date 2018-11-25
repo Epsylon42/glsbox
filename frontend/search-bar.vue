@@ -12,8 +12,15 @@
   
   <div class="select">
     <select v-model="time">
-      <option value="" disabled>Time Interval</option>
+      <option value="" disabled>Interval</option>
       <option v-for="t in timeVariants" :value="t">{{ t }}</option>
+    </select>
+  </div>
+
+  <div class="select">
+    <select v-model="sort">
+      <option value="" disabled>Sort</option>
+      <option v-for="s in sortVariants" :value="s">{{ s }}</option>
     </select>
   </div>
   
@@ -29,6 +36,7 @@ import { Vue, Component, Prop, Emit } from 'vue-property-decorator';
 
 export type SearchParams = {
     time: string,
+    sort: string,
     search: string,
 };
 
@@ -46,11 +54,21 @@ export default class SearchBar extends Vue {
     ];
     private time = "all";
 
+    private sortVariants = [
+        "new",
+        "old",
+        "upvoted",
+    ]
+    private sort = "upvoted";
+
     private search() {
-        this.$emit("search", {
+        const search: SearchParams = {
             time: this.time,
+            sort: this.sort,
             search: this.searchString,
-        });
+        };
+
+        this.$emit("search", search);
     }
 
     private searchIfEnter(event) {

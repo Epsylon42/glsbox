@@ -557,6 +557,7 @@ pub.get("/shaders", async (req, res) => {
         const page = req.query.page || 1;
 
         const where: any = { [Sequelize.Op.and]: [] };
+        const order: [string, string][] = [];
         if (req.query.owner != null) {
             where.owner = req.query.owner;
         }
@@ -613,6 +614,21 @@ pub.get("/shaders", async (req, res) => {
                 });
             }
         }
+        if (req.query.sort) {
+            switch (req.query.sort) {
+            case "new":
+                order.push(["publishingDate", "DESC"]);
+                break;
+
+            case "old":
+                order.push(["publishingDate", "ASC"]);
+                break;
+
+            case "upvoted":
+                console.error("Sorting by upvoted is not implemented");
+                break;
+            }
+        }
         if (req.user) {
             where[Sequelize.Op.and as any].push({
                 [Sequelize.Op.or]: [
@@ -624,7 +640,7 @@ pub.get("/shaders", async (req, res) => {
             where.published = true;
         }
 
-        const shaders = await Shaders.findAll({ where, limit, offset: (page-1) * limit });
+        const shaders = await Shaders.findAll({ where, order, limit, offset: (page-1) * limit });
 
         const responseShaders = await Promise.all(shaders.map(async shader => {
             const textures = await ShaderTextures.findAll({ where: { shaderId: shader.id } });

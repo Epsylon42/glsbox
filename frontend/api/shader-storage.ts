@@ -213,13 +213,16 @@ export module ShaderStorage {
             .then(() => {});
     }
 
-    export function requestShaders(limit: number, page: number, options: { search?: string, time?: string, owner?: number } = {}): Promise<RecvShaderData[]> {
+    export function requestShaders(limit: number, page: number, options: { search?: string, sort?: string, time?: string, owner?: number } = {}): Promise<RecvShaderData[]> {
         let addr = `/api/v1/shaders?limit=${limit}&page=${page}`;
         if (options.search) {
             addr += `&search=${encodeURIComponent(options.search)}`;
         }
         if (options.time) {
             addr += `&time=${encodeURIComponent(options.time)}`;
+        }
+        if (options.sort) {
+            addr += `&sort=${encodeURIComponent(options.sort)}`;
         }
         if (options.owner != null) {
             addr += `&owner=${encodeURIComponent(options.owner.toString())}`;
