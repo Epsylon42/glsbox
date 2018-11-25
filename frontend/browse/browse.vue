@@ -154,8 +154,6 @@ export default class Browse extends Vue {
 
 .is-ancestor {
     flex-wrap: wrap;
-    padding-left: 50px;
-    padding-right: 50px;
     width: 100%;
 }
 </style>
