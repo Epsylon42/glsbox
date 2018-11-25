@@ -103,7 +103,7 @@
         <div v-else class="message is-danger">
           <p class="message-body field-value">Private</p>
         </div>
-
+        
         <template v-if="perm.canEditFields">
           <button
             class="button is-primary is-small"
@@ -119,10 +119,10 @@
           </button>
         </template>
       </template>
-
+      
       <template v-else>
         <input class="input" type="text" v-model="edit.telegram" placeholder="telegram">
-
+        
         <button
           class="button is-success is-small"
           @click="edit.saveTelegram()"
@@ -136,14 +136,14 @@
           Cancel
         </button>
       </template>
-
+      
       <label v-if="perm.canEditPublic" class="checkbox">
         <input type="checkbox" v-model.boolean="data.publicTelegram">
         Telegram is public
       </label>
     </div>
   </div>
-
+  
   <div v-if="perm.canEditFields" class="field">
     <label class="label">Password</label>
     
@@ -156,7 +156,7 @@
           Edit
         </button>
       </template>
-
+      
       <template v-else>
         <input class="input" type="password" v-model="edit.password" placeholder="Password">
         <input class="input" type="password" v-model="edit.repeatPassword" placeholder="Repeat password">
@@ -176,10 +176,35 @@
       </template>
     </div>
   </div>
-
+  
   <div v-if="perm.canEditFields" class="field">
     <div class="control">
-      <button class="button is-success" :disabled="!changed" @click="save">Save</button>
+      <button
+        class="button is-success"
+        :class="{ 'is-loading': isSaving }"
+        :disabled="!changed || isSaving"
+        @click="save"
+        >
+        Save
+      </button>
+    </div>
+  </div>
+  
+  <div v-if="savingError" class="modal is-active">
+    <div class="modal-background" @click="savingError = null"></div>
+    <div class="modal-content message is-danger">
+      <div class="message-header">
+        Saving Error
+      </div>
+      <div class="message-body">
+        <p>
+          {{ savingError }}
+        </p>
+        
+        <button class="button is-danger is-outlined" @click="savingError = null">
+          Close
+        </button>
+      </div>
     </div>
   </div>
 
@@ -336,9 +361,15 @@ export default class Profile extends Vue {
         return store.getters.changed;
     }
 
+    private get isSaving(): boolean {
+        return store.getters.isSaving;
+    }
+
     private perm = new Permissions();
     private data = new Data();
     private edit: Edit;
+
+    private savingError?: string = null;
 
     constructor() {
         super();
@@ -347,8 +378,9 @@ export default class Profile extends Vue {
 
     private save() {
         store.dispatch(Actions.save)
-            .then(() => alert("saved successfully"))
-            .catch(() => alert("error"));
+            .catch(err => {
+                this.savingError = err.message;
+            });
     }
 }
 </script>

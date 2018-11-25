@@ -42,6 +42,8 @@ export class StoreState {
 
     public shaders = new DynamicLoading<RecvShaderData>(10);
     public commented = new DynamicLoading<ShaderComments>(10);
+
+    public savingLock: boolean = false;
 }
 
 export const Mutations = {
@@ -61,6 +63,8 @@ export const Mutations = {
     pushDLBatch: "pushDLBatch",
     modifyDL: "modifyDL",
     resetShaders: "resetShaders",
+
+    setSavingLock: "setSavingLock",
 };
 
 export const Actions = {
@@ -130,6 +134,10 @@ export const store = new Vuex.Store({
                 || state.newRole != null
                 || state.newPublicEmail != null
                 || state.newPublicTelegram != null;
+        },
+
+        isSaving(state: StoreState): boolean {
+            return state.savingLock;
         },
     },
 
@@ -205,6 +213,10 @@ export const store = new Vuex.Store({
         [Mutations.resetShaders] (state: StoreState) {
             state.shaders.reset();
         },
+
+        [Mutations.setSavingLock] (state: StoreState, lock: boolean) {
+            state.savingLock = lock;
+        },
     },
 
     actions: {
@@ -223,7 +235,12 @@ export const store = new Vuex.Store({
         },
 
         [Actions.save] ({ state, commit }): Promise<void> {
-            return UserStorage.patchUser(state.user.id, new PatchUser(
+            if (state.savingLock) {
+                return Promise.reject(new Error("Another saving process is already underway"));
+            }
+            commit(Mutations.setSavingLock, true);
+
+            const promise = UserStorage.patchUser(state.user.id, new PatchUser(
                 state.newPassword || undefined,
                 state.newRole || undefined,
                 state.emailChanged ? state.newEmail : undefined,
@@ -235,6 +252,12 @@ export const store = new Vuex.Store({
                     commit(Mutations.setUser, user);
                     commit(Mutations.resetChanges);
                 });
+
+            promise
+                .then(() => commit(Mutations.setSavingLock, false))
+                .catch(() => commit(Mutations.setSavingLock, false));
+
+            return promise;
         },
 
         [Actions.loadShaders] ({ state, commit }, obj: { time?: string, search?: string }): Promise<void> {
