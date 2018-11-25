@@ -20,6 +20,22 @@
           <Icon name="pause" v-else />
         </button>
         <p>{{ shaderTime }}</p>
+        
+        <button
+          v-if="canVote"
+          class="svg-button upvote-button"
+          :class="{ upvoted }"
+          @click="upvote"
+          :title="upvoted ? 'cancel vote' : 'upvote'"
+          >
+          <Icon name="heart" />
+        </button>
+        <div v-else class="svg-button upvote-button">
+          <Icon name="heart" />
+        </div>
+        <p>
+          {{ upvoteNumber }}
+        </p>
       </div>
     </div>
     
@@ -122,6 +138,7 @@ import 'vue-awesome/icons/redo.js';
 import 'vue-awesome/icons/arrow-left.js';
 import 'vue-awesome/icons/save.js';
 import 'vue-awesome/icons/spinner.js';
+import 'vue-awesome/icons/heart.js';
 
 class ErrorModal {
     constructor(
@@ -147,7 +164,7 @@ export default class ShaderView extends Vue {
         indentUnit: 4,
         indentWithTabs: true,
     };
-
+    
     mounted() {
         this.$watch(
             () => (this.$refs.window as ShaderWindow).shaderTime,
@@ -163,40 +180,56 @@ export default class ShaderView extends Vue {
                 }
             }
         );
-
+        
         this.shaderSource = this.storedSource;
     }
-
+    
     private shaderSource = "";
-
+    
     private get storedSource(): string {
         return store.getters.source;
     }
     @Watch('storedSource') storedSourceChanged(newSource: string) {
         this.shaderSource = newSource;
     }
-
+    
     private get canSave(): boolean {
         return store.getters.canSave;
     }
-
+    
     private get isSaving(): boolean {
         return store.getters.isSaving;
     }
-
+    
     private get showInfo(): boolean {
         // don't show info if you are not logged in and are editing a new shader
         return !(store.getters.user == null && store.getters.owner == null);
     }
-
+    
     private get declarations(): Declaration[] {
         return store.getters.declarations;
     }
-
+    
     private get rootComment(): GenericComment {
         return store.getters.rootComment;
     }
+    
+    private get upvoted(): boolean {
+        return false;
+    }
 
+    private get canVote(): boolean {
+        return store.getters.user != null;
+    }
+
+    private get upvoteNumber(): number {
+        return 0;
+    }
+
+    private upvote() {
+        alert("not implemented");
+    }
+    
     private shaderTime: string = "";
     private timePause: boolean = false;
     private updatePause: boolean = false;
@@ -362,5 +395,22 @@ export default class ShaderView extends Vue {
 
 .declarations .declaration-name {
     background-color: #ddf;
+}
+
+
+.upvote-button {
+    margin-left: auto;
+}
+
+.upvote-button.upvoted svg {
+    color: crimson;
+}
+
+.upvote-button:active svg {
+    color: darkred;
+}
+
+div.svg-button.upvote-button svg {
+    color: grey !important;
 }
 </style>
