@@ -165,7 +165,7 @@ export const Shaders = db.define<ShadersInstance, ShadersAttributes>("shaders", 
     },
     likeCount: {
         type: Sequelize.INTEGER,
-        defaultValue: 0,
+        defaultValue: 1,
         allowNull: false,
     },
     code: {
@@ -280,6 +280,27 @@ export const Comments = db.define<CommentsInstance, CommentsAttributes>("comment
         type: Sequelize.DATE,
         allowNull: true,
     },
+});
+
+
+export interface LikesAttributes {
+    user: number,
+    shader: number,
+}
+
+export interface LikesInstance extends LikesAttributes, Sequelize.Instance<LikesAttributes> {}
+
+export const Likes = db.define<LikesInstance, LikesAttributes>("likes", {
+    user: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        allowNull: false,
+    },
+    shader: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        allowNull: false,
+    }
 });
 
 export module Utils {

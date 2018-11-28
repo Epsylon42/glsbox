@@ -21,6 +21,8 @@ export class ShaderData {
     public preview?: Preview = null;
     public textures: TextureData[] = [];
     public published: boolean;
+    public liked: boolean;
+    public likeCount: number;
 
     constructor(recv: RecvShaderData) {
         this.id = recv.id;
@@ -29,6 +31,8 @@ export class ShaderData {
         this.description = recv.description;
         this.frag = new FragShader(recv.code);
         this.published = recv.published;
+        this.liked = recv.liked;
+        this.likeCount = recv.likeCount;
 
         this.textures = recv.textures.map(tex => {
             const texData = new TextureData(tex.url, tex.name, tex.kind);
@@ -75,6 +79,7 @@ export const Mutations = {
     setPreview: "setPreview",
     setUser: "setUser",
     setPublished: "setPublished",
+    setLikes: "setLikes",
     setRootComment: "setRootComment",
     modifyComment: "modifyComment",
     setFocusedComment: "setFocusedComment",
@@ -93,6 +98,7 @@ export const Actions = {
     removePreview: "removePreview",
     requestComment: "requestComment",
     setPublished: "setPublishedAction",
+    like: "like",
 
     saveShader: "saveShader",
 };
@@ -159,6 +165,14 @@ export const store = new Vuex.Store({
 
         published(state: StoreState): boolean {
             return state.shader.published;
+        },
+
+        liked(state: StoreState): boolean {
+            return state.shader.liked;
+        },
+
+        likeCount(state: StoreState): number {
+            return state.shader.likeCount;
         },
 
         textureUniforms(state: StoreState): [string, Uniform][] {
@@ -287,6 +301,11 @@ export const store = new Vuex.Store({
 
         [Mutations.setFocusedComment] (state: StoreState, comment: HTMLElement) {
             state.focusedComment = comment;
+        },
+
+        [Mutations.setLikes] (state: StoreState, likes: { liked: boolean, likeCount: number }) {
+            state.shader.liked = likes.liked;
+            state.shader.likeCount = likes.likeCount;
         },
     },
 
@@ -458,6 +477,12 @@ export const store = new Vuex.Store({
                 .then(() => {
                     commit(Mutations.setPublished, published);
                 });
+        },
+
+        [Actions.like] ({ state, commit }): Promise<void> {
+            return ShaderStorage
+                .setLikedState(state.shader.id, !state.shader.liked)
+                .then(response => commit(Mutations.setLikes, response));
         },
     },
 });

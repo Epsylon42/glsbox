@@ -2,7 +2,7 @@ import Express from 'express';
 import Passport from 'passport';
 import Sequelize from 'sequelize';
 
-import { db, Users, Shaders, ShaderTextures, ShaderTexturesInstance, Comments, Utils, UsersInstance } from './db';
+import { db, Users, Shaders, ShaderTextures, Likes, ShaderTexturesInstance, Comments, Utils, UsersInstance } from './db';
 import { Transaction as FileTransaction } from './file-storage';
 import { TextureKind } from '../common/texture-kind';
 import { UserRole } from '../common/user-role';
@@ -113,6 +113,8 @@ priv.post("/shaders", (req, res) => {
                 code: req.body.code || "",
             }, { transaction });
 
+            await Likes.create({ user: req.user.id, shader: shader.id });
+
             if (files.preview) {
                 const fdata = await ftrans.writeFile(files.preview[0].data, "glsbox-previews");
 
@@ -146,6 +148,7 @@ priv.post("/shaders", (req, res) => {
 
             res.json({
                 ...(shader as any).dataValues,
+                liked: true,
                 textures,
             });
         } catch (e) {
@@ -303,6 +306,7 @@ priv.patch("/shaders/:id", (req, res) => {
 
             res.json({
                 ...(shader as any).dataValues,
+                liked: (await Likes.findOne({ where: { user: req.user.id, shader: shader.id } })) != null,
                 textures: await ShaderTextures.findAll({ where: { shaderId: shader.id }, transaction }),
             });
         } catch (e) {
@@ -353,6 +357,56 @@ priv.patch("/shaders/:id/publish", async (req, res) => {
     }
 });
 
+priv.patch("/shaders/:id/like", async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) {
+        res.status(400).json({ error: true, message: "Invalid id" });
+        return;
+    }
+
+    if (req.body.liked == null || (typeof req.body.liked) !== "boolean") {
+        res.status(400).json({ error: true, message: "Liked state missing or is not boolean" });
+        return;
+    }
+
+    try {
+        const shader = await Shaders.findByPrimary(id);
+        if (!shader) {
+            res.status(404).json({ error: true, message: "Shader not found" });
+            return;
+        }
+
+        const like = await Likes.findOne({ where: { user: req.user.id, shader: shader.id } });
+        if (req.body.liked) {
+            if (like) {
+                res.json({ liked: true, likeCount: shader.likeCount });
+            } else {
+                let [, { likeCount }] = await Promise.all([
+                    Likes.create({ user: req.user.id, shader: shader.id }),
+                    shader.increment("likeCount")
+                ]);
+
+                res.json({ liked: true, likeCount });
+            }
+        } else {
+            if (!like) {
+                res.json({ liked: false, likeCount: shader.likeCount });
+            } else {
+                let [, { likeCount }] = await Promise.all([
+                    like.destroy(),
+                    shader.decrement("likeCount")
+                ]);
+
+                res.json({ liked: false, likeCount });
+            }
+        }
+    } catch (e) {
+        console.error(e);
+        res.json({ error: true, message: "Internal server error" });
+    }
+});
+
+
 priv.delete("/shaders/:id", async (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) {
@@ -377,6 +431,8 @@ priv.delete("/shaders/:id", async (req, res) => {
         const ftrans = new FileTransaction();
         await db.transaction(async transaction => {
             try {
+                await Likes.destroy({ where: { shader: shader.id }, transaction });
+
                 const textures = await ShaderTextures.findAll({ where: { shaderId: shader.id } });
                 const destroyPromises = textures.map(tex => ftrans.removeFile(tex.key));
                 if (shader.previewKey) {
@@ -624,8 +680,8 @@ pub.get("/shaders", async (req, res) => {
                 order.push(["publishingDate", "ASC"]);
                 break;
 
-            case "upvoted":
-                console.error("Sorting by upvoted is not implemented");
+            case "liked":
+                order.push(["likeCount", "DESC"]);
                 break;
             }
         }
@@ -666,7 +722,7 @@ pub.get("/shaders/:id", async (req, res) => {
             return;
         }
 
-        const shader: any = await Shaders.findByPrimary(id);
+        const shader = await Shaders.findByPrimary(id);
         if (!shader) {
             res.status(404).json({ error: true, message: "Shader not found" });
             return;
@@ -675,7 +731,11 @@ pub.get("/shaders/:id", async (req, res) => {
         const textures = await ShaderTextures.findAll({ where: { shaderId: id } });
 
         res.json({
-            ...shader.dataValues,
+            ...(shader as any).dataValues,
+            liked: req.user ?
+                (await Likes.findOne({ where: { user: req.user.id, shader: shader.id } })) != null :
+                false,
+
             textures: textures,
         });
     } catch (e) {

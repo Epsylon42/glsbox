@@ -22,19 +22,19 @@
         <p>{{ shaderTime }}</p>
         
         <button
-          v-if="canVote"
-          class="svg-button upvote-button"
-          :class="{ upvoted }"
-          @click="upvote"
-          :title="upvoted ? 'cancel vote' : 'upvote'"
+          v-if="canLike"
+          class="svg-button like-button"
+          :class="{ liked }"
+          @click="like"
+          :title="liked ? 'unlike' : 'like'"
           >
           <Icon name="heart" />
         </button>
-        <div v-else class="svg-button upvote-button">
+        <div v-else class="svg-button like-button">
           <Icon name="heart" />
         </div>
         <p>
-          {{ upvoteNumber }}
+          {{ likeCount }}
         </p>
       </div>
     </div>
@@ -214,20 +214,23 @@ export default class ShaderView extends Vue {
         return store.getters.rootComment;
     }
     
-    private get upvoted(): boolean {
-        return false;
+    private get liked(): boolean {
+        return store.getters.liked;
     }
-
-    private get canVote(): boolean {
+    
+    private get canLike(): boolean {
         return store.getters.user != null;
     }
-
-    private get upvoteNumber(): number {
-        return 0;
+    
+    private get likeCount(): number {
+        return store.getters.likeCount;
     }
-
-    private upvote() {
-        alert("not implemented");
+    
+    private like() {
+        store.dispatch(Actions.like)
+            .catch(e => {
+                this.openErrorModal({ title: "Like error", message: e.message });
+            });
     }
     
     private shaderTime: string = "";
@@ -398,19 +401,19 @@ export default class ShaderView extends Vue {
 }
 
 
-.upvote-button {
+.like-button {
     margin-left: auto;
 }
 
-.upvote-button.upvoted svg {
+.like-button.liked svg {
     color: crimson;
 }
 
-.upvote-button:active svg {
+.like-button:active svg {
     color: darkred;
 }
 
-div.svg-button.upvote-button svg {
+div.svg-button.like-button svg {
     color: grey !important;
 }
 </style>

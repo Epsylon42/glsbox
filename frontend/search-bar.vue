@@ -57,9 +57,9 @@ export default class SearchBar extends Vue {
     private sortVariants = [
         "new",
         "old",
-        "upvoted",
+        "liked",
     ]
-    private sort = "upvoted";
+    private sort = "liked";
 
     private search() {
         const search: SearchParams = {

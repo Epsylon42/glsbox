@@ -14,6 +14,8 @@ export class RecvShaderData {
     public creationDate: Date | null = null;
     public publishingDate: Date | null = null;
     public published: boolean = true;
+    public liked: boolean = false;
+    public likeCount: number = 0;
 
     constructor(
         public id: number,
@@ -211,6 +213,23 @@ export module ShaderStorage {
             .then(response => response.json())
             .then(checkError)
             .then(() => {});
+    }
+
+    export function setLikedState(id: number, liked: boolean): Promise<{ liked: boolean, likeCount: number }> {
+        return fetch(`/api/v1/shaders/${id}/like`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ liked })
+        })
+            .then(response => response.json())
+            .then(checkError)
+            .then(obj => {
+                if (!((typeof obj.liked) === "boolean" && (typeof obj.likeCount) === "number")) {
+                    throw new Error("Invalid response received");
+                } else {
+                    return obj as { liked: boolean, likeCount: number };
+                }
+            });
     }
 
     export function requestShaders(limit: number, page: number, options: { search?: string, sort?: string, time?: string, owner?: number } = {}): Promise<RecvShaderData[]> {
