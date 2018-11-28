@@ -3,31 +3,15 @@
   <div class="search-bar">
     <SearchBar :buttonActive="!storage.loadingLock" @search="search"></SearchBar>
   </div>
-
+  
   <div v-if="storage.firstLoading" class="loading-panel"></div>
-
+  
   <div v-else class="browse">
-
+    
     <div class="tile is-ancestor">
-      <div v-for="shader in shaders" class="tile is-parent is-6">
-        <div class="tile is-child box">
-          <div class="media">
-            <div class="media-left preview">
-              <a :href="shader.href">
-                <img v-if="shader.previewUrl" :src="shader.previewUrl">
-                <div v-else class="placeholder"></div>
-              </a>
-            </div>
-            
-            <div class="media-content">
-              <p>
-                <strong><a :href="shader.href">{{ shader.name }}</a></strong>
-                <span class="has-text-grey">{{ shader.published }}</span>
-              </p>
-              <hr>
-              <div class="content" v-html="shader.descriptionHTML"></div>
-            </div>
-          </div>
+      <div v-for="shader in shaders" :key="shader.id" class="tile is-parent is-6">
+        <div class="tile is-child">
+          <Shader :shader="shader"" class="box"></Shader>
         </div>
       </div>
     </div>
@@ -73,14 +57,15 @@
 import { Vue, Component } from 'vue-property-decorator';
 
 import { RecvShaderData, ShaderStorage } from '../api/shader-storage.ts'
-import { MDConverter } from '../converter.ts';
 import DynamicLoading from '../dynamic-loading.ts';
 
 import SearchBar, { SearchParams } from '../search-bar.vue';
+import Shader from '../shader.vue';
 
 @Component({
     components: {
         SearchBar,
+        Shader,
     }
 })
 export default class Browse extends Vue {
@@ -91,24 +76,8 @@ export default class Browse extends Vue {
 
     private searchParams: SearchParams | {} = {};
 
-    private get shaders(): any[] {
-        return this.storage.shown.map(shader => {
-            const obj = {
-                ...shader
-            };
-
-            Object.defineProperty(obj, "href", {
-                get: () => `/view/${shader.id}`
-            });
-            Object.defineProperty(obj, "descriptionHTML", {
-                get: () => MDConverter.makeHtml(shader.description)
-            });
-            Object.defineProperty(obj, "published", {
-                get: () => shader.publishingDate ? `published ${shader.publishingDate.toLocaleString()}` : ""
-            });
-
-            return obj;
-        });
+    private get shaders(): RecvShaderData[] {
+        return this.storage.shown;
     }
 
     private loadMore() {
@@ -136,8 +105,6 @@ export default class Browse extends Vue {
 
 <style scoped>
 
-@import "../shader.sass";
-
 .search-bar {
     display: flex;
     flex-direction: row;
@@ -155,5 +122,9 @@ export default class Browse extends Vue {
 .is-ancestor {
     flex-wrap: wrap;
     width: 100%;
+}
+
+.is-child > .box {
+    height: 100%;
 }
 </style>

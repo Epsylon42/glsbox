@@ -7,23 +7,7 @@
   <div v-if="firstLoading" class="loading-panel" />
   
   <template v-else>
-    <div v-for="shader in shaders" class="media shader box">
-      <div class="media-left preview">
-        <a :href="shader.url">
-          <img v-if="shader.previewUrl" :src="shader.previewUrl">
-          <div v-else class="placeholder" />
-        </a>
-      </div>
-      
-      <div class="media-content">
-        <p>
-          <strong><a :href="shader.url">{{ shader.name }}</a></strong>
-          <span class="has-text-grey">{{ shader.published }}</span>
-        </p>
-        <hr>
-        <div class="content" v-html="shader.descriptionHTML" />
-      </div>
-    </div>
+    <Shader v-for="shader in shaders" :key="shader.id" :shader="shader" class="box"></Shader>
     
     <button
       v-if="canLoadMore"
@@ -63,10 +47,12 @@ import { store, Mutations, Actions } from './store.ts';
 import { MDConverter } from '../converter.ts';
 
 import SearchBar, { SearchParams } from '../search-bar.vue';
+import Shader from '../shader.vue';
 
 @Component({
     components: {
-        SearchBar
+        SearchBar,
+        Shader,
     }
 })
 export default class Shaders extends Vue {
@@ -75,23 +61,7 @@ export default class Shaders extends Vue {
     private searchParams: SearchParams | {} = {};
 
     private get shaders(): any[] {
-        return store.state.shaders.shown.map(shader => {
-            const obj = {
-                ...shader
-            };
-
-            Object.defineProperty(obj, "url", {
-                get: () => `/view/${shader.id}`
-            });
-            Object.defineProperty(obj, "descriptionHTML", {
-                get: () => MDConverter.makeHtml(shader.description)
-            });
-            Object.defineProperty(obj, "published", {
-                get: () => shader.publishingDate ? `published ${shader.publishingDate.toLocaleString()}` : "",
-            });
-
-            return obj;
-        });
+        return store.state.shaders.shown;
     }
     private get canLoadMore(): boolean {
         return store.state.shaders.canLoadMore;
@@ -123,8 +93,6 @@ export default class Shaders extends Vue {
 </script>
 
 <style scoped>
-
-@import "../shader.sass";
 
 .search-bar {
     display: flex;
