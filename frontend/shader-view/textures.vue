@@ -1,7 +1,7 @@
 <template>
   <div class="textures">
     <div class="texture" v-for="tex in textures">
-      <img ref="images" :src="tex.data.src" @load="onLoad(tex.index)" crossorigin>
+      <img ref="images" @load="onLoad(tex.index)" :src="tex.data.src" crossorigin>
       <div class="texture-controls">
 
         <button @click="removeTexture(tex.index)">remove</button>

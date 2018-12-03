@@ -56,6 +56,7 @@ export class StoreState {
     // current logged in user
     public user?: RecvUser = null;
     public shader: ShaderData = ShaderData.defaultShader();
+    public deletedTextures: TextureData[] = [];
 
     public rootComment: GenericComment = new GenericComment();
     public focusedComment?: HTMLElement = null;
@@ -268,10 +269,10 @@ export const store = new Vuex.Store({
 
         [Mutations.removeTexture] (state: StoreState, i: number) {
             const tex = state.shader.textures[i];
-            if (tex.id) {
-                tex.deleted = true;
-            } else {
-                state.shader.textures.splice(i, 1);
+            tex.deleted = true;
+            state.shader.textures.splice(i, 1);
+            if (tex.id != null) {
+                state.deletedTextures.push(tex);
             }
         },
 
@@ -438,7 +439,7 @@ export const store = new Vuex.Store({
                         state.shader.name,
                         state.shader.description,
                         state.shader.frag.source,
-                        state.shader.textures.map(tex => ({
+                        state.shader.textures.concat(state.deletedTextures).map(tex => ({
                             id: tex.id,
                             name: tex.name,
                             kind: tex.kind,
@@ -450,7 +451,10 @@ export const store = new Vuex.Store({
 
                     promise = ShaderStorage.patchShader(data);
                     promise
-                        .then(shader => dispatch(Actions.setShader, shader));
+                        .then(shader => {
+                            dispatch(Actions.setShader, shader);
+                            state.deletedTextures = [];
+                        });
                 }
 
                 promise

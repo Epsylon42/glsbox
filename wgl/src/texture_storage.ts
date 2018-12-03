@@ -10,30 +10,30 @@ export default class TextureStorage {
     public step() {
         if (this.textures2d.size !== 0) {
             const remove: HTMLImageElement[] = [];
-            for (let [key, [age, _]] of this.textures2d) {
-                age += 1;
-                if (age > 10) {
+            for (let [key, pair] of this.textures2d) {
+                pair[0] += 1 //age
+                if (pair[0] > 10) {
                     remove.push(key);
                 }
             }
 
             for (let key of remove) {
-                this.gl.deleteTexture(this.textures2d.get(key));
+                this.gl.deleteTexture(this.textures2d.get(key)[1]);
                 this.textures2d.delete(key);
             }
         }
 
         if (this.texturesCube.size !== 0) {
             const remove: HTMLImageElement[] = [];
-            for (let [key, [age, _]] of this.texturesCube) {
-                age += 1;
-                if (age > 10) {
+            for (let [key, pair] of this.texturesCube) {
+                pair[0] += 1 //age
+                if (pair[0] > 10) {
                     remove.push(key);
                 }
             }
 
             for (let key of remove) {
-                this.gl.deleteTexture(this.texturesCube.get(key));
+                this.gl.deleteTexture(this.texturesCube.get(key)[1]);
                 this.texturesCube.delete(key);
             }
         }
