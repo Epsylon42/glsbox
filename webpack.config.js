@@ -2,7 +2,7 @@ const path = require('path');
 const VuePlugin = require('vue-loader/lib/plugin');
 
 module.exports = {
-    mode: 'development',
+    mode: 'production',
     entry: {
         view: './frontend/view.ts',
         auth: './frontend/auth.ts',
