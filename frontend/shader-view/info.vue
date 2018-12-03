@@ -200,7 +200,7 @@ export default class Info extends Vue {
     }
     
     private get canDelete(): boolean {
-        return store.getters.canEdit;
+        return store.getters.canDelete;
     }
     
     

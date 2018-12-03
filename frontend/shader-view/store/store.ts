@@ -10,6 +10,7 @@ import { ShaderStorage, PostShaderData, PatchShaderData, RecvShaderData } from '
 import { CommentStorage } from '../../api/comment-storage.ts';
 import { UserStorage, RecvUser } from '../../api/user-storage.ts';
 import { TextureKind } from '../../../common/texture-kind.ts';
+import { UserRole } from '../../../common/user-role.ts';
 import { Uniform, Texture2DUniform, TextureCubeUniform } from 'wgl';
 
 export class ShaderData {
@@ -58,6 +59,8 @@ export class StoreState {
     public shader: ShaderData = ShaderData.defaultShader();
     public deletedTextures: TextureData[] = [];
 
+    public ownerRole: UserRole = -1;
+
     public rootComment: GenericComment = new GenericComment();
     public focusedComment?: HTMLElement = null;
 
@@ -84,6 +87,7 @@ export const Mutations = {
     setRootComment: "setRootComment",
     modifyComment: "modifyComment",
     setFocusedComment: "setFocusedComment",
+    setOwnerRole: "setOwnerRole",
 };
 
 export const Actions = {
@@ -130,6 +134,13 @@ export const store = new Vuex.Store({
 
         canEdit(state: StoreState): boolean {
             return state.user && state.shader.id !== -1 && state.user.id === state.shader.owner;
+        },
+
+        canDelete(state: StoreState): boolean {
+            return state.user
+                && state.shader.id !== -1
+                && (state.user.id === state.shader.owner
+                    || state.user.role < state.ownerRole);
         },
 
         frag(state: StoreState): FragShader {
@@ -308,6 +319,10 @@ export const store = new Vuex.Store({
             state.shader.liked = likes.liked;
             state.shader.likeCount = likes.likeCount;
         },
+
+        [Mutations.setOwnerRole] (state: StoreState, role: UserRole) {
+            state.ownerRole = role;
+        },
     },
 
     actions: {
@@ -345,6 +360,13 @@ export const store = new Vuex.Store({
         [Actions.setShader] ({ state, commit }, shader: RecvShaderData) {
             commit(Mutations.setShader, new ShaderData(shader));
             commit(Mutations.updateShaderTextures);
+            UserStorage
+                .requestUser(shader.owner)
+                .then(owner => {
+                    if (state.shader.owner == owner.id) {
+                        commit(Mutations.setOwnerRole, owner.role)
+                    }
+                });
         },
 
         [Actions.requestShader] ({ dispatch }, id: number): Promise<void> {
