@@ -164,15 +164,19 @@ export const store = new Vuex.Store({
         },
 
         [Mutations.changeTelegram] (state: StoreState, telegram?: string) {
+            console.log("change telegram");
+
             if (!telegram || telegram.length === 0) {
+                state.newTelegram = null;
+            } else {
                 if (telegram && telegram[0] === "@") {
                     state.newTelegram = telegram.slice(1);
                 } else {
                     state.newTelegram = telegram;
                 }
-            } else {
-                state.newTelegram = null;
             }
+
+            console.log(state.newTelegram);
             state.telegramChanged = true;
         },
 
