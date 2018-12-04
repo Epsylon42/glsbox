@@ -164,8 +164,6 @@ export const store = new Vuex.Store({
         },
 
         [Mutations.changeTelegram] (state: StoreState, telegram?: string) {
-            console.log("change telegram");
-
             if (!telegram || telegram.length === 0) {
                 state.newTelegram = null;
             } else {
@@ -175,8 +173,6 @@ export const store = new Vuex.Store({
                     state.newTelegram = telegram;
                 }
             }
-
-            console.log(state.newTelegram);
             state.telegramChanged = true;
         },
 

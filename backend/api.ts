@@ -2,10 +2,11 @@ import Express from 'express';
 import Passport from 'passport';
 import Sequelize from 'sequelize';
 
-import { db, Users, Shaders, ShaderTextures, Likes, ShaderTexturesInstance, Comments, Utils, UsersInstance } from './db';
+import { db, Users, Shaders, ShaderTextures, Likes, ShaderTexturesInstance, Comments, CommentsInstance, Utils, UsersInstance } from './db';
 import { Transaction as FileTransaction } from './file-storage';
 import { TextureKind } from '../common/texture-kind';
 import { UserRole } from '../common/user-role';
+import { Notify } from './bot';
 
 async function editingAllowed(thisUser: number | UsersInstance, owner: number | UsersInstance): Promise<boolean> {
     const thisId = typeof thisUser === "number" ? thisUser : thisUser.id;
@@ -477,10 +478,10 @@ priv.post("/comments", async (req, res) => {
             return;
         }
 
-        let parentComment: number | undefined;
+        let parentComment: CommentsInstance | null = null;
         if (req.body.parentComment != null) {
-            parentComment = req.body.parentComment;
-            if (!await Comments.findByPrimary(req.body.parentComment)) {
+            parentComment = await Comments.findByPrimary(req.body.parentComment);
+            if (!parentComment) {
                 res.status(404).json({ error: true, message: "Parent comment not found" });
                 return;
             }
@@ -490,8 +491,23 @@ priv.post("/comments", async (req, res) => {
             author: req.user.id,
             text: req.body.text,
             parentShader: req.body.parentShader,
-            parentComment,
+            parentComment: parentComment ? parentComment.id : undefined,
         });
+
+        if (parentComment) {
+            Users
+                .findByPrimary(parentComment.author)
+                .then(parentAuthor => {
+                    if (parentAuthor) {
+                        Notify.comment(
+                            parentAuthor,
+                            req.user,
+                            comment,
+                        );
+                    }
+                })
+                .catch(e => console.error(e));
+        }
 
         const author = await Users.findByPrimary(comment.author);
         if (author) {

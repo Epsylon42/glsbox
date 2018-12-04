@@ -283,6 +283,31 @@ export const Comments = db.define<CommentsInstance, CommentsAttributes>("comment
 });
 
 
+export interface BotUsersAttributes {
+    telegramUserId: number,
+    telegramUsername: string,
+    chat: number,
+};
+
+export interface BotUsersInstance extends Sequelize.Instance<BotUsersAttributes>, BotUsersAttributes {}
+
+export const BotUsers = db.define<BotUsersInstance, BotUsersAttributes>("bot_users", {
+    telegramUserId: {
+        type: Sequelize.INTEGER,
+        primaryKey: true,
+        allowNull: false,
+    },
+    telegramUsername: {
+        type: Sequelize.TEXT,
+        allowNull: false,
+    },
+    chat: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+    },
+});
+
+
 export interface LikesAttributes {
     user: number,
     shader: number,
