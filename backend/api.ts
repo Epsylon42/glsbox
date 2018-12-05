@@ -473,7 +473,8 @@ priv.post("/comments", async (req, res) => {
 
         const id = req.body.parentShader;
 
-        if (!await Shaders.findByPrimary(id)) {
+        const parentShader = await Shaders.findByPrimary(id);
+        if (!parentShader) {
             res.status(404).json({ error: true, message: "Parent shader not found" });
             return;
         }
@@ -499,8 +500,22 @@ priv.post("/comments", async (req, res) => {
                 .findByPrimary(parentComment.author)
                 .then(parentAuthor => {
                     if (parentAuthor) {
-                        Notify.comment(
+                        Notify.commentReply(
                             parentAuthor,
+                            req.user,
+                            comment,
+                        );
+                    }
+                })
+                .catch(e => console.error(e));
+        } else {
+            Users
+                .findByPrimary(parentShader.owner)
+                .then(shaderOwner => {
+                    if (shaderOwner) {
+                        Notify.commentShader(
+                            shaderOwner,
+                            parentShader,
                             req.user,
                             comment,
                         );

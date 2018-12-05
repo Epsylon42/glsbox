@@ -1,5 +1,5 @@
 import Telegraf from 'telegraf';
-import { Users, UsersInstance, BotUsers, CommentsInstance } from './db';
+import { Users, UsersInstance, BotUsers, CommentsInstance, ShadersInstance } from './db';
 
 const HOST = process.env.HOST || "https://glsbox.herokuapp.com";
 
@@ -57,13 +57,26 @@ if (Bot) {
 }
 
 export module Notify {
-    export async function comment(parentOwner: UsersInstance, replyOwner: UsersInstance, comment: CommentsInstance) {
+    export async function commentReply(parentOwner: UsersInstance, replyOwner: UsersInstance, comment: CommentsInstance) {
         if (Bot && parentOwner.telegram) {
             const tg = await BotUsers.findOne({ where: { telegramUsername: parentOwner.telegram } });
             if (tg) {
                 Bot.telegram.sendMessage(
                     tg.chat,
                     `User [${replyOwner.username}](${HOST}/users/${replyOwner.id}) left a [reply](${HOST}/view/${comment.parentShader}?comment=${comment.id}) to your [comment](${HOST}/view/${comment.parentShader}?comment=${comment.parentComment})`,
+                    { parse_mode: "Markdown" } as any,
+                );
+            }
+        }
+    }
+
+    export async function commentShader(shaderOwner: UsersInstance, shader: ShadersInstance, commentOwner: UsersInstance, comment: CommentsInstance) {
+        if (Bot && shaderOwner.telegram) {
+            const tg = await BotUsers.findOne({ where: { telegramUsername: shaderOwner.telegram } });
+            if (tg) {
+                Bot.telegram.sendMessage(
+                    tg.chat,
+                    `User [${commentOwner.username}](${HOST}/users/${commentOwner.id}) left a [comment](${HOST}/view/${shader.id}?comment=${comment.id}) under your shader [${shader.name}](${HOST}/view/${shader.id})`,
                     { parse_mode: "Markdown" } as any,
                 );
             }
