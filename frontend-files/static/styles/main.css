@@ -35,9 +35,23 @@ body {
 }
 
 #footer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
     color: #ddd;
     margin-top: auto;
-    padding: 10px;
+    padding: 0;
+}
+
+#footer > * {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+
+    height: 100%;
+    margin-left: 10px;
+    margin-right: 10px;
 }
 
 .svg-button {

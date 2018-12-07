@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+
+        <title>
+            GLSBox api documentation
+        </title>
+    </head>
+
+    <body>
+        <h1>
+            Api documentation
+        </h1>
+
+        <p>All endpoints start with <i>/api/v1</i></p>
+
+        <div>
+            <h3>
+                Public endpoints
+            </h3>
+
+            <ul>
+                <li>
+                    <b>GET</b>
+
+                    <ul>
+                        <li>
+                            <p>
+                                <i>/shaders?limit={}&page={}&search={}&time={}&sort={}&owner={}</i>
+                            </p>
+                            <p>
+                                Returns one page of shaders
+                                <br>
+                                All query parameters are optional
+                            </p>
+
+                            <p>
+                                <i>limit</i>: number of shaders per page
+                                <br>
+                                <i>page</i>: page number
+                                <br>
+                                <i>search</i>: return only shaders whose description or name matches a regex
+                                <br>
+                                <i>time</i>: return only shaders from a specified time interval (day, week, month, year)
+                                <br>
+                                <i>sort</i>: specify order (new, old, liked)
+                                <br>
+                                <i>owner</i>: Returns only shaders belonging to the user with specified id
+                            </p>
+                        </li>
+
+                        <li>
+                            <p>
+                                <i>/shaders/{id}</i>
+                            </p>
+                            <p>
+                                Returns a shader with specified id
+                            </p>
+                        </li>
+
+                        <li>
+                            <p>
+                                <i>/comments/{shaderId}?comment={}&depth={}</i>
+                            </p>
+                            <p>
+                                Returns the comment tree of the specified shader
+                                <br>
+                                All query parameters are optional
+                            </p>
+
+                            <p>
+                                <i>comment</i>: return only a subtree of comments starting with the specified comment
+                                </br>
+                                <i>depth</i>: maximum tree depth
+                            </p>
+                        </li>
+
+                        <li>
+                            <p>
+                                <i>/users/{id}</i>
+                            </p>
+                            <p>
+                                Returns a user with specified id
+                            </p>
+                        </li>
+
+                        <li>
+                            <p>
+                                <i>/users/{id}/commented-shaders</i>
+                            </p>
+                            <p>
+                                Return ids of shaders the specified user left comments under
+                            </p>
+                        </li>
+
+                        <li>
+                            <p>
+                                <i>/users/{id}/comments?limit={}&page={}shader={}</i>
+                            </p>
+                            <p>
+                                Returns comments belonging to the specified user
+                                <br>
+                                All query parameters are optional
+                            </p>
+
+                            <p>
+                                <i>shader</i>: return only comments under the specified shader
+                            </p>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+    </body>
+</html>

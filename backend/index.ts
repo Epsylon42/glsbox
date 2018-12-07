@@ -147,6 +147,10 @@ app.get("/users/:id/:panel", async (req, res) => {
     }
 });
 
+app.get("/developer/v1", (req, res) => {
+    res.render("developer");
+});
+
 app.get("/login", (req, res) => {
     res.render("index", {
         user: req.user,
