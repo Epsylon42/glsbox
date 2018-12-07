@@ -807,22 +807,6 @@ pub.get("/users/:id", async (req, res) => {
     }
 });
 
-pub.get("/users/:id/shaders", async (req, res) => {
-    try {
-        const id = Number(req.params.id);
-        if (!Number.isFinite(id)) {
-            res.status(400).json({ error: true, message: "Invalid id" });
-        }
-
-        const shaders = await Shaders.findAll({ where: { owner: id } });
-
-        res.json(shaders);
-    } catch (e) {
-        console.error(e);
-        res.status(500).json({ error: true, message: "Internal server error" });
-    }
-});
-
 pub.get("/users/:id/commented-shaders", async (req, res) => {
     try {
         const id = Number(req.params.id);
