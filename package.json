@@ -10,7 +10,6 @@
         "build-frontend": "npm run build-css && webpack && cp -R frontend-files/* frontend-dist/",
         "build-backend": "tsc -p backend/tsconfig.json",
         "build": "npm run build-frontend && npm run build-backend",
-        "postinstall": "npm run build",
         "start": "node backend-dist/backend/index.js",
         "clean": "rm -r frontend-dist backend-dist || true"
     },
