@@ -1,90 +1,91 @@
 <template>
-<div class="box">
-  <h1 class="title">Register</h1>
-  
-  <form action="/register" method="POST" enctype="multipart/form-data">
-    <div class="field">
-      <div class="control has-icons-left has-icons-right">
-        <input
-          class="input"
-          :class="{ 'is-success': usernameState === 1, 'is-danger': usernameState === 2 }"
-          @change="checkUsername"
-          @input="trimFields"
-          v-model="username"
-          type="text"
-          name="username"
-          placeholder="Username">
-
-        <span class="icon is-small is-left">
-          <Icon name="user" />
-        </span>
-
-        <span v-if="usernameState !== 0" class="icon is-small is-right">
-          <Icon v-if="usernameChecking" name="spinner" pulse />
-          <Icon v-else-if="usernameState === 1" name="check" />
-          <Icon v-else name="times" />
-        </span>
+<div class="column is-4 is-offset-4">
+  <div class="box">
+    <h1 class="title">Register</h1>
+    
+    <form action="/register" method="POST" enctype="multipart/form-data">
+      <div class="field">
+        <div class="control has-icons-left has-icons-right">
+          <input
+            class="input"
+            :class="{ 'is-success': usernameState === 1, 'is-danger': usernameState === 2 }"
+            @change="checkUsername"
+            @input="trimFields"
+            v-model="username"
+            type="text"
+            name="username"
+            placeholder="Username">
+          
+          <span class="icon is-small is-left">
+            <Icon name="user" />
+          </span>
+          
+          <span v-if="usernameState !== 0" class="icon is-small is-right">
+            <Icon v-if="usernameChecking" name="spinner" pulse />
+            <Icon v-else-if="usernameState === 1" name="check" />
+            <Icon v-else name="times" />
+          </span>
+        </div>
+        <p v-if="usernameMessage" class="help" :class="{ 'is-success': usernameState === 1, 'is-danger': usernameState === 2 }">
+          {{ usernameMessage }}
+        </p>
       </div>
-      <p v-if="usernameMessage" class="help" :class="{ 'is-success': usernameState === 1, 'is-danger': usernameState === 2 }">
-        {{ usernameMessage }}
-      </p>
-    </div>
-
-    <div class="field">
-      <div class="control has-icons-left">
-        <input
-          class="input"
-          :class="{ 'is-success': passwordState === 1, 'is-danger': passwordState === 2 }"
-          @change="checkPassword"
-          @input="trimFields"
-          v-model="password"
-          type="password"
-          name="password"
-          placeholder="Password">
-
-        <span class="icon is-small is-left">
-          <Icon name="lock" />
-        </span>
+      
+      <div class="field">
+        <div class="control has-icons-left">
+          <input
+            class="input"
+            :class="{ 'is-success': passwordState === 1, 'is-danger': passwordState === 2 }"
+            @change="checkPassword"
+            @input="trimFields"
+            v-model="password"
+            type="password"
+            name="password"
+            placeholder="Password">
+          
+          <span class="icon is-small is-left">
+            <Icon name="lock" />
+          </span>
+        </div>
+        <p v-if="passwordMessage" class="help" :class="{ 'is-success': passwordState === 1, 'is-danger': passwordState === 2 }">
+          {{ passwordMessage }}
+        </p>
       </div>
-      <p v-if="passwordMessage" class="help" :class="{ 'is-success': passwordState === 1, 'is-danger': passwordState === 2 }">
-        {{ passwordMessage }}
-      </p>
-    </div>
-
-    <div class="field">
-      <div class="control has-icons-left">
-        <input
-          class="input"
-          :class="{ 'is-success': repeatPasswordState === 1, 'is-danger': repeatPasswordState === 2 }"
-          @change="checkRepeatPassword"
-          @input="trimFields"
-          v-model="repeatPassword"
-          type="password"
-          placeholder="Repeat Password">
-
-        <span class="icon is-small is-left">
-          <Icon name="lock" />
-        </span>
+      
+      <div class="field">
+        <div class="control has-icons-left">
+          <input
+            class="input"
+            :class="{ 'is-success': repeatPasswordState === 1, 'is-danger': repeatPasswordState === 2 }"
+            @change="checkRepeatPassword"
+            @input="trimFields"
+            v-model="repeatPassword"
+            type="password"
+            placeholder="Repeat Password">
+          
+          <span class="icon is-small is-left">
+            <Icon name="lock" />
+          </span>
+        </div>
+        <p v-if="repeatPasswordMessage" class="help" :class="{ 'is-success': repeatPasswordState === 1, 'is-danger': repeatPasswordState === 2 }">
+          {{ repeatPasswordMessage }}
+        </p>
       </div>
-      <p v-if="repeatPasswordMessage" class="help" :class="{ 'is-success': repeatPasswordState === 1, 'is-danger': repeatPasswordState === 2 }">
-        {{ repeatPasswordMessage }}
-      </p>
-    </div>
-
-    <div class="field">
-      <div class="control">
-        <input class="button is-primary" type="submit" value="Register" :disabled="!isReady">
+      
+      <div class="field">
+        <div class="control">
+          <input class="button is-primary" type="submit" value="Register" :disabled="!isReady">
+        </div>
       </div>
-    </div>
-  </form>
-
-  <div v-if="error" class="modal is-active">
-    <div class="modal-background" @click="error = null" />
-    <div class="modal-content message is-danger">
-      <div class="message-header">
-        <p>Username check error</p>
-      </div>
-
+    </form>
+    
+    <div v-if="error" class="modal is-active">
+      <div class="modal-background" @click="error = null" />
+      <div class="modal-content message is-danger">
+        <div class="message-header">
+          <p>Username check error</p>
+        </div>
+        
       <div class="message-body">
         <p>{{ error }}</p>
 
@@ -94,6 +95,7 @@
       </div>
     </div>
   </div>
+</div>
 </div>
 </template>
 

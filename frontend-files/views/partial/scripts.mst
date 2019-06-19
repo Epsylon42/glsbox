@@ -1,9 +1,0 @@
-{{#scripts}}
-<script src="/scripts/{{.}}"></script>
-{{/scripts}}
-
-<script>
- {{#mountPoints}}
- {{lib}}.mount("{{mount}}" {{#args}}, {{{.}}}{{/args}});
- {{/mountPoints}}
-</script>

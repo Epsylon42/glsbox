@@ -4,7 +4,7 @@
     
     <div class="preview media-left" v-if="canSave">
       <div class="preview-header">
-        <p>Preview</p>
+        <div>Preview</div>
         
         <button class="svg-button" @click="removePreview" v-if="preview">
           <Icon name="trash" />

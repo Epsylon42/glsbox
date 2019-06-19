@@ -4,10 +4,7 @@ const VuePlugin = require('vue-loader/lib/plugin');
 module.exports = {
     mode: 'development',
     entry: {
-        view: './frontend/view.ts',
-        auth: './frontend/auth.ts',
-        user: './frontend/user.ts',
-        browse: './frontend/browse.ts',
+        index: './frontend/index.ts',
     },
     output: {
         filename: '[name].js',

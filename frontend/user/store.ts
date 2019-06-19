@@ -221,6 +221,7 @@ export const store = new Vuex.Store({
 
     actions: {
         [Actions.init] ({ state, commit }, id: number): Promise<void> {
+            console.log("setting lock");
             commit(Mutations.setUserLoading, true);
 
             return Promise.all([
@@ -228,9 +229,11 @@ export const store = new Vuex.Store({
                 UserStorage.requestMe().catch(() => {}),
             ])
                 .then(([user, me]) => {
+                    console.log("loaded"),
                     commit(Mutations.setUser, user);
                     commit(Mutations.setMe, me);
                     commit(Mutations.setUserLoading, false);
+                    console.log("removing lock");
                 });
         },
 

@@ -1,52 +1,54 @@
 <template>
-<div class="box">
-  <h1 class="title">Login</h1>
-
-  <div v-if="error" class="message is-small is-danger">
-    <div class="message-body">
-      {{ error }}
-    </div>
-  </div>
-
-  <form action="/login" method="POST" enctype="multipart/form-data">
-    <div class="field">
-      <div class="control has-icons-left">
-        <input
-          @input="trimFields"
-          v-model="username"
-          class="input"
-          type="text"
-          name="username"
-          placeholder="Username">
-
-        <span class="icon is-small is-left">
-          <Icon name="user" />
-        </span>
+<div class="column is-4 is-offset-4">
+  <div class="box">
+    <h1 class="title">Login</h1>
+    
+    <div v-if="error" class="message is-small is-danger">
+      <div class="message-body">
+        {{ error }}
       </div>
     </div>
-
-    <div class="field">
-      <div class="control has-icons-left">
-        <input
-          @input="trimFields"
-          v-model="password"
-          class="input"
-          type="password"
-          name="password"
-          placeholder="Password">
-
-        <span class="icon is-small is-left">
-          <Icon name="lock" />
-        </span>
+    
+    <form action="/login" method="POST" enctype="multipart/form-data">
+      <div class="field">
+        <div class="control has-icons-left">
+          <input
+            @input="trimFields"
+            v-model="username"
+            class="input"
+            type="text"
+            name="username"
+            placeholder="Username">
+          
+          <span class="icon is-small is-left">
+            <Icon name="user" />
+          </span>
+        </div>
       </div>
-    </div>
-
-    <div class="field">
-      <div class="control">
-        <input class="button is-primary" type="submit" value="Login" :disabled="!isReady">
+      
+      <div class="field">
+        <div class="control has-icons-left">
+          <input
+            @input="trimFields"
+            v-model="password"
+            class="input"
+            type="password"
+            name="password"
+            placeholder="Password">
+          
+          <span class="icon is-small is-left">
+            <Icon name="lock" />
+          </span>
+        </div>
+      </div>
+      
+      <div class="field">
+        <div class="control">
+          <input class="button is-primary" type="submit" value="Login" :disabled="!isReady">
       </div>
     </div>
   </form>
+</div>
 </div>
 </template>
 

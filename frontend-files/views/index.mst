@@ -6,16 +6,8 @@
     </head>
 
     <body>
-        {{> nav}}
-
-        <div id="content">
-          <div id="content-app">
-            <div class="loading-panel"></div>
-          </div>
-        </div>
-
-        {{> footer}}
+        <div id="app"></div>
     </body>
 
-    {{> scripts}}
+    <script src="/scripts/index.js"></script>
 </html>

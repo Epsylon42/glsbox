@@ -69,128 +69,9 @@ app.use((req, res, next) => {
     next();
 });
 
-app.get("/", (req, res) => {
-    res.render("frontpage", { user: req.user });
-});
 
-app.get("/create", (req, res) => {
-    res.render("index", {
-        user: req.user,
-        scripts: "view.js",
-        mountPoints: {
-            lib: "view",
-            mount: "#content-app",
-            args: ["null", req.user && req.user.id || "null"],
-        }
-    });
-});
-
-app.get("/view/:id", (req, res) => {
-    res.render("index", {
-        user: req.user,
-        scripts: "view.js",
-        mountPoints: {
-            lib: "view",
-            mount: "#content-app",
-            args: [req.params.id, req.user && req.user.id || "null", req.query.comment || "null"],
-        },
-    });
-});
-
-app.get("/browse", async (req, res) => {
-    res.render("index", {
-        user: req.user,
-        scripts: "browse.js",
-        mountPoints: {
-            lib: "browse",
-            mount: "#content-app"
-        },
-    });
-});
-
-app.get("/users/:id", (req, res) => {
-    res.redirect(`/users/${req.params.id}/profile`)
-})
-
-app.get("/users/:id/:panel", async (req, res) => {
-    try {
-        const panel = req.params.panel;
-        if (!(panel === "profile" || panel === "shaders" || panel === "comments")) {
-            res.redirect(`/users/${req.params.id}/profile`);
-            return;
-        }
-
-        let id;
-        if (Number.isFinite(Number(req.params.id))) {
-            id = req.params.id;
-        } else {
-            const user = await Users.findOne({ where: { username: req.params.id } });
-            if (user) {
-                id = user.id;
-            } else {
-                id = `"${escape(req.params.id)}"`;
-            }
-        }
-
-        res.render("index", {
-            user: req.user,
-            scripts: "user.js",
-            mountPoints: {
-                lib: "user",
-                mount: "#content-app",
-                args: [id, `"${escape(panel)}"`],
-            }
-        });
-    } catch (e) {
-        console.error(e);
-        res.status(500).send("Internal server error");
-    }
-});
-
-app.get("/developer/v1", (req, res) => {
-    res.render("developer");
-});
-
-app.get("/login", (req, res) => {
-    res.render("index", {
-        user: req.user,
-        scripts: "auth.js",
-        mountPoints: {
-            lib: "auth",
-            mount: "#content-app",
-            args: "\"login\"",
-        }
-    });
-});
-
-app.post("/login", (req, res, next) => {
-    Passport.authenticate('local', (err, user) => {
-        if (err) {
-            res.redirect(`/login?error=${encodeURIComponent(err.message)}`);
-        } else if (user) {
-            req.login(user, err => {
-                if (err) {
-                    res.redirect(`/login?error=${encodeURIComponent(err.message)}`);
-                } else {
-                    res.redirect("/");
-                }
-            });
-        } else {
-            res.redirect(`/login?error=${encodeURIComponent("Unknown error")}`);
-        }
-    })(req, res, next);
-})
-
-app.get("/register", (req, res) => {
-    res.render("index", {
-        user: req.user,
-        scripts: "auth.js",
-        mountPoints: {
-            lib: "auth",
-            mount: "#content-app",
-            args: "\"register\"",
-        }
-    });
+app.get("*", (req, res) => {
+    res.render("index");
 });
 
 app.post("/register", async (req, res) => {
@@ -224,10 +105,29 @@ app.post("/register", async (req, res) => {
     }
 });
 
-app.get('/logout', (req, res) => {
+app.post("/login", (req, res, next) => {
+    Passport.authenticate('local', (err, user) => {
+        if (err) {
+            res.redirect(`/login?error=${encodeURIComponent(err.message)}`);
+        } else if (user) {
+            req.login(user, err => {
+                if (err) {
+                    res.redirect(`/login?error=${encodeURIComponent(err.message)}`);
+                } else {
+                    res.redirect("/");
+                }
+            });
+        } else {
+            res.redirect(`/login?error=${encodeURIComponent("Unknown error")}`);
+        }
+    })(req, res, next);
+})
+
+app.post('/logout', (req, res) => {
     req.logout();
     res.redirect('/');
 });
+
 
 app.use((err: any, req: any, res: any, next: any) => {
     res.status(err.status != null ? err.status : 500);

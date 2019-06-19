@@ -1,85 +1,88 @@
 <template>
-<div class="app">
+<div v-if="loading" class="loading-panel"></div>
+
+<div class="shader-view" v-else>
   
-  <div class="window-and-info">
-    <div class="window">
-      <ShaderWindow
-        ref="window"
-        :timePause="timePause"
-        :updatePause="updatePause"
-        @error="processError"
-        >
-      </ShaderWindow>
-      
-      <div class="controls">
-        <button class="svg-button" @click="resetTime" title="reset time">
-          <Icon name="redo" />
-        </button>
-        <button class="svg-button" @click="timePause = !timePause" title="toggle time">
-          <Icon name="play" v-if="timePause" />
-          <Icon name="pause" v-else />
-        </button>
-        <p>{{ shaderTime }}</p>
-        
-        <button
-          v-if="canLike"
-          class="svg-button like-button"
-          :class="{ liked }"
-          @click="like"
-          :title="liked ? 'unlike' : 'like'"
+  <template v-if="!loading">
+    <div class="window-and-info">
+      <div class="window">
+        <ShaderWindow
+          ref="window"
+          :timePause="timePause"
+          :updatePause="updatePause"
+          @error="processError"
           >
-          <Icon name="heart" />
-        </button>
-        <div v-else class="svg-button like-button">
-          <Icon name="heart" />
+        </ShaderWindow>
+        
+        <div class="controls">
+          <button class="svg-button" @click="resetTime" title="reset time">
+            <Icon name="redo" />
+          </button>
+          <button class="svg-button" @click="timePause = !timePause" title="toggle time">
+            <Icon name="play" v-if="timePause" />
+            <Icon name="pause" v-else />
+          </button>
+          <div>{{ shaderTime }}</div>
+          
+          <button
+            v-if="canLike"
+            class="svg-button like-button"
+            :class="{ liked }"
+            @click="like"
+            :title="liked ? 'unlike' : 'like'"
+            >
+            <Icon name="heart" />
+          </button>
+          <div v-else class="svg-button like-button">
+            <Icon name="heart" />
+          </div>
+          <div>
+            {{ likeCount }}
+          </div>
         </div>
-        <p>
-          {{ likeCount }}
-        </p>
       </div>
-    </div>
-    
-    <div class="info">
-      <Info v-if="showInfo" @error="openErrorModal" />
-    </div>
-  </div>
-  
-  <div class="editor">
-    <table class="declarations">
-      <tr v-for="decl in declarations">
-        <td class="declaration-kind">{{ decl.kind }}</td>
-        <td class="declaration-type">{{ decl.type }}</td>
-        <td class="declaration-name">{{ decl.name }}</td>
-      </tr>
-    </table>
-    
-    <div class="code-editor">
-      <VueCodemirror v-model="shaderSource" :options="cmOptions" />
       
-      <div class="controls">
-        <button class="svg-button" @click="updateSource" title="run this code">
-          <Icon name="arrow-left" />
-        </button>
-        <button class="svg-button" @click="upload" :title="isSaving ? 'saving' : 'save'" v-if="canSave">
-          <Icon v-if="isSaving" name="spinner" pulse />
-          <Icon v-else name="save" />
-        </button>
+      <div class="info">
+        <Info v-if="showInfo" @error="openErrorModal" />
       </div>
     </div>
     
-    <div v-if="compileErrors" class="message is-danger is-small">
-      <div class="message-header">
-        <p>Compilation errors</p>
+    <div class="editor">
+      <table class="declarations">
+        <tr v-for="decl in declarations">
+          <td class="declaration-kind">{{ decl.kind }}</td>
+          <td class="declaration-type">{{ decl.type }}</td>
+          <td class="declaration-name">{{ decl.name }}</td>
+        </tr>
+      </table>
+      
+      <div class="code-editor">
+        <VueCodemirror v-model="shaderSource" :options="cmOptions" />
+        
+        <div class="controls">
+          <button class="svg-button" @click="updateSource" title="run this code">
+            <Icon name="arrow-left" />
+          </button>
+          <button class="svg-button" @click="upload" :title="isSaving ? 'saving' : 'save'" v-if="canSave">
+            <Icon v-if="isSaving" name="spinner" pulse />
+            <Icon v-else name="save" />
+          </button>
+        </div>
       </div>
-      <div class="message-body">
-        <template v-for="err in compileErrors">
-          <p v-if="err.line != null">
-            On line <b>{{ err.line }}</b>: {{ err.message }}
-          </p>
-          <p v-else>
-            {{ err.message }}
-          </p>
-        </template>
+      
+      <div v-if="compileErrors" class="message is-danger is-small">
+        <div class="message-header">
+          <p>Compilation errors</p>
+        </div>
+        <div class="message-body">
+          <template v-for="err in compileErrors">
+            <p v-if="err.line != null">
+              On line <b>{{ err.line }}</b>: {{ err.message }}
+            </p>
+            <p v-else>
+              {{ err.message }}
+            </p>
+          </template>
       </div>
     </div>
     
@@ -88,7 +91,8 @@
   <Textures class="textures" />
   
   <Comment :comment="rootComment" :isRoot="true" class="comments" />
-  
+  </template>
+
   <div v-if="modal" class="modal is-active">
     <div class="modal-background" @click="modal = null" />
     <div class="modal-content message is-danger">
@@ -110,7 +114,7 @@
 
 <script lang="ts">
     
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+    import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
 import ShaderWindow from './shader-window.vue';
 import Textures from './textures.vue';
 import Info from './info.vue';
@@ -165,33 +169,66 @@ export default class ShaderView extends Vue {
         indentWithTabs: true,
     };
     
-    mounted() {
-        this.$watch(
-            () => (this.$refs.window as ShaderWindow).shaderTime,
-            time => {
-                this.shaderTime = (Math.round(time * 100) / 100).toString();
-                const dot = this.shaderTime.indexOf(".");
-                if (dot !== -1) {
-                    while (this.shaderTime.length - dot < 3) {
-                        this.shaderTime += "0";
-                    }
-                } else {
-                    this.shaderTime += ".00";
-                }
-            }
-        );
+    private loading = true;
+    private shaderId: string | null = null;
+    
+    private initialize() {
+        this.shaderId = this.$route.params.shaderId;
+        let promise;
         
-        this.shaderSource = this.storedSource;
+        if (this.shaderId != null) {
+            promise = store.dispatch(Actions.requestShader, Number(this.shaderId));
+        } else {
+            promise = store.dispatch(Actions.requestShader, null);
+        }
+        
+        promise
+            .then(() => {
+                this.shaderSource = store.getters.source;
+            })
+            .then(() => this.loading = false)
+            .then(() => {
+                this.$watch(
+                    () => (this.$refs.window as ShaderWindow).shaderTime,
+                    time => {
+                        this.shaderTime = (Math.round(time * 100) / 100).toString();
+                        const dot = this.shaderTime.indexOf(".");
+                        if (dot !== -1) {
+                            while (this.shaderTime.length - dot < 3) {
+                                this.shaderTime += "0";
+                            }
+                        } else {
+                            this.shaderTime += ".00";
+                        }
+                    }
+                );
+            })
+            .catch(err => {
+                this.openErrorModal({
+                    title: "Could not load shader",
+                    message: err.message,
+                });
+            })
+            .then(() => store.dispatch(Actions.requestComment, Number(this.$route.query.comment) || null))
+            .catch(err => {
+                this.openErrorModal({
+                    title: "Could not load comments",
+                    message: err.message,
+                });
+            });
+    }
+
+    mounted() {
+        this.initialize();
+    }
+
+    updated() {
+        if (this.$route.params.shaderId !== this.shaderId) {
+            this.initialize();
+        }
     }
     
     private shaderSource = "";
-    
-    private get storedSource(): string {
-        return store.getters.source;
-    }
-    @Watch('storedSource') storedSourceChanged(newSource: string) {
-        this.shaderSource = newSource;
-    }
     
     private get canSave(): boolean {
         return store.getters.canSave;
@@ -285,7 +322,7 @@ export default class ShaderView extends Vue {
 
 <style scoped>
 
-.app {
+.shader-view {
     display: grid;
     grid-template-columns: minmax(500px, 50%) 50%;
     grid-template-rows: auto auto auto;
@@ -300,7 +337,7 @@ export default class ShaderView extends Vue {
 }
 
 @media screen and (max-width: 1000px) {
-    .app {
+    .shader-view {
         grid-template-columns: 100%;
         grid-template-rows: auto auto auto auto;
         grid-template-areas:
@@ -312,7 +349,7 @@ export default class ShaderView extends Vue {
 }
 
 @media screen and (max-width: 390px) {
-    .app {
+    .shader-view {
         padding-left: 0;
         padding-right: 0;
     }
@@ -328,7 +365,7 @@ export default class ShaderView extends Vue {
 .window {
     margin-left: auto;
     margin-right: auto;
-
+    
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -348,7 +385,7 @@ export default class ShaderView extends Vue {
     
     padding-left: 5px;
     padding-right: 5px;
-
+    
     font-family: monospace;
 }
 
@@ -386,6 +423,8 @@ export default class ShaderView extends Vue {
     font-size: 10pt;
     padding-left: 2px;
     padding-right: 2px;
+    padding-top: 1px;
+    padding-bottom: 1px;
 }
 
 .declarations .declaration-kind {

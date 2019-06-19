@@ -1,9 +1,9 @@
 <template>
 <div class="comment" :id="id">
 
-  <div ref="marker" style="display: none;" />
+  <div ref="marker" class="marker" style="display: none;" />
   
-  <a class="full-tree comment-button svg-button" :href="fullTreeLink" v-if="isRoot && isComment">
+  <a class="full-tree comment-button svg-button" :href="fullTreeLink" @click="viewFullTree" v-if="isRoot && isComment">
     <Icon name="arrow-up" />
     View full comment tree
   </a>
@@ -12,14 +12,15 @@
 
     <div class="comment-info">
       <div class="comment-nav">
-        <a class="svg-button" :href="parentLink" v-if="parentLink" title="go to parent comment">
+        <a class="comment-button" :href="permalink" @click="setThisCommentAsRoot">permalink</a>
+        <a class="svg-button" :href="parentLink" @click="scrollToParent" v-if="parentLink" title="go to parent comment">
           <Icon name="hashtag" />
         </a>
-        <a class="svg-button" :href="nextLink" v-if="nextLink" title="go to next comment">
+        <a class="svg-button" :href="nextLink" @click="scrollToNext" v-if="nextLink" title="go to next comment">
           <Icon name="arrow-down" />
         </a>
       </div>
-      <p><a :href="info.author.ref">{{info.author.username}}</a></p>
+      <p><router-link :to="info.author.ref">{{info.author.username}}</router-link></p>
       <p>posted {{info.posted}}</p>
       <p v-if="info.edited">edited {{info.edited}}</p>
     </div>
@@ -27,7 +28,6 @@
     <div class="comment-text" v-html="commentHTML" />
     
     <div class="controls">
-      <a class="comment-button" :href="permalink">permalink</a>
       <button class="comment-button" @click="reply" v-if="canReply">reply</button>
       <button class="comment-button" @click="edit" v-if="canEdit">edit</button>
     </div>
@@ -62,9 +62,9 @@
 
 <script lang="ts">
     
-import { Vue, Component, Prop } from 'vue-property-decorator';
+    import { Vue, Component, Prop } from 'vue-property-decorator';
 
-import { store, Mutations } from './store/store.ts';
+import { store, Mutations, Actions } from './store/store.ts';
 import CommentData, { GenericComment } from './store/comment.ts';
 import { SendCommentData, PatchCommentData, CommentStorage } from '../api/comment-storage.ts';
 
@@ -85,15 +85,15 @@ export default class Comment extends Vue {
     @Prop({ type: GenericComment, required: true }) comment: GenericComment;
     @Prop({ type: Number, default: null }) parentId: number;
     @Prop({ type: Number, default: null }) nextId: number;
-
+    
     public focus() {
         store.commit(Mutations.setFocusedComment, this.$refs.marker);
     }
-
+    
     private isFocused(): boolean {
         return this.$refs.marker === store.getters.focusedComment;
     }
-
+    
     private get canReply(): boolean {
         return store.getters.user != null && store.getters.id != null;
     }
@@ -107,7 +107,14 @@ export default class Comment extends Vue {
     private get isComment(): boolean {
         return this.comment instanceof CommentData;
     }
-
+    
+    private scrollToParent(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const parent = document.getElementById(`comment-${this.parentId}`);
+        store.commit(Mutations.setFocusedComment, parent.querySelector(".marker"));
+        this.$scrollTo(parent);
+    }
     private get parentLink(): string | null {
         if (this.parentId != null) {
             return `#comment-${this.parentId}`;
@@ -115,7 +122,15 @@ export default class Comment extends Vue {
             return null;
         }
     }
-
+    
+    private scrollToNext(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const next = document.getElementById(`comment-${this.nextId}`);
+        store.commit(Mutations.setFocusedComment, next.querySelector(".marker"));
+        this.$scrollTo(next);
+    }
+    
     private get nextLink(): string | null {
         if (this.nextId != null) {
             return `#comment-${this.nextId}`;
@@ -123,11 +138,11 @@ export default class Comment extends Vue {
             return null;
         }
     }
-
+    
     private get info(): object {
         const edited = this.comment.lastEdited;
         const posted = this.comment.posted;
-
+        
         return {
             author: {
                 ref: `/users/${this.comment.author}`,
@@ -141,17 +156,25 @@ export default class Comment extends Vue {
     private get id(): string {
         return `comment-${this.comment.id || "root"}`;
     }
-
+    
     private get fullTreeLink(): string {
         return store.getters.link;
     }
-
+    
     private get permalink(): string {
-        if (this.comment.id != null) {
-            return `${store.getters.link}?comment=${this.comment.id}`
-        } else {
-            return store.getters.link;
-        }
+        return `${this.fullTreeLink}?comment=${this.comment.id}`;
+    }
+    
+    private setThisCommentAsRoot(event) {
+        event.preventDefault();
+        store.dispatch(Actions.requestComment, this.comment.id)
+            .catch(() => {});
+    }
+
+    private viewFullTree(event) {
+        event.preventDefault();
+        store.dispatch(Actions.requestComment, null)
+            .catch(() => {});
     }
     
     private get commentHTML(): string {

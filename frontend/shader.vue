@@ -2,14 +2,14 @@
 <div class="media">
   
   <div class="media-left preview">
-    <a :href="href">
+    <router-link :to="href">
       <img v-if="previewUrl" :src="previewUrl">
       <div v-else class="placeholder"></div>
-    </a>
+    </router-link>
   </div>
   
   <div class="media-content">
-    <p> <strong><a :href="href">{{ name }}</a></strong> </p>
+    <p> <strong><router-link :to="href">{{ name }}</router-link></strong> </p>
     <p class="monospace">{{ published }}</p>
     <div class="likes">
       <div class="svg-button">

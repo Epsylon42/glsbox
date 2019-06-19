@@ -121,7 +121,11 @@ export const store = new Vuex.Store({
         },
 
         id(state: StoreState): number | null {
-            return state.shader.id !== -1 && state.shader.id;
+            if (state.shader.id === -1) {
+                return null;
+            } else {
+                return state.shader.id;
+            }
         },
 
         owner(state: StoreState): number | null {
@@ -311,7 +315,7 @@ export const store = new Vuex.Store({
             args.callback(args.comment);
         },
 
-        [Mutations.setFocusedComment] (state: StoreState, comment: HTMLElement) {
+        [Mutations.setFocusedComment] (state: StoreState, comment: HTMLElement | null) {
             state.focusedComment = comment;
         },
 
@@ -357,22 +361,32 @@ export const store = new Vuex.Store({
             commit(Mutations.updateShaderTextures);
         },
 
-        [Actions.setShader] ({ state, commit }, shader: RecvShaderData) {
-            commit(Mutations.setShader, new ShaderData(shader));
+        [Actions.setShader] ({ state, commit }, shader: ShaderData) {
+            state.deletedTextures = [];
+            commit(Mutations.setShader, shader);
             commit(Mutations.updateShaderTextures);
-            UserStorage
-                .requestUser(shader.owner)
-                .then(owner => {
-                    if (state.shader.owner == owner.id) {
-                        commit(Mutations.setOwnerRole, owner.role)
-                    }
-                });
+            if (shader.owner !== -1) {
+                return UserStorage
+                    .requestUser(shader.owner)
+                    .then(owner => {
+                        if (state.shader.owner == owner.id) {
+                            commit(Mutations.setOwnerRole, owner.role)
+                        }
+                    });
+            } else {
+                commit(Mutations.setOwnerRole, -1);
+                return Promise.resolve();
+            }
         },
 
-        [Actions.requestShader] ({ dispatch }, id: number): Promise<void> {
-            return ShaderStorage
-                .requestShader(id)
-                .then(shader => dispatch(Actions.setShader, shader));
+        [Actions.requestShader] ({ dispatch }, id: number | null): Promise<void> {
+            if (id != null) {
+                return ShaderStorage
+                    .requestShader(id)
+                    .then(shader => dispatch(Actions.setShader, new ShaderData(shader)));
+            } else {
+                return dispatch(Actions.setShader, ShaderData.defaultShader());
+            }
         },
 
         [Actions.removeTexture] ({ commit }, i: number) {
@@ -412,6 +426,8 @@ export const store = new Vuex.Store({
                     .requestComment(state.shader.id, comment)
                     .then(comment => commit(Mutations.setRootComment, comment));
             } else {
+                commit(Mutations.setFocusedComment, null);
+                commit(Mutations.setRootComment, new GenericComment());
                 return Promise.resolve();
             }
         },
@@ -445,7 +461,7 @@ export const store = new Vuex.Store({
 
                     promise = ShaderStorage.postShader(data);
                     promise
-                        .then(shader => dispatch(Actions.setShader, shader))
+                        .then(shader => dispatch(Actions.setShader, new ShaderData(shader)))
                 } else {
                     let preview: Blob | "delete" | null;
                     if (state.shader.preview) {
@@ -473,10 +489,7 @@ export const store = new Vuex.Store({
 
                     promise = ShaderStorage.patchShader(data);
                     promise
-                        .then(shader => {
-                            dispatch(Actions.setShader, shader);
-                            state.deletedTextures = [];
-                        });
+                        .then(shader => dispatch(Actions.setShader, new ShaderData(shader)));
                 }
 
                 promise
@@ -486,7 +499,7 @@ export const store = new Vuex.Store({
                     .then(shader => {
                         commit(Mutations.setSendLock, false);
                         if (createNew) {
-                            window.history.pushState("", "", `/view/${shader.id}`);
+                            window.history.pushState("", "", `#/view/${shader.id}`);
                         }
                         return shader.id;
                     });
