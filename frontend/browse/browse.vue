@@ -11,7 +11,7 @@
     <div class="tile is-ancestor">
       <div v-for="shader in shaders" :key="shader.id" class="tile is-parent is-6">
         <div class="tile is-child">
-          <Shader :shader="shader"" class="box"></Shader>
+          <Shader :shader="shader" class="box"></Shader>
         </div>
       </div>
     </div>
