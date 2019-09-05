@@ -40,7 +40,7 @@
         "passport-local": "^1.0.0",
         "pg": "^7.5.0",
         "pg-hstore": "^2.3.2",
-        "sequelize": "^4.39.0",
+        "sequelize": "^4.44.3",
         "showdown": "^1.8.7",
         "telegraf": "^3.25.0",
         "vue": "^2.5.17",
@@ -65,6 +65,6 @@
         "vue-template-compiler": "^2.5.17",
         "webpack": "^4.17.2",
         "webpack-cli": "^3.1.0",
-        "webpack-dev-server": "^3.1.7"
+        "webpack-dev-server": "^3.8.0"
     }
 }
