@@ -76,3 +76,6 @@ frontend-dist
 backend-dist
 data
 node_modules
+
+.flowconfig
+.eslintrc.json
