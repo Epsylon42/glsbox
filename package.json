@@ -41,7 +41,7 @@
         "pg": "^7.5.0",
         "pg-hstore": "^2.3.2",
         "sequelize": "^4.44.3",
-        "showdown": "^1.8.7",
+        "showdown": "^1.9.1",
         "telegraf": "^3.25.0",
         "vue": "^2.5.17",
         "vue-awesome": "^3.1.3",
