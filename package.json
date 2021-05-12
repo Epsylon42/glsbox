@@ -29,7 +29,7 @@
         "@types/vue-scrollto": "^2.14.0",
         "busboy-body-parser": "^0.3.2",
         "cloudinary": "^1.11.0",
-        "codemirror": "^5.41.0",
+        "codemirror": "^5.58.2",
         "express": "^4.16.3",
         "express-session": "^1.15.6",
         "fs-extra": "^7.0.0",
