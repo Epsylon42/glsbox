@@ -56,7 +56,7 @@
         "bulma": "^0.7.2",
         "css-loader": "^1.0.0",
         "extract-text-webpack-plugin": "^4.0.0-beta.0",
-        "node-sass": "^4.9.2",
+        "node-sass": "^7.0.0",
         "sass-loader": "^7.1.0",
         "ts-loader": "^5.0.0",
         "typescript": "^3.0.3",
